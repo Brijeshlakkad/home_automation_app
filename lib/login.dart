@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'colors.dart';
 import 'package:home_automation/data/database_helper.dart';
 import 'package:home_automation/auth.dart';
 import 'package:home_automation/models/user.dart';

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:home_automation/data/database_helper.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
-import 'package:home_automation/colors.dart';
+
 class HomeScreen extends StatefulWidget {
   @override
   HomeScreenState createState() {
@@ -62,7 +62,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     _showDialog() async {
       await showDialog<String>(
         context: context,
-        child: new AlertDialog(
+        builder: (BuildContext context) => new AlertDialog(
           contentPadding: const EdgeInsets.all(16.0),
           content: new Row(
             children: <Widget>[

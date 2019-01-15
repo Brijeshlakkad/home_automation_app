@@ -6,11 +6,11 @@ class RestDatasource {
   NetworkUtil _netUtil = new NetworkUtil();
   static final baseURL = 'https://86d2ad5a.ngrok.io/Home Automation';
   static final loginURL = baseURL + "/login_data.php";
-  static final _API_KEY = "somerandomkey";
+  static final _apiKEY = "somerandomkey";
 
   Future<User> login(String username, String password) {
     return _netUtil.post(loginURL, body: {
-      "token": _API_KEY,
+      "token": _apiKEY,
       "email": username,
       "password": password
     }).then((dynamic res) {
