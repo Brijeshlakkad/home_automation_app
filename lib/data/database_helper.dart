@@ -3,6 +3,7 @@ import 'dart:io' as io;
 
 import 'package:path/path.dart';
 import 'package:home_automation/models/user.dart';
+import 'package:home_automation/models/home_data.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -22,7 +23,7 @@ class DatabaseHelper {
 
   initDb() async {
     io.Directory documentsDirectory = await getApplicationDocumentsDirectory();
-    String path = join(documentsDirectory.path, "home.db");
+    String path = join(documentsDirectory.path, "user.db");
     var theDb = await openDatabase(path, version: 1, onCreate: _onCreate);
     return theDb;
   }
@@ -31,6 +32,8 @@ class DatabaseHelper {
     // When creating the db, create the table
     await db.execute(
         "CREATE TABLE User(id INTEGER PRIMARY KEY, email TEXT, password TEXT)");
+    await db.execute(
+        "CREATE TABLE Home(id INTEGER PRIMARY KEY, email TEXT, homeName TEXT)");
     print("Created tables");
   }
 
@@ -46,6 +49,12 @@ class DatabaseHelper {
     return res;
   }
 
+  Future deleteDatabaseFile() async {
+    io.Directory documentsDirectory = await getApplicationDocumentsDirectory();
+    String path = join(documentsDirectory.path, "user.db");
+    await deleteDatabase(path);
+  }
+
   Future<bool> isLoggedIn() async {
     var dbClient = await db;
     var res = await dbClient.query("User");
@@ -54,11 +63,41 @@ class DatabaseHelper {
 
   Future<String> getUser() async {
     var dbClient = await db;
-    var res = await dbClient.query("User");
+    var res = await dbClient.rawQuery("SELECT * FROM User");
     if (res.length > 0) {
-      return res[0]['email'];
+      return res.first['email'].toString();
+    } else {
+      return null;
     }
-    else{
+  }
+
+  Future<int> saveHome(Home home) async {
+    var dbClient = await db;
+    int res = await dbClient.insert("Home", home.toMap());
+    return res;
+  }
+
+  Future<int> deleteHome() async {
+    var dbClient = await db;
+    int res = await dbClient.delete("Home");
+    return res;
+  }
+
+  Future<String> getHome() async {
+    var dbClient = await db;
+    var res = await dbClient.rawQuery("SELECT * FROM Home");
+    if (res.length > 0) {
+      return res.first['homeName'].toString();
+    } else {
+      return null;
+    }
+  }
+  Future<List<Map>> getAllHome() async {
+    var dbClient = await db;
+    var res = await dbClient.rawQuery("SELECT * FROM Home");
+    if (res.length > 0) {
+      return res.toList();
+    } else {
       return null;
     }
   }

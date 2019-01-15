@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:home_automation/data/database_helper.dart';
 import 'package:home_automation/colors.dart';
-import 'package:home_automation/home_data.dart';
-
-
+import 'package:home_automation/models/home_data.dart';
+import 'package:home_automation/colors.dart';
 class HomeScreen extends StatefulWidget {
   @override
   HomeScreenState createState() {
@@ -11,12 +10,45 @@ class HomeScreen extends StatefulWidget {
   }
 }
 
-class HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
+  final scaffoldKey = new GlobalKey<ScaffoldState>();
+  bool _isLoading = false;
   TextEditingController _homeNameController;
+  void _showSnackBar(String text) {
+    scaffoldKey.currentState
+        .showSnackBar(new SnackBar(content: new Text(text)));
+  }
+
   @override
   void initState() {
-    _homeNameController=new TextEditingController();
+    _homeNameController = new TextEditingController();
     super.initState();
+  }
+
+  HomeScreenPresenter _presenter;
+  HomeScreenState() {
+    _presenter = new HomeScreenPresenter(this);
+  }
+  @override
+  void onSuccess(Home home) async {
+    _showSnackBar(home.toString());
+    setState(() => _isLoading = false);
+    var db = new DatabaseHelper();
+    await db.saveHome(home);
+  }
+
+  @override
+  void onError(String errorTxt) {
+    print("x");
+    _showSnackBar(errorTxt);
+    setState(() => _isLoading = false);
+  }
+  Widget showProgress(){
+    return Container(
+      child: Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
   }
 
   @override
@@ -27,8 +59,6 @@ class HomeScreenState extends State<HomeScreen> {
       print("logout");
       Navigator.of(context).pushNamed('/login');
     }
-
-
     _showDialog() async {
       await showDialog<String>(
         context: context,
@@ -52,46 +82,79 @@ class HomeScreenState extends State<HomeScreen> {
                   Navigator.pop(context);
                 }),
             new FlatButton(
-                child: const Text('Create'),
-                onPressed: () async{
+                child: const Text('CREATE'),
+                onPressed: () async {
                   Navigator.pop(context);
-                  CreateHome api=new CreateHome();
-                  try {
-                    var home = await api.create(_homeNameController.text);
-                    print("success");
-                  } on Exception catch(error) {
-                    print('Error');
-                  }
+                  setState(() {
+                    _isLoading=true;
+                  });
+                 await _presenter.doCreateHome(_homeNameController.text);
+                  _homeNameController.clear();
                 })
           ],
         ),
       );
     }
-
-    var addHomeInterface = new Container(
-      padding: EdgeInsets.only(left: 40.0, top: 30.0),
-      child: Row(
-        children: <Widget>[
-          RaisedButton(
-            onPressed: _showDialog,
-            color: kHAutoBlue300,
-            elevation: 10.0,
-            child: Icon(
-              Icons.add,
-              color: Colors.black,
-            ),
-          ),
-          Container(
-            padding: EdgeInsets.only(left: 30.0),
+    Widget createListView(BuildContext context, AsyncSnapshot snapshot) {
+      List<Map> values = snapshot.data;
+      return new GridView.count(
+        crossAxisCount: 2,
+        // Generate 100 Widgets that display their index in the List
+        children: List.generate(values.length + 1, (index) {
+          if (index == values.length) {
+            return Center(
+                child: SizedBox(
+                  width: 150.0,
+                  height: 150.0,
+                  child: RaisedButton(
+                    shape: new RoundedRectangleBorder(
+                        borderRadius: new BorderRadius.circular(30.0)),
+                    onPressed: _showDialog,
+                    color: kHAutoBlue300,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(Icons.add),
+                        Text('Add Home'),
+                      ],
+                    ),
+                  ),
+                ));
+          }
+          return Center(
             child: Text(
-              'Add Home',
-              style: TextStyle(fontSize: 21.0),
+              'Home ${values[index]['homeName']}',
+              style: Theme.of(context).textTheme.headline,
             ),
-          )
-        ],
-      ),
+          );
+        }),
+      );
+    }
+
+    var db = new DatabaseHelper();
+
+    var getHome = new FutureBuilder(
+      future: db.getAllHome(),
+      builder: (BuildContext context, AsyncSnapshot snapshot) {
+        switch (snapshot.connectionState) {
+          case ConnectionState.none:
+          case ConnectionState.waiting:
+            return CircularProgressIndicator();
+          default:
+            if (snapshot.hasError)
+              return new Text('Error: ${snapshot.error}');
+            else {
+              return createListView(context, snapshot);
+            }
+        }
+      },
     );
+
+
+
     return new Scaffold(
+      key: scaffoldKey,
       appBar: new AppBar(
         leading: Container(),
         title: new Text("Home Automation"),
@@ -102,7 +165,8 @@ class HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: addHomeInterface,
+      body: _isLoading ? showProgress() :getHome,
     );
   }
 }
+

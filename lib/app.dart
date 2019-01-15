@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home.dart';
+import 'package:home_automation/home.dart';
 import 'colors.dart';
 import 'login.dart';
 class HomeAutomation extends StatefulWidget{
