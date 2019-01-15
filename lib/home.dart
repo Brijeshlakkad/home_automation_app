@@ -44,6 +44,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     var db = new DatabaseHelper();
     await db.deleteHome(home);
   }
+
   void onSuccessRename(Home home) async {
     _showSnackBar(home.toString());
     setState(() => _isLoading = false);
@@ -88,15 +89,21 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     Future<List> getListOfHomeName() async {
       var db = new DatabaseHelper();
       List<Map> list = await db.getAllHome();
-      List homeNameList = new List();
-      for (int i = 0; i < list.length; i++) {
-        homeNameList.add(list[i]['homeName']);
+      if(list != null){
+        List homeNameList = new List();
+        for (int i = 0; i < list.length; i++) {
+          homeNameList.add(list[i]['homeName']);
+        }
+        return homeNameList;
       }
-      return homeNameList;
+      return null;
     }
 
     existHomeName(String homeName) async {
       List list = await getListOfHomeName();
+      if(list == null){
+        return false;
+      }
       for (int i = 0; i < list.length; i++) {
         if (homeName == list[i]) return true;
       }
@@ -107,7 +114,6 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       Map validate = new Map();
       validate['error'] = true;
       validate['errorMessege'] = null;
-      print("f");
       if (homeName.isEmpty) {
         validate['errorMessege'] = 'Please enter home name';
       } else if (await existHomeName(homeName)) {
@@ -150,15 +156,15 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                       Navigator.pop(context);
                       var res =
                           await validateHomeName(_homeNameController.text);
-                      setState(() {
-                        if (res['error']) {
-                          _showSnackBar("${res['errorMessege']}");
-                        } else {
+                      if (res['error']) {
+                        _showSnackBar("${res['errorMessege']}");
+                      } else {
+                        setState(() {
                           _isLoading = true;
-                          _createHome(_homeNameController.text);
-                        }
-                        _homeNameController.clear();
-                      });
+                        });
+                        _createHome(_homeNameController.text);
+                      }
+                      _homeNameController.clear();
                     })
               ],
             ),
@@ -196,15 +202,15 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                       Navigator.pop(context);
                       var res =
                           await validateHomeName(_homeReNameController.text);
-                      setState(() {
-                        if (res['error']) {
-                          _showSnackBar("${res['errorMessege']}");
-                        } else {
+                      if (res['error']) {
+                        _showSnackBar("${res['errorMessege']}");
+                      } else {
+                        setState(() {
                           _isLoading = true;
-                          _renameHome(home);
-                        }
-                        _homeReNameController.clear();
-                      });
+                        });
+                        _renameHome(home);
+                      }
+                      _homeReNameController.clear();
                     })
               ],
             ),
@@ -260,16 +266,17 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     }
 
     Widget createListView(BuildContext context, AsyncSnapshot snapshot) {
-      List<Map> values = snapshot.data;
-      var len=0;
-      if(values!=null){
-        len=values.length;
+      List<Map> values;
+      var len = 0;
+      if(snapshot.data!=null || (snapshot.data is List)){
+        values=snapshot.data;
+        len = values.length;
       }
       return new GridView.count(
         crossAxisCount: 2,
         // Generate 100 Widgets that display their index in the List
         children: List.generate(len + 1, (index) {
-          if (values==null || index == len) {
+          if (index == len) {
             return Center(
                 child: SizedBox(
               width: 150.0,
@@ -277,7 +284,9 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
               child: RaisedButton(
                 shape: new RoundedRectangleBorder(
                     borderRadius: new BorderRadius.circular(30.0)),
-                onPressed: _showHomeNameDialog,
+                onPressed: () async{
+                  await _showHomeNameDialog();
+                },
                 color: kHAutoBlue300,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,

@@ -104,7 +104,6 @@ class DatabaseHelper {
   Future<String> renameHome(Home home) async {
     var dbClient = await db;
     var res = await dbClient.rawQuery("SELECT * FROM Home");
-    print(home.id);
     return "";
   }
 }
