@@ -67,11 +67,47 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       print("logout");
       Navigator.of(context).pushNamed('/login');
     }
-    _createHome(String homeName) async{
+
+    _createHome(String homeName) async {
       await _presenter.doCreateHome(_homeNameController.text);
       _homeNameController.clear();
     }
-    _showDialog() async {
+
+    Future<List> getListOfHomeName() async {
+      var db = new DatabaseHelper();
+      List<Map> list = await db.getAllHome();
+      List homeNameList = new List();
+      for (int i = 0; i < list.length; i++) {
+        homeNameList.add(list[i]['homeName']);
+      }
+      return homeNameList;
+    }
+
+    existHomeName(String homeName) async {
+      List list = await getListOfHomeName();
+      for (int i = 0; i < list.length; i++) {
+        if (homeName == list[i]) return true;
+      }
+      return false;
+    }
+
+    validateHomeName(String homeName) async {
+      Map validate = new Map();
+      validate['error'] = true;
+      validate['errorMessege'] = null;
+      print("f");
+      if (homeName.isEmpty) {
+        validate['errorMessege'] = 'Please enter home name';
+      } else if (await existHomeName(homeName)) {
+        validate['errorMessege'] = 'Home exists';
+      } else {
+        validate['error'] = false;
+        validate['errorMessege'] = null;
+      }
+      return validate;
+    }
+
+    _showHomeNameDialog() async {
       await showDialog<String>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
@@ -99,14 +135,16 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                     child: const Text('CREATE'),
                     onPressed: () async {
                       Navigator.pop(context);
+                      var res =
+                          await validateHomeName(_homeNameController.text);
                       setState(() {
-                        if (_homeNameController.text.isEmpty) {
-                          _showSnackBar("Please enter home name");
-                        }
-                        else{
+                        if (res['error']) {
+                          _showSnackBar("${res['errorMessege']}");
+                        } else {
                           _isLoading = true;
                           _createHome(_homeNameController.text);
                         }
+                        _homeNameController.clear();
                       });
                     })
               ],
@@ -114,11 +152,42 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       );
     }
 
+    // to show dialogue to ensure of deleting operation
+    bool status = false;
+    _showConfirmDialog() async {
+      await showDialog<String>(
+        context: context,
+        builder: (BuildContext context) => new AlertDialog(
+              contentPadding: const EdgeInsets.all(16.0),
+              content: new Container(
+                child: Text('Are you sure?'),
+              ),
+              actions: <Widget>[
+                new FlatButton(
+                    child: const Text('CANCEL'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      status = false;
+                    }),
+                new FlatButton(
+                    child: const Text('OK'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      status = true;
+                    })
+              ],
+            ),
+      );
+    }
+
     _deleteHome(Home home) async {
-      setState(() {
-        _isLoading = true;
-      });
-      await _presenter.doDeleteHome(home);
+      await _showConfirmDialog();
+      if (status) {
+        setState(() {
+          _isLoading = true;
+        });
+        await _presenter.doDeleteHome(home);
+      }
     }
 
     Widget createListView(BuildContext context, AsyncSnapshot snapshot) {
@@ -135,7 +204,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
               child: RaisedButton(
                 shape: new RoundedRectangleBorder(
                     borderRadius: new BorderRadius.circular(30.0)),
-                onPressed: _showDialog,
+                onPressed: _showHomeNameDialog,
                 color: kHAutoBlue300,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
