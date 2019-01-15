@@ -13,7 +13,7 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   final scaffoldKey = new GlobalKey<ScaffoldState>();
   bool _isLoading = false;
-  TextEditingController _homeNameController;
+  TextEditingController _homeNameController, _homeReNameController;
   void _showSnackBar(String text) {
     scaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
@@ -22,6 +22,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   @override
   void initState() {
     _homeNameController = new TextEditingController();
+    _homeReNameController = new TextEditingController();
     super.initState();
   }
 
@@ -42,6 +43,12 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteHome(home);
+  }
+  void onSuccessRename(Home home) async {
+    _showSnackBar(home.toString());
+    setState(() => _isLoading = false);
+    var db = new DatabaseHelper();
+    await db.renameHome(home);
   }
 
   @override
@@ -69,8 +76,13 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     }
 
     _createHome(String homeName) async {
-      await _presenter.doCreateHome(_homeNameController.text);
+      await _presenter.doCreateHome(homeName);
       _homeNameController.clear();
+    }
+
+    _renameHome(Home home) async {
+      await _presenter.doRenameHome(home);
+      _homeReNameController.clear();
     }
 
     Future<List> getListOfHomeName() async {
@@ -108,6 +120,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     }
 
     _showHomeNameDialog() async {
+      _homeNameController.clear();
       await showDialog<String>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
@@ -145,6 +158,52 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                           _createHome(_homeNameController.text);
                         }
                         _homeNameController.clear();
+                      });
+                    })
+              ],
+            ),
+      );
+    }
+
+    _showHomeReNameDialog(Home home) async {
+      _homeReNameController.text = home.homeName;
+      await showDialog<String>(
+        context: context,
+        builder: (BuildContext context) => new AlertDialog(
+              contentPadding: const EdgeInsets.all(16.0),
+              content: new Row(
+                children: <Widget>[
+                  new Expanded(
+                    child: new TextField(
+                      controller: _homeReNameController,
+                      autofocus: true,
+                      decoration: new InputDecoration(
+                        labelText: 'Home',
+                      ),
+                    ),
+                  )
+                ],
+              ),
+              actions: <Widget>[
+                new FlatButton(
+                    child: const Text('CANCEL'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    }),
+                new FlatButton(
+                    child: const Text('CREATE'),
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      var res =
+                          await validateHomeName(_homeReNameController.text);
+                      setState(() {
+                        if (res['error']) {
+                          _showSnackBar("${res['errorMessege']}");
+                        } else {
+                          _isLoading = true;
+                          _renameHome(home);
+                        }
+                        _homeReNameController.clear();
                       });
                     })
               ],
@@ -190,13 +249,27 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       }
     }
 
+    _renameHomeName(Home home) async {
+      await _showHomeReNameDialog(home);
+      if (status) {
+        setState(() {
+          _isLoading = true;
+        });
+        await _presenter.doRenameHome(home);
+      }
+    }
+
     Widget createListView(BuildContext context, AsyncSnapshot snapshot) {
       List<Map> values = snapshot.data;
+      var len=0;
+      if(values!=null){
+        len=values.length;
+      }
       return new GridView.count(
         crossAxisCount: 2,
         // Generate 100 Widgets that display their index in the List
-        children: List.generate(values.length + 1, (index) {
-          if (index == values.length) {
+        children: List.generate(len + 1, (index) {
+          if (values==null || index == len) {
             return Center(
                 child: SizedBox(
               width: 150.0,
@@ -239,7 +312,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                       children: <Widget>[
                         FloatingActionButton(
                           onPressed: () async {
-                            await _deleteHome(home);
+                            await _renameHomeName(home);
                           },
                           child: Icon(Icons.edit),
                         ),

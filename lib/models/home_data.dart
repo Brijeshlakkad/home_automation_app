@@ -58,12 +58,23 @@ class SendHomeData {
       return new Home.map(res);
     });
   }
+  Future<Home> rename(Home home) async {
+    final user =home.email;
+    final homeName= home.homeName;
+    return _netUtil.post(finalURL,
+        body: {"homeName": homeName, "email": user, "rename": "2"}).then((dynamic res) {
+      print(res.toString());
+      if (res["error"]) throw new Exception(res["errorMessege"]);
+      return new Home.map(res);
+    });
+  }
 }
 
 abstract class HomeScreenContract {
   void onSuccess(Home home);
   void onSuccessDelete(Home home);
   void onError(String errorTxt);
+  void onSuccessRename(Home home);
 }
 
 class HomeScreenPresenter {
@@ -84,6 +95,15 @@ class HomeScreenPresenter {
     try {
       var h = await api.delete(home);
       _view.onSuccessDelete(h);
+    } on Exception catch (error) {
+      _view.onError(error.toString());
+      print('Error');
+    }
+  }
+  doRenameHome(Home home) async{
+    try {
+      var h = await api.rename(home);
+      _view.onSuccessRename(h);
     } on Exception catch (error) {
       _view.onError(error.toString());
       print('Error');
