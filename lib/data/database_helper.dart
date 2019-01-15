@@ -77,9 +77,9 @@ class DatabaseHelper {
     return res;
   }
 
-  Future<int> deleteHome() async {
+  Future<int> deleteHome(Home home) async {
     var dbClient = await db;
-    int res = await dbClient.delete("Home");
+    int res = await dbClient.rawDelete('DELETE FROM Home WHERE email = ? and homeName = ?', [home.email,home.homeName]);
     return res;
   }
 
