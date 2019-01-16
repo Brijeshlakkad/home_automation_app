@@ -8,7 +8,8 @@ class Home {
   Home.map(dynamic obj) {
     this._homeName = obj["homeName"];
     this._email = obj["email"];
-    this._id = obj['id'];
+    var id= obj['id'].toString();
+    this._id=int.parse(id);
   }
 
   String get homeName => _homeName;
@@ -36,15 +37,15 @@ class HomeConst{
 class SendHomeData {
   NetworkUtil _netUtil = new NetworkUtil();
   static final baseURL = 'https://86d2ad5a.ngrok.io/Home Automation';
-  static final finalURL = baseURL + "/create_home.php";
+  static final finalURL = baseURL + "/home_actions.php";
   static final db = new DatabaseHelper();
   Future<Home> create(String homeName) async {
     final user = await db.getUser();
     return _netUtil.post(finalURL,
-        body: {"homeName": homeName, "email": user, "create": "1"}).then((dynamic res) {
+        body: {"homeName": homeName, "email": user, "action": "1"}).then((dynamic res) {
       print(res.toString());
       if (res["error"]) throw new Exception(res["errorMessege"]);
-      return new Home.map(res);
+      return new Home.map(res['user']);
     });
   }
 
@@ -52,20 +53,21 @@ class SendHomeData {
     final user =home.email;
     final homeName= home.homeName;
     return _netUtil.post(finalURL,
-        body: {"homeName": homeName, "email": user, "delete": "2"}).then((dynamic res) {
+        body: {"homeName": homeName, "email": user, "action": "2"}).then((dynamic res) {
       print(res.toString());
       if (res["error"]) throw new Exception(res["errorMessege"]);
-      return new Home.map(res);
+      return new Home.map(res['user']);
     });
   }
-  Future<Home> rename(Home home) async {
+  Future<Home> rename(Home home,String homeName) async {
     final user =home.email;
-    final homeName= home.homeName;
+    final id=home.id;
+    print(id);
     return _netUtil.post(finalURL,
-        body: {"homeName": homeName, "email": user, "rename": "2"}).then((dynamic res) {
+        body: {"homeName": homeName, "email": user, "action": "3", "id":id.toString()}).then((dynamic res) {
       print(res.toString());
       if (res["error"]) throw new Exception(res["errorMessege"]);
-      return new Home.map(res);
+      return new Home.map(res['user']);
     });
   }
 }
@@ -100,9 +102,9 @@ class HomeScreenPresenter {
       print('Error');
     }
   }
-  doRenameHome(Home home) async{
+  doRenameHome(Home home,String homeName) async{
     try {
-      var h = await api.rename(home);
+      var h = await api.rename(home,homeName);
       _view.onSuccessRename(h);
     } on Exception catch (error) {
       _view.onError(error.toString());

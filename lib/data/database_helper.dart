@@ -101,9 +101,14 @@ class DatabaseHelper {
       return null;
     }
   }
-  Future<String> renameHome(Home home) async {
+  Future<int> renameHome(Home home) async {
     var dbClient = await db;
-    var res = await dbClient.rawQuery("SELECT * FROM Home");
-    return "";
+    var res = await dbClient.rawUpdate("UPDATE Home SET homeName = ? WHERE id = ?",[home.homeName,home.id]);
+    if (res > 0) {
+      return res;
+    } else {
+      return 0;
+    }
   }
+
 }

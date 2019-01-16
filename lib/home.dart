@@ -81,8 +81,8 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       _homeNameController.clear();
     }
 
-    _renameHome(Home home) async {
-      await _presenter.doRenameHome(home);
+    _renameHome(Home home,String homeName) async {
+      await _presenter.doRenameHome(home,homeName);
       _homeReNameController.clear();
     }
 
@@ -197,7 +197,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                       Navigator.pop(context);
                     }),
                 new FlatButton(
-                    child: const Text('CREATE'),
+                    child: const Text('RENAME'),
                     onPressed: () async {
                       Navigator.pop(context);
                       var res =
@@ -208,9 +208,8 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                         setState(() {
                           _isLoading = true;
                         });
-                        _renameHome(home);
+                        _renameHome(home,_homeReNameController.text);
                       }
-                      _homeReNameController.clear();
                     })
               ],
             ),
@@ -261,7 +260,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
         setState(() {
           _isLoading = true;
         });
-        await _presenter.doRenameHome(home);
+        await _presenter.doRenameHome(home,_homeReNameController.text);
       }
     }
 
