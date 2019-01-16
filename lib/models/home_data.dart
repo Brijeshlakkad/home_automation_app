@@ -30,10 +30,6 @@ class Home {
     return homeName;
   }
 }
-class HomeConst{
-  final Home home;
-  const HomeConst({this.home});
-}
 class SendHomeData {
   NetworkUtil _netUtil = new NetworkUtil();
   static final baseURL = 'https://86d2ad5a.ngrok.io/Home Automation';

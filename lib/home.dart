@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:home_automation/data/database_helper.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
-
+import 'package:home_automation/home_object.dart';
 class HomeScreen extends StatefulWidget {
   @override
   HomeScreenState createState() {
@@ -300,43 +300,54 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
           }
           Home home = Home.map(values[index]);
           return Center(
-            child: Card(
-              child: Container(
-                padding: EdgeInsets.only(left: 10.0, top: 20.0, bottom: 20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        '${values[index]['homeName']}',
-                        textAlign: TextAlign.left,
-                        style: Theme.of(context).textTheme.headline,
+            child: InkWell(
+              onTap: (){
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => HomeObject(home:home)),
+                );
+              },
+              splashColor: kHAutoBlue300,
+              child: Card(
+                child: Container(
+                  padding: EdgeInsets.only(left: 10.0, top: 20.0, bottom: 20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          '${values[index]['homeName']}',
+                          textAlign: TextAlign.left,
+                          style: Theme.of(context).textTheme.headline,
+                        ),
                       ),
-                    ),
-                    SizedBox(
-                      height: 40.0,
-                    ),
-                    Row(
-                      children: <Widget>[
-                        FloatingActionButton(
-                          onPressed: () async {
-                            await _renameHomeName(home);
-                          },
-                          child: Icon(Icons.edit),
-                        ),
-                        SizedBox(
-                          width: 10.0,
-                        ),
-                        FloatingActionButton(
-                          backgroundColor: Colors.red,
-                          onPressed: () async {
-                            await _deleteHome(home);
-                          },
-                          child: Icon(Icons.delete),
-                        ),
-                      ],
-                    ),
-                  ],
+                      SizedBox(
+                        height: 40.0,
+                      ),
+                      Row(
+                        children: <Widget>[
+                          FloatingActionButton(
+                            heroTag: "Edit",
+                            onPressed: () async {
+                              await _renameHomeName(home);
+                            },
+                            child: Icon(Icons.edit),
+                          ),
+                          SizedBox(
+                            width: 10.0,
+                          ),
+                          FloatingActionButton(
+                            heroTag: "Delete",
+                            backgroundColor: Colors.red,
+                            onPressed: () async {
+                              await _deleteHome(home);
+                            },
+                            child: Icon(Icons.delete),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
