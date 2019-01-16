@@ -4,7 +4,8 @@ import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/models/room_data.dart';
 import 'package:home_automation/show_progress.dart';
-class HomeObject extends StatefulWidget{
+
+class HomeObject extends StatefulWidget {
   final Home home;
   const HomeObject({this.home});
   @override
@@ -16,11 +17,13 @@ class HomeObject extends StatefulWidget{
 class HomeObjectState extends State<HomeObject> {
   @override
   Widget build(BuildContext context) {
-    return ShowRoomsOfHome(home: widget.home,);
+    return ShowRoomsOfHome(
+      home: widget.home,
+    );
   }
 }
 
-class ShowRoomsOfHome extends StatefulWidget{
+class ShowRoomsOfHome extends StatefulWidget {
   final Home home;
   const ShowRoomsOfHome({this.home});
   @override
@@ -29,9 +32,12 @@ class ShowRoomsOfHome extends StatefulWidget{
   }
 }
 
-class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>  implements RoomScreenContract{
+class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
+    implements RoomScreenContract {
   final showRoomscaffoldKey = new GlobalKey<ScaffoldState>();
   bool _isLoading = false;
+  var refreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
+  List<Room> roomList = new List<Room>();
   TextEditingController _roomNameController, _roomReNameController;
   void _showSnackBar(String text) {
     showRoomscaffoldKey.currentState
@@ -42,7 +48,22 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>  implements RoomScreen
   void initState() {
     _roomNameController = new TextEditingController();
     _roomReNameController = new TextEditingController();
+    getRoomList();
+    setState(() => _isLoading = true);
+    _presenter.doGetAllRoom(widget.home);
     super.initState();
+  }
+
+  var db = new DatabaseHelper();
+
+  Future getRoomList() async {
+    refreshIndicatorKey.currentState?.show();
+    roomList = await _presenter.api.getAllRoom(widget.home);
+    if (roomList != null) {
+      setState(() {
+        roomList = roomList.toList();
+      });
+    }
   }
 
   RoomScreenPresenter _presenter;
@@ -55,6 +76,17 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>  implements RoomScreen
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.saveRoom(room);
+    refreshIndicatorKey.currentState.show();
+  }
+
+  @override
+  void onSuccessGetAllRoom(List<Room> roomList) async {
+    if(roomList!=null){
+      _showSnackBar("Got ${roomList.length}");
+      setState(() => _isLoading = false);
+      var db = new DatabaseHelper();
+      await db.saveAllRoom(roomList);
+    }
   }
 
   void onSuccessDelete(Room room) async {
@@ -63,6 +95,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>  implements RoomScreen
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteRoom(room);
+    refreshIndicatorKey.currentState.show();
   }
 
   void onSuccessRename(Room room) async {
@@ -70,6 +103,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>  implements RoomScreen
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.renameRoom(room);
+    refreshIndicatorKey.currentState.show();
   }
 
   @override
@@ -78,33 +112,33 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>  implements RoomScreen
     _showSnackBar(errorTxt);
     setState(() => _isLoading = false);
   }
+
   @override
   Widget build(BuildContext context) {
     void getLogOut() async {
       var db = new DatabaseHelper();
       await db.deleteUsers();
-      await db.deleteDatabaseFile();
       print("logout");
       Navigator.of(context).pushNamed('/login');
     }
 
-    _createRoom(String roomName,Home home) async {
-      await _presenter.doCreateRoom(roomName,home);
+    _createRoom(String roomName, Home home) async {
+      await _presenter.doCreateRoom(roomName, home);
       _roomNameController.clear();
     }
 
-    _renameRoom(Room room,String roomName) async {
-      await _presenter.doRenameRoom(room,roomName);
+    _renameRoom(Room room, String roomName) async {
+      await _presenter.doRenameRoom(room, roomName);
       _roomReNameController.clear();
     }
 
     Future<List> getListOfRoomName() async {
       var db = new DatabaseHelper();
-      List<Map> list = await db.getAllRoom();
-      if(list != null){
+      List<Room> list = await db.getAllRoom();
+      if (list != null) {
         List roomNameList = new List();
         for (int i = 0; i < list.length; i++) {
-          roomNameList.add(list[i]['roomName']);
+          roomNameList.add(list[i].roomName);
         }
         return roomNameList;
       }
@@ -113,7 +147,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>  implements RoomScreen
 
     existRoomName(String roomName) async {
       List list = await getListOfRoomName();
-      if(list == null){
+      if (list == null) {
         return false;
       }
       for (int i = 0; i < list.length; i++) {
@@ -142,44 +176,44 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>  implements RoomScreen
       await showDialog<String>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
-          contentPadding: const EdgeInsets.all(16.0),
-          content: new Row(
-            children: <Widget>[
-              new Expanded(
-                child: new TextField(
-                  controller: _roomNameController,
-                  autofocus: true,
-                  decoration: new InputDecoration(
-                    labelText: 'Room',
-                  ),
-                ),
-              )
-            ],
-          ),
-          actions: <Widget>[
-            new FlatButton(
-                child: const Text('CANCEL'),
-                onPressed: () {
-                  Navigator.pop(context);
-                }),
-            new FlatButton(
-                child: const Text('CREATE'),
-                onPressed: () async {
-                  Navigator.pop(context);
-                  var res =
-                  await validateRoomName(_roomNameController.text);
-                  if (res['error']) {
-                    _showSnackBar("${res['errorMessege']}");
-                  } else {
-                    setState(() {
-                      _isLoading = true;
-                    });
-                    _createRoom(_roomNameController.text,widget.home);
-                  }
-                  _roomNameController.clear();
-                })
-          ],
-        ),
+              contentPadding: const EdgeInsets.all(16.0),
+              content: new Row(
+                children: <Widget>[
+                  new Expanded(
+                    child: new TextField(
+                      controller: _roomNameController,
+                      autofocus: true,
+                      decoration: new InputDecoration(
+                        labelText: 'Room',
+                      ),
+                    ),
+                  )
+                ],
+              ),
+              actions: <Widget>[
+                new FlatButton(
+                    child: const Text('CANCEL'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    }),
+                new FlatButton(
+                    child: const Text('CREATE'),
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      var res =
+                          await validateRoomName(_roomNameController.text);
+                      if (res['error']) {
+                        _showSnackBar("${res['errorMessege']}");
+                      } else {
+                        setState(() {
+                          _isLoading = true;
+                        });
+                        _createRoom(_roomNameController.text, widget.home);
+                      }
+                      _roomNameController.clear();
+                    })
+              ],
+            ),
       );
     }
 
@@ -188,70 +222,71 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>  implements RoomScreen
       await showDialog<String>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
-          contentPadding: const EdgeInsets.all(16.0),
-          content: new Row(
-            children: <Widget>[
-              new Expanded(
-                child: new TextField(
-                  controller: _roomReNameController,
-                  autofocus: true,
-                  decoration: new InputDecoration(
-                    labelText: 'Home',
-                  ),
-                ),
-              )
-            ],
-          ),
-          actions: <Widget>[
-            new FlatButton(
-                child: const Text('CANCEL'),
-                onPressed: () {
-                  Navigator.pop(context);
-                }),
-            new FlatButton(
-                child: const Text('RENAME'),
-                onPressed: () async {
-                  Navigator.pop(context);
-                  var res =
-                  await validateRoomName(_roomReNameController.text);
-                  if (res['error']) {
-                    _showSnackBar("${res['errorMessege']}");
-                  } else {
-                    setState(() {
-                      _isLoading = true;
-                    });
-                    _renameRoom(room,_roomReNameController.text);
-                  }
-                })
-          ],
-        ),
+              contentPadding: const EdgeInsets.all(16.0),
+              content: new Row(
+                children: <Widget>[
+                  new Expanded(
+                    child: new TextField(
+                      controller: _roomReNameController,
+                      autofocus: true,
+                      decoration: new InputDecoration(
+                        labelText: 'Home',
+                      ),
+                    ),
+                  )
+                ],
+              ),
+              actions: <Widget>[
+                new FlatButton(
+                    child: const Text('CANCEL'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    }),
+                new FlatButton(
+                    child: const Text('RENAME'),
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      var res =
+                          await validateRoomName(_roomReNameController.text);
+                      if (res['error']) {
+                        _showSnackBar("${res['errorMessege']}");
+                      } else {
+                        setState(() {
+                          _isLoading = true;
+                        });
+                        _renameRoom(room, _roomReNameController.text);
+                      }
+                    })
+              ],
+            ),
       );
     }
+
     // to show dialogue to ensure of deleting operation
     bool status = false;
     _showConfirmDialog() async {
       await showDialog<String>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
-          contentPadding: const EdgeInsets.all(16.0),
-          content: new Container(
-            child: Text('Are you sure?'),
-          ),
-          actions: <Widget>[
-            new FlatButton(
-                child: const Text('CANCEL'),
-                onPressed: () {
-                  Navigator.pop(context);
-                  status = false;
-                }),
-            new FlatButton(
-                child: const Text('OK'),
-                onPressed: () {
-                  Navigator.pop(context);
-                  status = true;
-                })
-          ],
-        ),
+              contentPadding: const EdgeInsets.all(16.0),
+              content: new Container(
+                child: Text('Are you sure?'),
+              ),
+              actions: <Widget>[
+                new FlatButton(
+                    child: const Text('CANCEL'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      status = false;
+                    }),
+                new FlatButton(
+                    child: const Text('OK'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      status = true;
+                    })
+              ],
+            ),
       );
     }
 
@@ -271,16 +306,14 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>  implements RoomScreen
         setState(() {
           _isLoading = true;
         });
-        await _presenter.doRenameRoom(room,_roomReNameController.text);
+        await _presenter.doRenameRoom(room, _roomReNameController.text);
       }
     }
 
-    Widget createListView(BuildContext context, AsyncSnapshot snapshot) {
-      List<Map> values;
+    Widget createListView(BuildContext context, List<Room> roomList) {
       var len = 0;
-      if(snapshot.data!=null || (snapshot.data is List)){
-        values=snapshot.data;
-        len = values.length;
+      if (roomList != null) {
+        len = roomList.length;
       }
       return new GridView.count(
         crossAxisCount: 2,
@@ -289,32 +322,29 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>  implements RoomScreen
           if (index == len) {
             return Center(
                 child: SizedBox(
-                  width: 150.0,
-                  height: 150.0,
-                  child: RaisedButton(
-                    shape: new RoundedRectangleBorder(
-                        borderRadius: new BorderRadius.circular(30.0)),
-                    onPressed: () async{
-                      await _showRoomNameDialog();
-                    },
-                    color: kHAutoBlue300,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Icon(Icons.add),
-                        Text('Add Room'),
-                      ],
-                    ),
-                  ),
-                ));
+              width: 150.0,
+              height: 150.0,
+              child: RaisedButton(
+                shape: new RoundedRectangleBorder(
+                    borderRadius: new BorderRadius.circular(30.0)),
+                onPressed: () async {
+                  await _showRoomNameDialog();
+                },
+                color: kHAutoBlue300,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Icon(Icons.add),
+                    Text('Add Room'),
+                  ],
+                ),
+              ),
+            ));
           }
-          Room room= Room.map(values[index]);
           return Center(
             child: InkWell(
-              onTap: (){
-
-              },
+              onTap: () {},
               splashColor: kHAutoBlue300,
               child: Card(
                 child: Container(
@@ -324,7 +354,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>  implements RoomScreen
                     children: <Widget>[
                       Expanded(
                         child: Text(
-                          '${values[index]['roomName']}',
+                          '${roomList[index].roomName}',
                           textAlign: TextAlign.left,
                           style: Theme.of(context).textTheme.headline,
                         ),
@@ -336,7 +366,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>  implements RoomScreen
                         children: <Widget>[
                           FlatButton(
                             onPressed: () async {
-                              await _renameRoomName(room);
+                              await _renameRoomName(roomList[index]);
                             },
                             child: Icon(Icons.edit),
                           ),
@@ -345,7 +375,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>  implements RoomScreen
                           ),
                           FlatButton(
                             onPressed: () async {
-                              await _deleteRoom(room);
+                              await _deleteRoom(roomList[index]);
                             },
                             child: Icon(Icons.delete),
                           ),
@@ -361,24 +391,6 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>  implements RoomScreen
       );
     }
 
-    var db = new DatabaseHelper();
-
-    var getRoom = new FutureBuilder(
-      future: db.getAllRoom(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        switch (snapshot.connectionState) {
-          case ConnectionState.none:
-          case ConnectionState.waiting:
-            return ShowProgress();
-          default:
-            if (snapshot.hasError)
-              return new Text('Error: ${snapshot.error}');
-            else {
-              return createListView(context, snapshot);
-            }
-        }
-      },
-    );
     return new Scaffold(
       key: showRoomscaffoldKey,
       appBar: new AppBar(
@@ -390,7 +402,13 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>  implements RoomScreen
           ),
         ],
       ),
-      body: _isLoading ? ShowProgress() : getRoom,
+      body: _isLoading
+          ? ShowProgress()
+          : RefreshIndicator(
+              key: refreshIndicatorKey,
+              child: createListView(context, roomList),
+              onRefresh: getRoomList,
+            ),
     );
   }
 }

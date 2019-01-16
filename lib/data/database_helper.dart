@@ -36,7 +36,7 @@ class DatabaseHelper {
     await db.execute(
         "CREATE TABLE Home(id INTEGER PRIMARY KEY, email TEXT, homeName TEXT)");
     await db.execute(
-        "CREATE TABLE Room(id INTEGER PRIMARY KEY, email TEXT, homeID TEXT, roomName TEXT)");
+        "CREATE TABLE Room(id INTEGER PRIMARY KEY, email TEXT, homeID INTEGER, roomName TEXT)");
     print("Created tables");
   }
 
@@ -79,11 +79,23 @@ class DatabaseHelper {
     int res = await dbClient.insert("Home", home.toMap());
     return res;
   }
+  Future<int> saveAllHome(List<Home> homeList) async {
+    var dbClient = await db;
+    int result = await dbClient.rawDelete('DELETE FROM Home');
+    int res=0;
+    for(int i=0;i<homeList.length;i++){
+      result = await dbClient.insert("Home", homeList[i].toMap());
+      res+=result;
+    }
+    return res;
+  }
 
   Future<int> deleteHome(Home home) async {
     var dbClient = await db;
     await deleteAllRoomWith(home);
-    int res = await dbClient.rawDelete('DELETE FROM Home WHERE homeName = ? and email = ?', [home.homeName,home.email]);
+    int res = await dbClient.rawDelete(
+        'DELETE FROM Home WHERE homeName = ? and email = ?',
+        [home.homeName, home.email]);
     return res;
   }
 
@@ -96,18 +108,25 @@ class DatabaseHelper {
       return null;
     }
   }
-  Future<List<Map>> getAllHome() async {
+
+  Future<List<Home>> getAllHome() async {
     var dbClient = await db;
     var res = await dbClient.rawQuery("SELECT * FROM Home");
     if (res.length > 0) {
-      return res.toList();
+      List<Home> list = new List<Home>();
+      for (int i = 0; i < res.length; i++) {
+        list.add(Home.map(res[i]));
+      }
+      return list;
     } else {
       return null;
     }
   }
+
   Future<int> renameHome(Home home) async {
     var dbClient = await db;
-    var res = await dbClient.rawUpdate("UPDATE Home SET homeName = ? WHERE id = ?",[home.homeName,home.id]);
+    var res = await dbClient.rawUpdate(
+        "UPDATE Home SET homeName = ? WHERE id = ?", [home.homeName, home.id]);
     if (res > 0) {
       return res;
     } else {
@@ -121,15 +140,30 @@ class DatabaseHelper {
     return res;
   }
 
+  Future<int> saveAllRoom(List<Room> roomList) async {
+    var dbClient = await db;
+    int result = await dbClient.rawDelete('DELETE FROM Room');
+    int res=0;
+    for(int i=0;i<roomList.length;i++){
+      result = await dbClient.insert("Room", roomList[i].toMap());
+      res+=result;
+    }
+    return res;
+  }
+
   Future<int> deleteRoom(Room room) async {
     var dbClient = await db;
-    int res = await dbClient.rawDelete('DELETE FROM Room WHERE roomName = ? and homeID = ? and email = ?', [room.roomName,room.homeID,room.email]);
+    int res = await dbClient.rawDelete(
+        'DELETE FROM Room WHERE roomName = ? and homeID = ? and email = ?',
+        [room.roomName, room.homeID, room.email]);
     return res;
   }
 
   Future<int> deleteAllRoomWith(Home home) async {
     var dbClient = await db;
-    int res = await dbClient.rawDelete('DELETE FROM Room WHERE homeID = ? and email = ?', [home.id,home.email]);
+    int res = await dbClient.rawDelete(
+        'DELETE FROM Room WHERE homeID = ? and email = ?',
+        [home.id, home.email]);
     return res;
   }
 
@@ -142,23 +176,29 @@ class DatabaseHelper {
       return null;
     }
   }
-  Future<List<Map>> getAllRoom() async {
+
+  Future<List<Room>> getAllRoom() async {
     var dbClient = await db;
     var res = await dbClient.rawQuery("SELECT * FROM Room");
     if (res.length > 0) {
-      return res.toList();
+      List<Room> list = new List<Room>();
+      for (int i = 0; i < res.length; i++) {
+        list.add(Room.map(res[i]));
+      }
+      return list;
     } else {
       return null;
     }
   }
+
   Future<int> renameRoom(Room room) async {
     var dbClient = await db;
-    var res = await dbClient.rawUpdate("UPDATE Room SET roomName = ? WHERE id = ?",[room.roomName,room.id]);
+    var res = await dbClient.rawUpdate(
+        "UPDATE Room SET roomName = ? WHERE id = ?", [room.roomName, room.id]);
     if (res > 0) {
       return res;
     } else {
       return 0;
     }
   }
-
 }

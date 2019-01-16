@@ -3,6 +3,7 @@ import 'package:home_automation/data/database_helper.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/home_object.dart';
+
 class HomeScreen extends StatefulWidget {
   @override
   HomeScreenState createState() {
@@ -13,6 +14,9 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   final scaffoldKey = new GlobalKey<ScaffoldState>();
   bool _isLoading = false;
+  var refreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
+  List<Home> homeList = new List<Home>();
+  var db = new DatabaseHelper();
   TextEditingController _homeNameController, _homeReNameController;
   void _showSnackBar(String text) {
     scaffoldKey.currentState
@@ -23,6 +27,9 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   void initState() {
     _homeNameController = new TextEditingController();
     _homeReNameController = new TextEditingController();
+    getHomeList();
+    setState(() => _isLoading = true);
+    _presenter.doGetAllHome();
     super.initState();
   }
 
@@ -36,6 +43,17 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.saveHome(home);
+    refreshIndicatorKey.currentState.show();
+  }
+
+  @override
+  void onSuccessGetAllHome(List<Home> homeList) async {
+    if(homeList!=null){
+      _showSnackBar("Got ${homeList.length}");
+      setState(() => _isLoading = false);
+      var db = new DatabaseHelper();
+      await db.saveAllHome(homeList);
+    }
   }
 
   void onSuccessDelete(Home home) async {
@@ -43,6 +61,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteHome(home);
+    refreshIndicatorKey.currentState.show();
   }
 
   void onSuccessRename(Home home) async {
@@ -50,6 +69,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.renameHome(home);
+    refreshIndicatorKey.currentState.show();
   }
 
   @override
@@ -67,6 +87,17 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     );
   }
 
+
+  Future getHomeList() async {
+    refreshIndicatorKey.currentState?.show();
+    homeList = await _presenter.api.getAllHome();
+    if (homeList != null) {
+      setState(() {
+        homeList = homeList.toList();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     void getLogOut() async {
@@ -81,18 +112,18 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       _homeNameController.clear();
     }
 
-    _renameHome(Home home,String homeName) async {
-      await _presenter.doRenameHome(home,homeName);
+    _renameHome(Home home, String homeName) async {
+      await _presenter.doRenameHome(home, homeName);
       _homeReNameController.clear();
     }
 
     Future<List> getListOfHomeName() async {
       var db = new DatabaseHelper();
-      List<Map> list = await db.getAllHome();
-      if(list != null){
+      List<Home> list = await db.getAllHome();
+      if (list != null) {
         List homeNameList = new List();
         for (int i = 0; i < list.length; i++) {
-          homeNameList.add(list[i]['homeName']);
+          homeNameList.add(list[i].homeName);
         }
         return homeNameList;
       }
@@ -101,7 +132,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
 
     existHomeName(String homeName) async {
       List list = await getListOfHomeName();
-      if(list == null){
+      if (list == null) {
         return false;
       }
       for (int i = 0; i < list.length; i++) {
@@ -208,7 +239,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                         setState(() {
                           _isLoading = true;
                         });
-                        _renameHome(home,_homeReNameController.text);
+                        _renameHome(home, _homeReNameController.text);
                       }
                     })
               ],
@@ -260,16 +291,14 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
         setState(() {
           _isLoading = true;
         });
-        await _presenter.doRenameHome(home,_homeReNameController.text);
+        await _presenter.doRenameHome(home, _homeReNameController.text);
       }
     }
 
-    Widget createListView(BuildContext context, AsyncSnapshot snapshot) {
-      List<Map> values;
+    Widget createListView(BuildContext context, List<Home> homeList) {
       var len = 0;
-      if(snapshot.data!=null || (snapshot.data is List)){
-        values=snapshot.data;
-        len = values.length;
+      if (homeList != null) {
+        len = homeList.length;
       }
       return new GridView.count(
         crossAxisCount: 2,
@@ -283,7 +312,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
               child: RaisedButton(
                 shape: new RoundedRectangleBorder(
                     borderRadius: new BorderRadius.circular(30.0)),
-                onPressed: () async{
+                onPressed: () async {
                   await _showHomeNameDialog();
                 },
                 color: kHAutoBlue300,
@@ -298,13 +327,13 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
               ),
             ));
           }
-          Home home = Home.map(values[index]);
           return Center(
             child: InkWell(
-              onTap: (){
+              onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => HomeObject(home:home)),
+                  MaterialPageRoute(
+                      builder: (context) => HomeObject(home: homeList[index])),
                 );
               },
               splashColor: kHAutoBlue300,
@@ -316,7 +345,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                     children: <Widget>[
                       Expanded(
                         child: Text(
-                          '${values[index]['homeName']}',
+                          '${homeList[index].homeName}',
                           textAlign: TextAlign.left,
                           style: Theme.of(context).textTheme.headline,
                         ),
@@ -328,7 +357,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                         children: <Widget>[
                           FlatButton(
                             onPressed: () async {
-                              await _renameHomeName(home);
+                              await _renameHomeName(homeList[index]);
                             },
                             child: Icon(Icons.edit),
                           ),
@@ -337,7 +366,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                           ),
                           FlatButton(
                             onPressed: () async {
-                              await _deleteHome(home);
+                              await _deleteHome(homeList[index]);
                             },
                             child: Icon(Icons.delete),
                           ),
@@ -353,25 +382,6 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       );
     }
 
-    var db = new DatabaseHelper();
-
-    var getHome = new FutureBuilder(
-      future: db.getAllHome(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        switch (snapshot.connectionState) {
-          case ConnectionState.none:
-          case ConnectionState.waiting:
-            return showProgress();
-          default:
-            if (snapshot.hasError)
-              return new Text('Error: ${snapshot.error}');
-            else {
-              return createListView(context, snapshot);
-            }
-        }
-      },
-    );
-
     return new Scaffold(
       key: scaffoldKey,
       appBar: new AppBar(
@@ -384,7 +394,13 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
           ),
         ],
       ),
-      body: _isLoading ? showProgress() : getHome,
+      body: _isLoading
+          ? showProgress()
+          : RefreshIndicator(
+              key: refreshIndicatorKey,
+              child: createListView(context, homeList),
+              onRefresh: getHomeList,
+            ),
     );
   }
 }

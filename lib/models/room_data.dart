@@ -4,7 +4,7 @@ import 'package:home_automation/models/home_data.dart';
 class Room {
   String _roomName, _email;
   int _id, _homeID;
-  Room(this._roomName, this._email,this._homeID);
+  Room(this._roomName, this._email,this._homeID,this._id);
   Room.map(dynamic obj) {
     this._roomName = obj["roomName"];
     this._email = obj["email"];
@@ -23,9 +23,7 @@ class Room {
     map["roomName"] = _roomName;
     map["email"] = _email;
     map['homeID'] = _homeID;
-    if(_id != null){
-      map['id']=_id;
-    }
+    map['id']=_id;
     return map;
   }
   @override
@@ -38,6 +36,26 @@ class SendRoomData {
   static final baseURL = 'https://86d2ad5a.ngrok.io/Home Automation';
   static final finalURL = baseURL + "/room_actions.php";
   static final db = new DatabaseHelper();
+
+  Future<List<Room>> getAllRoom(Home home) async {
+    final user = home.email;
+    final homeID = home.id.toString();
+    return _netUtil.post(finalURL, body: {
+      "email": user,
+      "homeID": homeID,
+      "action": "0"
+    }).then((dynamic res) {
+      print(res.toString());
+      if (res["error"]) throw new Exception(res["errorMessege"]);
+      int total=int.parse(res['total'].toString());
+      List<Room> roomList= new List<Room>();
+      for(int i=0;i<total;i++){
+        roomList.add(Room.map(res['user']['room'][i]));
+      }
+      return roomList;
+    });
+  }
+
   Future<Room> create(String roomName, Home home) async {
     final homeID=home.id.toString();
     final user = home.email;
@@ -79,6 +97,7 @@ abstract class RoomScreenContract {
   void onSuccessDelete(Room room);
   void onError(String errorTxt);
   void onSuccessRename(Room room);
+  void onSuccessGetAllRoom(List<Room> roomList);
 }
 
 class RoomScreenPresenter {
@@ -110,6 +129,16 @@ class RoomScreenPresenter {
       var r = await api.rename(room,roomName);
       print("3");
       _view.onSuccessRename(r);
+    } on Exception catch (error) {
+      _view.onError(error.toString());
+      print('Error');
+    }
+  }
+
+  doGetAllRoom(Home home) async {
+    try {
+      List<Room> r = await api.getAllRoom(home);
+      _view.onSuccessGetAllRoom(r);
     } on Exception catch (error) {
       _view.onError(error.toString());
       print('Error');

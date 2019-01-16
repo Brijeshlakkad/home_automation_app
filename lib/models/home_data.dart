@@ -4,7 +4,7 @@ import 'package:home_automation/data/database_helper.dart';
 class Home {
   String _homeName, _email;
   int _id;
-  Home(this._homeName, this._email);
+  Home(this._homeName, this._email, this._id);
   Home.map(dynamic obj) {
     this._homeName = obj["homeName"];
     this._email = obj["email"];
@@ -19,9 +19,7 @@ class Home {
     var map = new Map<String, dynamic>();
     map["homeName"] = _homeName;
     map["email"] = _email;
-    if (_id != null) {
-      map['id'] = _id;
-    }
+    map['id'] = _id;
     return map;
   }
 
@@ -37,6 +35,23 @@ class SendHomeData {
   static final baseURL = 'https://86d2ad5a.ngrok.io/Home Automation';
   static final finalURL = baseURL + "/home_actions.php";
   static final db = new DatabaseHelper();
+  Future<List<Home>> getAllHome() async {
+    final user = await db.getUser();
+    return _netUtil.post(finalURL, body: {
+      "email": user,
+      "action": "0"
+    }).then((dynamic res) {
+      print(res.toString());
+      if (res["error"]) throw new Exception(res["errorMessege"]);
+      int total=int.parse(res['total'].toString());
+      List<Home> homeList= new List<Home>();
+      for(int i=0;i<total;i++){
+        homeList.add(Home.map(res['user']['home'][i]));
+      }
+      return homeList;
+    });
+  }
+
   Future<Home> create(String homeName) async {
     final user = await db.getUser();
     return _netUtil.post(finalURL, body: {
@@ -87,6 +102,7 @@ abstract class HomeScreenContract {
   void onSuccessDelete(Home home);
   void onError(String errorTxt);
   void onSuccessRename(Home home);
+  void onSuccessGetAllHome(List<Home> homeList);
 }
 
 class HomeScreenPresenter {
@@ -118,6 +134,15 @@ class HomeScreenPresenter {
     try {
       var h = await api.rename(home, homeName);
       _view.onSuccessRename(h);
+    } on Exception catch (error) {
+      _view.onError(error.toString());
+      print('Error');
+    }
+  }
+  doGetAllHome() async {
+    try {
+      List<Home> h = await api.getAllHome();
+      _view.onSuccessGetAllHome(h);
     } on Exception catch (error) {
       _view.onError(error.toString());
       print('Error');
