@@ -326,8 +326,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                       ),
                       Row(
                         children: <Widget>[
-                          FloatingActionButton(
-                            heroTag: "Edit",
+                          FlatButton(
                             onPressed: () async {
                               await _renameHomeName(home);
                             },
@@ -336,9 +335,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                           SizedBox(
                             width: 10.0,
                           ),
-                          FloatingActionButton(
-                            heroTag: "Delete",
-                            backgroundColor: Colors.red,
+                          FlatButton(
                             onPressed: () async {
                               await _deleteHome(home);
                             },

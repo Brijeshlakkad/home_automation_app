@@ -4,6 +4,7 @@ import 'dart:io' as io;
 import 'package:path/path.dart';
 import 'package:home_automation/models/user.dart';
 import 'package:home_automation/models/home_data.dart';
+import 'package:home_automation/models/room_data.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -34,6 +35,8 @@ class DatabaseHelper {
         "CREATE TABLE User(id INTEGER PRIMARY KEY, email TEXT, password TEXT)");
     await db.execute(
         "CREATE TABLE Home(id INTEGER PRIMARY KEY, email TEXT, homeName TEXT)");
+    await db.execute(
+        "CREATE TABLE Room(id INTEGER PRIMARY KEY, email TEXT, homeID TEXT, roomName TEXT)");
     print("Created tables");
   }
 
@@ -79,7 +82,8 @@ class DatabaseHelper {
 
   Future<int> deleteHome(Home home) async {
     var dbClient = await db;
-    int res = await dbClient.rawDelete('DELETE FROM Home WHERE email = ? and homeName = ?', [home.email,home.homeName]);
+    await deleteAllRoomWith(home);
+    int res = await dbClient.rawDelete('DELETE FROM Home WHERE homeName = ? and email = ?', [home.homeName,home.email]);
     return res;
   }
 
@@ -104,6 +108,52 @@ class DatabaseHelper {
   Future<int> renameHome(Home home) async {
     var dbClient = await db;
     var res = await dbClient.rawUpdate("UPDATE Home SET homeName = ? WHERE id = ?",[home.homeName,home.id]);
+    if (res > 0) {
+      return res;
+    } else {
+      return 0;
+    }
+  }
+
+  Future<int> saveRoom(Room room) async {
+    var dbClient = await db;
+    int res = await dbClient.insert("Room", room.toMap());
+    return res;
+  }
+
+  Future<int> deleteRoom(Room room) async {
+    var dbClient = await db;
+    int res = await dbClient.rawDelete('DELETE FROM Room WHERE roomName = ? and homeID = ? and email = ?', [room.roomName,room.homeID,room.email]);
+    return res;
+  }
+
+  Future<int> deleteAllRoomWith(Home home) async {
+    var dbClient = await db;
+    int res = await dbClient.rawDelete('DELETE FROM Room WHERE homeID = ? and email = ?', [home.id,home.email]);
+    return res;
+  }
+
+  Future<String> getRoom() async {
+    var dbClient = await db;
+    var res = await dbClient.rawQuery("SELECT * FROM Room");
+    if (res.length > 0) {
+      return res.first['roomName'].toString();
+    } else {
+      return null;
+    }
+  }
+  Future<List<Map>> getAllRoom() async {
+    var dbClient = await db;
+    var res = await dbClient.rawQuery("SELECT * FROM Room");
+    if (res.length > 0) {
+      return res.toList();
+    } else {
+      return null;
+    }
+  }
+  Future<int> renameRoom(Room room) async {
+    var dbClient = await db;
+    var res = await dbClient.rawUpdate("UPDATE Room SET roomName = ? WHERE id = ?",[room.roomName,room.id]);
     if (res > 0) {
       return res;
     } else {
