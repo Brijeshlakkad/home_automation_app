@@ -3,6 +3,7 @@ import 'package:home_automation/data/database_helper.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/home_object.dart';
+import 'package:home_automation/logout.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -100,12 +101,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
 
   @override
   Widget build(BuildContext context) {
-    void getLogOut() async {
-      var db = new DatabaseHelper();
-      await db.deleteUsers();
-      print("logout");
-      Navigator.of(context).pushNamed('/login');
-    }
+
 
     _createHome(String homeName) async {
       await _presenter.doCreateHome(homeName);
@@ -388,10 +384,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
         leading: Container(),
         title: new Text("Home Automation"),
         actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.clear),
-            onPressed: getLogOut,
-          ),
+          GetLogOut(),
         ],
       ),
       body: _isLoading

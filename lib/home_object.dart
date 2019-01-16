@@ -4,6 +4,7 @@ import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/models/room_data.dart';
 import 'package:home_automation/show_progress.dart';
+import 'package:home_automation/logout.dart';
 
 class HomeObject extends StatefulWidget {
   final Home home;
@@ -115,13 +116,6 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
 
   @override
   Widget build(BuildContext context) {
-    void getLogOut() async {
-      var db = new DatabaseHelper();
-      await db.deleteUsers();
-      print("logout");
-      Navigator.of(context).pushNamed('/login');
-    }
-
     _createRoom(String roomName, Home home) async {
       await _presenter.doCreateRoom(roomName, home);
       _roomNameController.clear();
@@ -396,10 +390,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
       appBar: new AppBar(
         title: new Text("Home: ${widget.home.homeName}"),
         actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.clear),
-            onPressed: getLogOut,
-          ),
+          GetLogOut(),
         ],
       ),
       body: _isLoading
