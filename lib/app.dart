@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:home_automation/home.dart';
-import 'colors.dart';
-import 'login.dart';
+import 'package:home_automation/colors.dart';
+import 'package:home_automation/login.dart';
+import 'package:home_automation/signup.dart';
 class HomeAutomation extends StatefulWidget{
   HomeAutomationState createState() => HomeAutomationState();
 }
@@ -16,6 +17,7 @@ class HomeAutomationState extends State<HomeAutomation>{
         '/': (context) => LoginScreen(),
         '/login': (context) => LoginScreen(),
         '/home': (context) => HomeScreen(),
+        '/signup': (context) => SignupScreen(),
       },
     );
   }

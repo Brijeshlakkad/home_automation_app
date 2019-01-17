@@ -4,6 +4,7 @@ import 'package:home_automation/auth.dart';
 import 'package:home_automation/models/user.dart';
 import 'login_screen_presenter.dart';
 import 'dart:ui';
+import 'package:home_automation/colors.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -22,7 +23,7 @@ class LoginScreenState extends State<LoginScreen>
   String _password, _email;
   bool _autoValidate = false;
   LoginScreenPresenter _presenter;
-
+  bool _showError = false;
   LoginScreenState() {
     _presenter = new LoginScreenPresenter(this);
     var authStateProvider = new AuthStateProvider();
@@ -31,7 +32,7 @@ class LoginScreenState extends State<LoginScreen>
 
   void _submit() async {
     final form = formKey.currentState;
-
+    setState(() => _showError = false);
     if (form.validate()) {
       setState(() => _isLoading = true);
       form.save();
@@ -65,6 +66,13 @@ class LoginScreenState extends State<LoginScreen>
         return null;
     }
 
+    String validatePassword(String value) {
+      if (value.isEmpty)
+        return 'Please enter password';
+      else
+        return null;
+    }
+
     void _toggle() {
       setState(() {
         _obscureText = !_obscureText;
@@ -90,7 +98,7 @@ class LoginScreenState extends State<LoginScreen>
           textScaleFactor: 2.0,
         ),
         SizedBox(
-          height: 21.0,
+          height: 41.0,
         ),
         new Form(
           autovalidate: _autoValidate,
@@ -113,6 +121,7 @@ class LoginScreenState extends State<LoginScreen>
                     Expanded(
                       child: new TextFormField(
                         onSaved: (val) => _password = val,
+                        validator: validatePassword,
                         decoration: new InputDecoration(
                           labelText: "Password",
                           suffixIcon: IconButton(
@@ -135,7 +144,35 @@ class LoginScreenState extends State<LoginScreen>
             ],
           ),
         ),
-        _isLoading ? new CircularProgressIndicator() : loginBtn
+        Padding(
+          padding: EdgeInsets.only(top: 30.0, bottom: 10.0),
+          child: _showError
+              ? Container(
+                  child: Text(
+                    "Email id or Password is wrong",
+                    style: TextStyle(
+                      color: Colors.red,
+                    ),
+                  ),
+                )
+              : Container(),
+        ),
+        _isLoading ? new CircularProgressIndicator() : loginBtn,
+        Padding(
+          padding: EdgeInsets.only(top: 10.0),
+          child: FlatButton(
+            onPressed: (){
+              Navigator.of(context).pushNamed('/signup');
+            },
+            child: Text(
+              'or register here',
+              textScaleFactor: 1,
+              style: TextStyle(
+                color: kHAutoBlue50,
+              ),
+            ),
+          ),
+        )
       ],
       crossAxisAlignment: CrossAxisAlignment.center,
     );
@@ -147,7 +184,7 @@ class LoginScreenState extends State<LoginScreen>
         child: new Center(
           child: new Container(
             child: loginForm,
-            height: 300.0,
+            height: 400.0,
             width: 300.0,
           ),
         ),
@@ -159,7 +196,10 @@ class LoginScreenState extends State<LoginScreen>
   void onLoginError(String errorTxt) {
     print("x");
     _showSnackBar(errorTxt);
-    setState(() => _isLoading = false);
+    setState(() {
+      _isLoading = false;
+      _showError = true;
+    });
   }
 
   @override
