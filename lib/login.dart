@@ -15,7 +15,7 @@ class LoginScreen extends StatefulWidget {
 class LoginScreenState extends State<LoginScreen>
     implements LoginScreenContract, AuthStateListener {
   BuildContext _ctx;
-
+  bool _obscureText = true;
   bool _isLoading = false;
   final formKey = new GlobalKey<FormState>();
   final scaffoldKey = new GlobalKey<ScaffoldState>();
@@ -29,14 +29,14 @@ class LoginScreenState extends State<LoginScreen>
     authStateProvider.subscribe(this);
   }
 
-  void _submit() async{
+  void _submit() async {
     final form = formKey.currentState;
 
     if (form.validate()) {
       setState(() => _isLoading = true);
       form.save();
       await _presenter.doLogin(_email, _password);
-    }else {
+    } else {
       setState(() {
         _autoValidate = true;
       });
@@ -64,6 +64,13 @@ class LoginScreenState extends State<LoginScreen>
       else
         return null;
     }
+
+    void _toggle() {
+      setState(() {
+        _obscureText = !_obscureText;
+      });
+    }
+
     _ctx = context;
     var loginBtn = new Container(
       padding: EdgeInsets.only(top: 16.0),
@@ -101,9 +108,28 @@ class LoginScreenState extends State<LoginScreen>
               ),
               new Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: new TextFormField(
-                  onSaved: (val) => _password = val,
-                  decoration: new InputDecoration(labelText: "Password"),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: new TextFormField(
+                        onSaved: (val) => _password = val,
+                        decoration: new InputDecoration(
+                          labelText: "Password",
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              // Based on passwordVisible state choose the icon
+                              _obscureText
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: Theme.of(context).primaryColorDark,
+                            ),
+                            onPressed: _toggle,
+                          ),
+                        ),
+                        obscureText: _obscureText,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
