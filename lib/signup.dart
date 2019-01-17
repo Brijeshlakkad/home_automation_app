@@ -1,7 +1,7 @@
 import "package:flutter/material.dart";
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/show_progress.dart';
-
+import 'package:home_automation/signup_screen_presenter.dart';
 class SignupScreen extends StatefulWidget {
   @override
   SignupScreenState createState() {
@@ -9,24 +9,48 @@ class SignupScreen extends StatefulWidget {
   }
 }
 
-class SignupScreenState extends State<SignupScreen> {
+class SignupScreenState extends State<SignupScreen> implements SignupScreenContract{
+  var scaffoldKey = new GlobalKey<ScaffoldState>();
   var formKey = new GlobalKey<FormState>();
   bool _isLoading = false;
   bool _autoValidate = false;
   String _passwordValidText =
       "Password should contain at least one small and large alpha characters";
   String _name, _email, _password, _address, _city, _contact;
+  SignupScreenPresenter _presenter;
+  SignupScreenState(){
+    _presenter = new SignupScreenPresenter(this);
+  }
   void _submit() async {
     final form = formKey.currentState;
     if (form.validate()) {
       setState(() => _isLoading = true);
       form.save();
-      //await _presenter.doLogin(_email, _password);
+      await _presenter.doSignup(_name, _email, _password, _address, _city, _contact);
     } else {
       setState(() {
         _autoValidate = true;
       });
     }
+  }
+  @override
+  void onSignupSuccess() async {
+    _showSnackBar("Created");
+    setState(() => _isLoading = false);
+    Navigator.of(context).pushNamed('/login');
+  }
+  @override
+  void onSignupError(String errorTxt) {
+    print("x");
+    _showSnackBar(errorTxt);
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  void _showSnackBar(String text) {
+    scaffoldKey.currentState
+        .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
   @override
@@ -144,6 +168,7 @@ class SignupScreenState extends State<SignupScreen> {
                     _password = val;
                   },
                   validator: passwordValidator,
+                  obscureText: true,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     suffixIcon: Tooltip(
@@ -212,6 +237,7 @@ class SignupScreenState extends State<SignupScreen> {
     );
 
     return Scaffold(
+      key: scaffoldKey,
       appBar: AppBar(
         title: Text("Home Autmation"),
       ),

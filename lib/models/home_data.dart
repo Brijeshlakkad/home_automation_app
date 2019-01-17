@@ -42,7 +42,7 @@ class SendHomeData {
       "action": "0"
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new Exception(res["errorMessage"]);
       int total=int.parse(res['total'].toString());
       List<Home> homeList= new List<Home>();
       for(int i=0;i<total;i++){
@@ -60,7 +60,7 @@ class SendHomeData {
       "action": "1"
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new Exception(res["errorMessage"]);
       return new Home.map(res['user']);
     });
   }

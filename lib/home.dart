@@ -29,8 +29,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     _homeNameController = new TextEditingController();
     _homeReNameController = new TextEditingController();
     getHomeList();
-    setState(() => _isLoading = true);
-    _presenter.doGetAllHome();
+    refreshIndicatorKey.currentState?.show();
     super.initState();
   }
 
@@ -44,7 +43,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.saveHome(home);
-    refreshIndicatorKey.currentState.show();
+    refreshIndicatorKey.currentState?.show();
   }
 
   @override
@@ -62,7 +61,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteHome(home);
-    refreshIndicatorKey.currentState.show();
+    refreshIndicatorKey.currentState?.show();
   }
 
   void onSuccessRename(Home home) async {
@@ -70,7 +69,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.renameHome(home);
-    refreshIndicatorKey.currentState.show();
+    refreshIndicatorKey.currentState?.show();
   }
 
   @override

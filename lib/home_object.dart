@@ -50,8 +50,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     _roomNameController = new TextEditingController();
     _roomReNameController = new TextEditingController();
     getRoomList();
-    setState(() => _isLoading = true);
-    _presenter.doGetAllRoom(widget.home);
+    refreshIndicatorKey.currentState?.show();
     super.initState();
   }
 
@@ -77,7 +76,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.saveRoom(room);
-    refreshIndicatorKey.currentState.show();
+    refreshIndicatorKey.currentState?.show();
   }
 
   @override
@@ -96,7 +95,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteRoom(room);
-    refreshIndicatorKey.currentState.show();
+    refreshIndicatorKey.currentState?.show();
   }
 
   void onSuccessRename(Room room) async {
@@ -104,7 +103,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.renameRoom(room);
-    refreshIndicatorKey.currentState.show();
+    refreshIndicatorKey.currentState?.show();
   }
 
   @override

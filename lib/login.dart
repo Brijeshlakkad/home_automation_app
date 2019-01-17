@@ -91,11 +91,13 @@ class LoginScreenState extends State<LoginScreen>
         child: new Text("LOGIN"),
       ),
     );
-    var loginForm = new Column(
+    var loginForm = new ListView(
       children: <Widget>[
-        new Text(
-          "Home Automation",
-          textScaleFactor: 2.0,
+        new Center(
+          child: Text(
+            "Home Automation",
+            textScaleFactor: 2.0,
+          ),
         ),
         SizedBox(
           height: 41.0,
@@ -157,7 +159,9 @@ class LoginScreenState extends State<LoginScreen>
                 )
               : Container(),
         ),
-        _isLoading ? new CircularProgressIndicator() : loginBtn,
+        Center(
+          child: _isLoading ? new CircularProgressIndicator() : loginBtn,
+        ),
         Padding(
           padding: EdgeInsets.only(top: 10.0),
           child: FlatButton(
@@ -165,7 +169,7 @@ class LoginScreenState extends State<LoginScreen>
               Navigator.of(context).pushNamed('/signup');
             },
             child: Text(
-              'or register here',
+              'Register?',
               textScaleFactor: 1,
               style: TextStyle(
                 color: kHAutoBlue50,
@@ -174,21 +178,17 @@ class LoginScreenState extends State<LoginScreen>
           ),
         )
       ],
-      crossAxisAlignment: CrossAxisAlignment.center,
     );
 
     return new Scaffold(
       appBar: null,
       key: scaffoldKey,
-      body: new Container(
-        child: new Center(
-          child: new Container(
-            child: loginForm,
-            height: 400.0,
-            width: 300.0,
-          ),
+      body: new Center(
+        child: Container(
+          padding: EdgeInsets.all(30.0),
+          child: loginForm,
         ),
-      ),
+      )
     );
   }
 
