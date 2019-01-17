@@ -5,6 +5,7 @@ import 'package:path/path.dart';
 import 'package:home_automation/models/user.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/models/room_data.dart';
+import 'package:home_automation/models/hardware_data.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -37,6 +38,8 @@ class DatabaseHelper {
         "CREATE TABLE Home(id INTEGER PRIMARY KEY, email TEXT, homeName TEXT)");
     await db.execute(
         "CREATE TABLE Room(id INTEGER PRIMARY KEY, email TEXT, homeID INTEGER, roomName TEXT)");
+    await db.execute(
+        "CREATE TABLE Hardware(id INTEGER PRIMARY KEY, email TEXT, homeID INTEGER, roomID INTEGER, hwName TEXT, hwSeries Text, hwIP Text)");
     print("Created tables");
   }
 
@@ -152,6 +155,7 @@ class DatabaseHelper {
   }
 
   Future<int> deleteRoom(Room room) async {
+    await deleteAllHardwareWithRoom(room);
     var dbClient = await db;
     int res = await dbClient.rawDelete(
         'DELETE FROM Room WHERE roomName = ? and homeID = ? and email = ?',
@@ -160,6 +164,7 @@ class DatabaseHelper {
   }
 
   Future<int> deleteAllRoomWith(Home home) async {
+    await deleteAllHardwareWithHome(home);
     var dbClient = await db;
     int res = await dbClient.rawDelete(
         'DELETE FROM Room WHERE homeID = ? and email = ?',
@@ -195,6 +200,81 @@ class DatabaseHelper {
     var dbClient = await db;
     var res = await dbClient.rawUpdate(
         "UPDATE Room SET roomName = ? WHERE id = ?", [room.roomName, room.id]);
+    if (res > 0) {
+      return res;
+    } else {
+      return 0;
+    }
+  }
+  Future<int> saveHardware(Hardware hw) async {
+    var dbClient = await db;
+    int res = await dbClient.insert("Hardware", hw.toMap());
+    return res;
+  }
+
+  Future<int> saveAllHardware(List<Hardware> hwList) async {
+    var dbClient = await db;
+    int result = await dbClient.rawDelete('DELETE FROM Hardware');
+    int res=0;
+    for(int i=0;i<hwList.length;i++){
+      result = await dbClient.insert("Hardware", hwList[i].toMap());
+      res+=result;
+    }
+    return res;
+  }
+
+  Future<int> deleteHardware(Hardware hw) async {
+    var dbClient = await db;
+    int res = await dbClient.rawDelete(
+        'DELETE FROM Hardware WHERE hwName = ? and roomID = ? and homeID = ? and email = ?',
+        [hw.hwName, hw.roomID, hw.homeID, hw.email]);
+    return res;
+  }
+
+  Future<int> deleteAllHardwareWithRoom(Room room) async {
+    var dbClient = await db;
+    int res = await dbClient.rawDelete(
+        'DELETE FROM Hardware WHERE roomID = ? and email = ?',
+        [room.id, room.email]);
+    return res;
+  }
+
+  Future<int> deleteAllHardwareWithHome(Home home) async {
+    var dbClient = await db;
+    int res = await dbClient.rawDelete(
+        'DELETE FROM Hardware WHERE homeID = ? and email = ?',
+        [home.id, home.email]);
+    return res;
+  }
+
+  Future<String> getHardware() async {
+    var dbClient = await db;
+    var res = await dbClient.rawQuery("SELECT * FROM Hardware");
+    if (res.length > 0) {
+      return res.first['hwName'].toString();
+    } else {
+      return null;
+    }
+  }
+
+  Future<List<Hardware>> getAllHardware() async {
+    var dbClient = await db;
+    var res = await dbClient.rawQuery("SELECT * FROM Hardware");
+    if (res.length > 0) {
+      List<Hardware> list = new List<Hardware>();
+      for (int i = 0; i < res.length; i++) {
+        list.add(Hardware.map(res[i]));
+      }
+      return list;
+    } else {
+      return null;
+    }
+  }
+
+  Future<int> renameHardware(Hardware hw) async {
+    var dbClient = await db;
+    var res = await dbClient.rawUpdate(
+        "UPDATE Hardware SET hwName = ? WHERE id = ?", [hw.hwName, hw.id]);
     if (res > 0) {
       return res;
     } else {

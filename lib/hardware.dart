@@ -2,73 +2,99 @@ import 'package:flutter/material.dart';
 import 'package:home_automation/data/database_helper.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
-import 'package:home_automation/home_object.dart';
+import 'package:home_automation/models/room_data.dart';
+import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/logout.dart';
+import 'package:home_automation/models/hardware_data.dart';
 
-class HomeScreen extends StatefulWidget {
+class HardwareScreen extends StatefulWidget {
+  final Home home;
+  final Room room;
+  const HardwareScreen({this.home, this.room});
   @override
-  HomeScreenState createState() {
-    return new HomeScreenState();
+  HardwareScreenState createState() {
+    return new HardwareScreenState();
   }
 }
 
-class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
-  final scaffoldKey = new GlobalKey<ScaffoldState>();
+class HardwareScreenState extends State<HardwareScreen>
+    implements HardwareScreenContract {
+  final showHwscaffoldKey = new GlobalKey<ScaffoldState>();
   bool _isLoading = false;
   var refreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
-  List<Home> homeList = new List<Home>();
-  var db = new DatabaseHelper();
-  TextEditingController _homeNameController, _homeReNameController;
+  List<Hardware> hwList = new List<Hardware>();
+  TextEditingController _hwNameController, _hwReNameController;
+  TextEditingController _hwSeriesController, _hwReSeriesController;
+  TextEditingController _hwIPController, _hwReIPController;
   void _showSnackBar(String text) {
-    scaffoldKey.currentState
+    showHwscaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
   @override
   void initState() {
-    _homeNameController = new TextEditingController();
-    _homeReNameController = new TextEditingController();
-    getHomeList();
+    _hwNameController = new TextEditingController();
+    _hwReNameController = new TextEditingController();
+    _hwSeriesController = new TextEditingController();
+    _hwReSeriesController = new TextEditingController();
+    _hwIPController = new TextEditingController();
+    _hwReIPController = new TextEditingController();
+    getHardwareList();
+    _presenter.doGetAllHardware(widget.room);
     refreshIndicatorKey.currentState?.show();
     super.initState();
   }
 
-  HomeScreenPresenter _presenter;
-  HomeScreenState() {
-    _presenter = new HomeScreenPresenter(this);
-  }
-  @override
-  void onSuccess(Home home) async {
-    _showSnackBar("Created ${home.toString()} home");
-    setState(() => _isLoading = false);
-    var db = new DatabaseHelper();
-    await db.saveHome(home);
-    refreshIndicatorKey.currentState?.show();
-  }
+  var db = new DatabaseHelper();
 
-  @override
-  void onSuccessGetAllHome(List<Home> homeList) async {
-    if(homeList!=null){
-      _showSnackBar("Got ${homeList.length}");
-      setState(() => _isLoading = false);
-      var db = new DatabaseHelper();
-      await db.saveAllHome(homeList);
+  Future getHardwareList() async {
+    refreshIndicatorKey.currentState?.show();
+    hwList = await _presenter.api.getAllHardware(widget.room);
+    if (hwList != null) {
+      setState(() {
+        hwList = hwList.toList();
+      });
     }
   }
 
-  void onSuccessDelete(Home home) async {
-    _showSnackBar(home.toString());
+  HardwareScreenPresenter _presenter;
+  HardwareScreenState() {
+    _presenter = new HardwareScreenPresenter(this);
+  }
+  @override
+  void onSuccess(Hardware hw) async {
+    _showSnackBar("Created ${hw.toString()} hardware");
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
-    await db.deleteHome(home);
+    await db.saveHardware(hw);
     refreshIndicatorKey.currentState?.show();
   }
 
-  void onSuccessRename(Home home) async {
-    _showSnackBar(home.toString());
+  @override
+  void onSuccessGetAllHardware(List<Hardware> hwList) async {
+    if (hwList != null) {
+      _showSnackBar("Got ${hwList.length}");
+      setState(() => _isLoading = false);
+      var db = new DatabaseHelper();
+      await db.saveAllHardware(hwList);
+    }
+  }
+
+  @override
+  void onSuccessDelete(Hardware hw) async {
+    _showSnackBar(hw.toString());
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
-    await db.renameHome(home);
+    await db.deleteHardware(hw);
+    refreshIndicatorKey.currentState?.show();
+  }
+
+  @override
+  void onSuccessRename(Hardware hw) async {
+    _showSnackBar(hw.toString());
+    setState(() => _isLoading = false);
+    var db = new DatabaseHelper();
+    await db.renameHardware(hw);
     refreshIndicatorKey.currentState?.show();
   }
 
@@ -79,71 +105,56 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     setState(() => _isLoading = false);
   }
 
-  Widget showProgress() {
-    return Container(
-      child: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-  }
-
-
-  Future getHomeList() async {
-    refreshIndicatorKey.currentState?.show();
-    homeList = await _presenter.api.getAllHome();
-    if (homeList != null) {
-      setState(() {
-        homeList = homeList.toList();
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-
-
-    _createHome(String homeName) async {
-      await _presenter.doCreateHome(homeName);
-      _homeNameController.clear();
+    _createHardware(
+        String hwName, String hwSeries, String hwIP, Room room) async {
+      await _presenter.doCreateHardware(hwName, hwSeries, hwIP, room);
+      _hwNameController.clear();
+      _hwSeriesController.clear();
+      _hwIPController.clear();
     }
 
-    _renameHome(Home home, String homeName) async {
-      await _presenter.doRenameHome(home, homeName);
-      _homeReNameController.clear();
+    _renameHardware(
+        Hardware hw, String hwName, String hwSeries, String hwIP) async {
+      await _presenter.doRenameHardware(hw, hwName, hwSeries, hwIP);
+      _hwReNameController.clear();
+      _hwReSeriesController.clear();
+      _hwReIPController.clear();
     }
 
-    Future<List> getListOfHomeName() async {
+    Future<List> getListOfHardwareName() async {
       var db = new DatabaseHelper();
-      List<Home> list = await db.getAllHome();
+      List<Hardware> list = await db.getAllHardware();
       if (list != null) {
-        List homeNameList = new List();
+        List hwNameList = new List();
         for (int i = 0; i < list.length; i++) {
-          homeNameList.add(list[i].homeName);
+          hwNameList.add(list[i].hwName);
         }
-        return homeNameList;
+        return hwNameList;
       }
       return null;
     }
 
-    existHomeName(String homeName) async {
-      List list = await getListOfHomeName();
+    existHardwareName(String hwName) async {
+      List list = await getListOfHardwareName();
       if (list == null) {
         return false;
       }
       for (int i = 0; i < list.length; i++) {
-        if (homeName == list[i]) return true;
+        if (hwName == list[i]) return true;
       }
       return false;
     }
 
-    validateHomeName(String homeName) async {
+    validateHardwareName(String hwName) async {
       Map validate = new Map();
       validate['error'] = true;
       validate['errorMessege'] = null;
-      if (homeName.isEmpty) {
-        validate['errorMessege'] = 'Please enter home name';
-      } else if (await existHomeName(homeName)) {
-        validate['errorMessege'] = 'Home exists';
+      if (hwName.isEmpty) {
+        validate['errorMessege'] = 'Please enter hardware name';
+      } else if (await existHardwareName(hwName)) {
+        validate['errorMessege'] = 'Hardware already exists';
       } else {
         validate['error'] = false;
         validate['errorMessege'] = null;
@@ -151,24 +162,43 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       return validate;
     }
 
-    _showHomeNameDialog() async {
-      _homeNameController.clear();
-      await showDialog<String>(
+    _showHardwareNameDialog() async {
+      _hwNameController.clear();
+      await showDialog<Null>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
               contentPadding: const EdgeInsets.all(16.0),
-              content: new Row(
-                children: <Widget>[
-                  new Expanded(
-                    child: new TextField(
-                      controller: _homeNameController,
+              content: Container(
+                width: double.maxFinite,
+                child: new ListView(
+                  children: <Widget>[
+                    new Container(
+                      child: Center(
+                        child: Text("Hardware details"),
+                      ),
+                      padding: EdgeInsets.only(bottom: 20.0),
+                    ),
+                    new TextField(
+                      controller: _hwNameController,
                       autofocus: true,
                       decoration: new InputDecoration(
-                        labelText: 'Home',
+                        labelText: 'Hardware Name',
                       ),
                     ),
-                  )
-                ],
+                    new TextField(
+                      controller: _hwSeriesController,
+                      decoration: new InputDecoration(
+                        labelText: 'Hardware Series',
+                      ),
+                    ),
+                    new TextField(
+                      controller: _hwIPController,
+                      decoration: new InputDecoration(
+                        labelText: 'Hardware IP',
+                      ),
+                    ),
+                  ],
+                ),
               ),
               actions: <Widget>[
                 new FlatButton(
@@ -181,40 +211,64 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                     onPressed: () async {
                       Navigator.pop(context);
                       var res =
-                          await validateHomeName(_homeNameController.text);
+                          await validateHardwareName(_hwNameController.text);
                       if (res['error']) {
                         _showSnackBar("${res['errorMessege']}");
                       } else {
                         setState(() {
                           _isLoading = true;
                         });
-                        _createHome(_homeNameController.text);
+                        _createHardware(
+                            _hwNameController.text,
+                            _hwSeriesController.text,
+                            _hwIPController.text,
+                            widget.room);
                       }
-                      _homeNameController.clear();
                     })
               ],
             ),
       );
     }
 
-    _showHomeReNameDialog(Home home) async {
-      _homeReNameController.text = home.homeName;
+    _showHardwareReNameDialog(Hardware hw) async {
+      _hwReNameController.text = hw.hwName;
+      _hwReSeriesController.text = hw.hwSeries;
+      _hwReIPController.text = hw.hwIP;
       await showDialog<String>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
               contentPadding: const EdgeInsets.all(16.0),
-              content: new Row(
-                children: <Widget>[
-                  new Expanded(
-                    child: new TextField(
-                      controller: _homeReNameController,
+              content: Container(
+                width: double.maxFinite,
+                child: new ListView(
+                  children: <Widget>[
+                    new Container(
+                      child: Center(
+                        child: Text("Hardware details"),
+                      ),
+                      padding: EdgeInsets.only(bottom: 20.0),
+                    ),
+                    new TextField(
+                      controller: _hwReNameController,
                       autofocus: true,
                       decoration: new InputDecoration(
-                        labelText: 'Home',
+                        labelText: 'Hardware Name',
                       ),
                     ),
-                  )
-                ],
+                    new TextField(
+                      controller: _hwReSeriesController,
+                      decoration: new InputDecoration(
+                        labelText: 'Hardware Series',
+                      ),
+                    ),
+                    new TextField(
+                      controller: _hwReIPController,
+                      decoration: new InputDecoration(
+                        labelText: 'Hardware IP',
+                      ),
+                    ),
+                  ],
+                ),
               ),
               actions: <Widget>[
                 new FlatButton(
@@ -223,18 +277,19 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                       Navigator.pop(context);
                     }),
                 new FlatButton(
-                    child: const Text('RENAME'),
+                    child: const Text('MODIFY'),
                     onPressed: () async {
                       Navigator.pop(context);
                       var res =
-                          await validateHomeName(_homeReNameController.text);
+                          await validateHardwareName(_hwReNameController.text);
                       if (res['error']) {
                         _showSnackBar("${res['errorMessege']}");
                       } else {
                         setState(() {
                           _isLoading = true;
                         });
-                        _renameHome(home, _homeReNameController.text);
+                        _renameHardware(hw, _hwReNameController.text,
+                            _hwReSeriesController.text, _hwReIPController.text);
                       }
                     })
               ],
@@ -270,20 +325,20 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       );
     }
 
-    _deleteHome(Home home) async {
+    _deleteHardware(Hardware hw) async {
       await _showConfirmDialog();
       if (status) {
         setState(() {
           _isLoading = true;
         });
-        await _presenter.doDeleteHome(home);
+        await _presenter.doDeleteHardware(hw);
       }
     }
 
-    Widget createListView(BuildContext context, List<Home> homeList) {
+    Widget createListView(BuildContext context, List<Hardware> hwList) {
       var len = 0;
-      if (homeList != null) {
-        len = homeList.length;
+      if (hwList != null) {
+        len = hwList.length;
       }
       return new GridView.count(
         crossAxisCount: 2,
@@ -298,7 +353,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                 shape: new RoundedRectangleBorder(
                     borderRadius: new BorderRadius.circular(30.0)),
                 onPressed: () async {
-                  await _showHomeNameDialog();
+                  await _showHardwareNameDialog();
                 },
                 color: kHAutoBlue300,
                 child: Column(
@@ -306,7 +361,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     Icon(Icons.add),
-                    Text('Add Home'),
+                    Text('Add Hardware'),
                   ],
                 ),
               ),
@@ -314,13 +369,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
           }
           return Center(
             child: InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => HomeObject(home: homeList[index])),
-                );
-              },
+              onTap: () {},
               splashColor: kHAutoBlue300,
               child: Card(
                 child: Container(
@@ -330,7 +379,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                     children: <Widget>[
                       Expanded(
                         child: Text(
-                          '${homeList[index].homeName}',
+                          '${hwList[index].hwName}',
                           textAlign: TextAlign.left,
                           style: Theme.of(context).textTheme.headline,
                         ),
@@ -342,7 +391,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                         children: <Widget>[
                           FlatButton(
                             onPressed: () async {
-                              await _showHomeReNameDialog(homeList[index]);
+                              await _showHardwareReNameDialog(hwList[index]);
                             },
                             child: Icon(Icons.edit),
                           ),
@@ -351,7 +400,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                           ),
                           FlatButton(
                             onPressed: () async {
-                              await _deleteHome(homeList[index]);
+                              await _deleteHardware(hwList[index]);
                             },
                             child: Icon(Icons.delete),
                           ),
@@ -367,21 +416,20 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       );
     }
 
-    return new Scaffold(
-      key: scaffoldKey,
-      appBar: new AppBar(
-        leading: Container(),
-        title: new Text("Home Automation"),
+    return Scaffold(
+      key: showHwscaffoldKey,
+      appBar: AppBar(
+        title: Text('Hardware'),
         actions: <Widget>[
           GetLogOut(),
         ],
       ),
       body: _isLoading
-          ? showProgress()
+          ? ShowProgress()
           : RefreshIndicator(
               key: refreshIndicatorKey,
-              child: createListView(context, homeList),
-              onRefresh: getHomeList,
+              child: createListView(context, hwList),
+              onRefresh: getHardwareList,
             ),
     );
   }

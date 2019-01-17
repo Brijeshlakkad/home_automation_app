@@ -117,7 +117,6 @@ class RoomScreenPresenter {
   doDeleteRoom(Room room) async{
     try {
       var r = await api.delete(room);
-      print("1");
       _view.onSuccessDelete(r);
     } on Exception catch (error) {
       _view.onError(error.toString());
@@ -127,7 +126,6 @@ class RoomScreenPresenter {
   doRenameRoom(Room room,String roomName) async{
     try {
       var r = await api.rename(room,roomName);
-      print("3");
       _view.onSuccessRename(r);
     } on Exception catch (error) {
       _view.onError(error.toString());

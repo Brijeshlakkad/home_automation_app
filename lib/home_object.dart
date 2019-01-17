@@ -5,6 +5,7 @@ import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/models/room_data.dart';
 import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/logout.dart';
+import 'package:home_automation/hardware.dart';
 
 class HomeObject extends StatefulWidget {
   final Home home;
@@ -81,7 +82,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
 
   @override
   void onSuccessGetAllRoom(List<Room> roomList) async {
-    if(roomList!=null){
+    if (roomList != null) {
       _showSnackBar("Got ${roomList.length}");
       setState(() => _isLoading = false);
       var db = new DatabaseHelper();
@@ -89,6 +90,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     }
   }
 
+  @override
   void onSuccessDelete(Room room) async {
     print("1");
     _showSnackBar(room.toString());
@@ -98,6 +100,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     refreshIndicatorKey.currentState?.show();
   }
 
+  @override
   void onSuccessRename(Room room) async {
     _showSnackBar(room.toString());
     setState(() => _isLoading = false);
@@ -293,16 +296,6 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
       }
     }
 
-    _renameRoomName(Room room) async {
-      await _showRoomReNameDialog(room);
-      if (status) {
-        setState(() {
-          _isLoading = true;
-        });
-        await _presenter.doRenameRoom(room, _roomReNameController.text);
-      }
-    }
-
     Widget createListView(BuildContext context, List<Room> roomList) {
       var len = 0;
       if (roomList != null) {
@@ -337,7 +330,14 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
           }
           return Center(
             child: InkWell(
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => HardwareScreen(
+                          home: widget.home, room: roomList[index])),
+                );
+              },
               splashColor: kHAutoBlue300,
               child: Card(
                 child: Container(
@@ -359,7 +359,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
                         children: <Widget>[
                           FlatButton(
                             onPressed: () async {
-                              await _renameRoomName(roomList[index]);
+                              await _showRoomReNameDialog(roomList[index]);
                             },
                             child: Icon(Icons.edit),
                           ),
