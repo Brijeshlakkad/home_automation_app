@@ -137,10 +137,10 @@ class HardwareScreenState extends State<HardwareScreen>
       return false;
     }
 
-    hardwareNameValidator(String val) {
+    hardwareNameValidator(String val, String ignoreName) {
       if (val.isEmpty) {
         return 'Please enter hardware name';
-      } else if (existHardwareName(val)) {
+      } else if (existHardwareName(val) && val != ignoreName) {
         return 'Hardware already exists';
       } else {
         return null;
@@ -184,7 +184,8 @@ class HardwareScreenState extends State<HardwareScreen>
                       child: Column(
                         children: <Widget>[
                           new TextFormField(
-                            validator: hardwareNameValidator,
+                            validator: (val) =>
+                                hardwareNameValidator(val, null),
                             onSaved: (val) => _hwName = val,
                             autofocus: true,
                             decoration: new InputDecoration(
@@ -263,7 +264,8 @@ class HardwareScreenState extends State<HardwareScreen>
                       child: Column(
                         children: <Widget>[
                           new TextFormField(
-                            validator: hardwareNameValidator,
+                            validator: (val) =>
+                                hardwareNameValidator(val, hw.hwName),
                             initialValue: hw.hwName,
                             onSaved: (val) => _hwName = val,
                             autofocus: true,
@@ -307,12 +309,18 @@ class HardwareScreenState extends State<HardwareScreen>
                       var form = hwReFormKey.currentState;
                       if (form.validate()) {
                         form.save();
-                        Navigator.pop(context);
-                        setState(() {
-                          _isLoading = true;
-                          _autoValidatehwRe = false;
-                        });
-                        _renameHardware(hw, _hwName, _hwSeries, _hwIP);
+                        if (_hwName != hw.hwName ||
+                            _hwSeries != hw.hwSeries ||
+                            _hwIP != hw.hwIP) {
+                          Navigator.pop(context);
+                          setState(() {
+                            _isLoading = true;
+                            _autoValidatehwRe = false;
+                          });
+                          _renameHardware(hw, _hwName, _hwSeries, _hwIP);
+                        }else{
+                          Navigator.pop(context);
+                        }
                       } else {
                         setState(() {
                           _autoValidatehw = true;

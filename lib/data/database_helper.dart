@@ -296,7 +296,7 @@ class DatabaseHelper {
     int result = await dbClient.rawDelete('DELETE FROM Device');
     int res=0;
     for(int i=0;i<dvList.length;i++){
-      result = await dbClient.insert("Hardware", dvList[i].toMap());
+      result = await dbClient.insert("Device", dvList[i].toMap());
       res+=result;
     }
     return res;
