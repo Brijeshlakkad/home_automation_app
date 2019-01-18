@@ -101,12 +101,12 @@ class DeviceScreenState extends State<DeviceScreen>
 
   @override
   Widget build(BuildContext context) {
-    _createDevice(String dvName, String dvPort, Hardware hw) async {
-      await _presenter.doCreateDevice(dvName, dvPort, hw);
+    _createDevice(String dvName, String dvPort, String dvImg, Hardware hw) async {
+      await _presenter.doCreateDevice(dvName, dvPort, dvImg, hw);
     }
 
-    _renameDevice(Device dv, dvName, dvPort) async {
-      await _presenter.doRenameDevice(dv, dvName, dvPort);
+    _renameDevice(Device dv, String dvName, String dvPort, String dvImg) async {
+      await _presenter.doRenameDevice(dv, dvName, dvPort, dvImg);
     }
 
 
@@ -184,7 +184,7 @@ class DeviceScreenState extends State<DeviceScreen>
                       _isLoading = true;
                     });
                     _createDevice(
-                        result['dvName'], result['dvPort'], widget.hardware);
+                        result['dvName'], result['dvPort'], result['dvImg'], widget.hardware);
                   }
                 },
                 color: kHAutoBlue300,
@@ -241,7 +241,7 @@ class DeviceScreenState extends State<DeviceScreen>
                                 setState(() {
                                   _isLoading = true;
                                 });
-                                _renameDevice(dvList[index], result['dvName'], result['dvPort']);
+                                _renameDevice(dvList[index], result['dvName'], result['dvImg'], result['dvPort']);
                               }
                             },
                             child: Icon(Icons.edit),

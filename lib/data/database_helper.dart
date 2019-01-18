@@ -42,7 +42,7 @@ class DatabaseHelper {
     await db.execute(
         "CREATE TABLE Hardware(id INTEGER PRIMARY KEY, email TEXT, homeID INTEGER, roomID INTEGER, hwName TEXT, hwSeries Text, hwIP Text)");
     await db.execute(
-        "CREATE TABLE Device(id INTEGER PRIMARY KEY, email TEXT, homeID INTEGER, roomID INTEGER, hwID INTEGER, dvName TEXT, dvPort Text)");
+        "CREATE TABLE Device(id INTEGER PRIMARY KEY, email TEXT, homeID INTEGER, roomID INTEGER, hwID INTEGER, dvName TEXT, dvPort Text, dvImg Text, dvStatus INTEGER DEFAULT 0)");
     print("Created tables");
   }
 
@@ -360,7 +360,7 @@ class DatabaseHelper {
   Future<int> renameDevice(Device dv) async {
     var dbClient = await db;
     var res = await dbClient.rawUpdate(
-        "UPDATE Device SET dvName = ?, dvPort = ? WHERE id = ?", [dv.dvName, dv.dvPort, dv.id]);
+        "UPDATE Device SET dvName = ?, dvPort = ?, dvImg = ? WHERE id = ?", [dv.dvName, dv.dvPort, dv.dvImg, dv.id]);
     if (res > 0) {
       return res;
     } else {

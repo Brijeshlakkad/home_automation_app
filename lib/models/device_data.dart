@@ -1,14 +1,16 @@
 import 'package:home_automation/utils/network_util.dart';
 import 'package:home_automation/data/database_helper.dart';
 import 'package:home_automation/models/hardware_data.dart';
+
 class Device {
-  String _dvName, _email, _dvPort;
-  int _id, _homeID, _roomID, _hwID;
-  Device(this._dvName, this._dvPort, this._email, this._roomID,
-      this._homeID, this._hwID, this._id);
+  String _dvName, _email, _dvPort, _dvImg;
+  int _id, _homeID, _roomID, _hwID, _dvStatus;
+  Device(this._dvName, this._dvPort, this._dvImg, this._dvStatus, this._email,
+      this._roomID, this._homeID, this._hwID, this._id);
   Device.map(dynamic obj) {
     this._dvName = obj["dvName"];
     this._dvPort = obj["dvPort"];
+    this._dvImg = obj['dvImg'];
     this._email = obj["email"];
     var id = obj['id'].toString();
     this._id = int.parse(id);
@@ -18,11 +20,15 @@ class Device {
     this._roomID = int.parse(roomID);
     var hwID = obj['hwID'].toString();
     this._hwID = int.parse(hwID);
+    var dvStatus = obj['dvStatus'].toString();
+    this._dvStatus = int.parse(dvStatus);
   }
 
   String get dvName => _dvName;
   String get dvPort => _dvPort;
+  String get dvImg => _dvImg;
   String get email => _email;
+  int get dvStatus => _dvStatus;
   int get id => _id;
   int get homeID => _homeID;
   int get roomID => _roomID;
@@ -31,6 +37,8 @@ class Device {
     var map = new Map<String, dynamic>();
     map["dvName"] = _dvName;
     map["dvPort"] = _dvPort;
+    map["dvImg"] = _dvImg;
+    map["dvStatus"] = _dvStatus;
     map["email"] = _email;
     map['homeID'] = _homeID;
     map['roomID'] = _roomID;
@@ -75,7 +83,7 @@ class SendDeviceData {
   }
 
   Future<Device> create(
-      String dvName, String dvPort, Hardware hw) async {
+      String dvName, String dvPort, String dvImg, Hardware hw) async {
     final user = hw.email;
     final homeID = hw.homeID.toString();
     final roomID = hw.roomID.toString();
@@ -83,7 +91,7 @@ class SendDeviceData {
     return _netUtil.post(finalURL, body: {
       "dvName": dvName,
       "dvPort": dvPort,
-      "dvImg": "fan.jpg",
+      "dvImg": dvImg,
       "email": user,
       "homeID": homeID,
       "roomID": roomID,
@@ -108,13 +116,13 @@ class SendDeviceData {
   }
 
   Future<Device> rename(
-      Device dv, String dvName, String dvPort) async {
+      Device dv, String dvName, String dvImg, String dvPort) async {
     final user = dv.email;
     final id = dv.id.toString();
     return _netUtil.post(finalURL, body: {
       "dvName": dvName,
       "dvPort": dvPort,
-      "dvImg": "fan.jpg",
+      "dvImg": dvImg,
       "email": user,
       "action": "3",
       "id": id
@@ -142,9 +150,9 @@ class DeviceScreenPresenter {
   DeviceScreenPresenter(this._view);
 
   doCreateDevice(
-      String dvName, String dvPort, Hardware hw) async {
+      String dvName, String dvPort, String dvImg, Hardware hw) async {
     try {
-      var dv = await api.create(dvName, dvPort, hw);
+      var dv = await api.create(dvName, dvPort, dvImg, hw);
       _view.onSuccess(dv);
     } on Exception catch (error) {
       _view.onError(error.toString());
@@ -162,10 +170,9 @@ class DeviceScreenPresenter {
     }
   }
 
-  doRenameDevice(
-      Device dv, String dvName, String dvPort) async {
+  doRenameDevice(Device dv, String dvName, String dvPort, String dvImg) async {
     try {
-      var d = await api.rename(dv, dvName, dvPort);
+      var d = await api.rename(dv, dvName, dvPort, dvImg);
       _view.onSuccessRename(d);
     } on Exception catch (error) {
       _view.onError(error.toString());

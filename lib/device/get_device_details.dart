@@ -18,7 +18,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
   bool _autoValidatedv = false;
   Map deviceDetails = new Map();
   List<Device> dvList = new List<Device>();
-  String _dvName, _dvPort = "1";
+  String _dvName, _dvImg, _dvPort = "1";
   List<String> portList = <String>[
     '1',
     '2',
@@ -87,6 +87,13 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                         labelText: 'Device Name',
                       ),
                     ),
+                    new TextFormField(
+                      onSaved: (val) => _dvImg = val,
+                      autofocus: true,
+                      decoration: new InputDecoration(
+                        labelText: 'Choose device',
+                      ),
+                    ),
                     new InputDecorator(
                       decoration: InputDecoration(
                         labelText: 'Device Port',
@@ -114,14 +121,21 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                       child: Row(
                         children: <Widget>[
                           new FlatButton(
-                            child: const Text('CANCEL'),
+                            child: const Text(
+                              'CANCEL',
+                              textScaleFactor: 1.0,
+                            ),
                             onPressed: () {
                               deviceDetails['error'] = true;
                               Navigator.pop(context, deviceDetails);
                             },
                           ),
                           new FlatButton(
-                            child: const Text('OK'),
+                            child: const Text(
+                              'OK',
+                              textScaleFactor: 1.0,
+                              style: TextStyle(color: Colors.blue),
+                            ),
                             onPressed: () {
                               var form = dvFormKey.currentState;
                               if (form.validate()) {
@@ -132,6 +146,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                                 deviceDetails['error'] = false;
                                 deviceDetails['dvName'] = _dvName;
                                 deviceDetails['dvPort'] = _dvPort;
+                                deviceDetails['dvImg'] = _dvImg;
                                 Navigator.pop(context, deviceDetails);
                               } else {
                                 setState(() {
@@ -155,6 +170,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
     Widget modifyDevice() {
       _dvName = widget.dvDetails['dvName'];
       _dvPort = widget.dvDetails['dvPort'];
+      _dvImg = widget.dvDetails['dvImg'];
       return new Center(
         child: Container(
           padding: EdgeInsets.only(top: 40.0),
@@ -168,12 +184,20 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
                     new TextFormField(
-                      validator: (val) => deviceNameValidator(val, null),
+                      validator: (val) => deviceNameValidator(val, _dvName),
                       onSaved: (val) => _dvName = val,
                       autofocus: true,
                       initialValue: _dvName,
                       decoration: new InputDecoration(
                         labelText: 'Device Name',
+                      ),
+                    ),
+                    new TextFormField(
+                      onSaved: (val) => _dvImg = val,
+                      autofocus: true,
+                      initialValue: _dvImg,
+                      decoration: new InputDecoration(
+                        labelText: 'Choose device',
                       ),
                     ),
                     new InputDecorator(
@@ -203,26 +227,35 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                       child: Row(
                         children: <Widget>[
                           new FlatButton(
-                            child: const Text('CANCEL'),
+                            child: const Text(
+                              'CANCEL',
+                              textScaleFactor: 1.0,
+                            ),
                             onPressed: () {
                               deviceDetails['error'] = true;
                               Navigator.pop(context, deviceDetails);
                             },
                           ),
                           new FlatButton(
-                            child: const Text('OK'),
+                            child: const Text(
+                              'OK',
+                              textScaleFactor: 1.0,
+                              style: TextStyle(color: Colors.blue),
+                            ),
                             onPressed: () {
                               var form = dvFormKey.currentState;
                               if (form.validate()) {
                                 form.save();
                                 if (_dvName != widget.dvDetails['dvName'] ||
-                                    _dvPort != widget.dvDetails['dvPort']) {
+                                    _dvPort != widget.dvDetails['dvPort'] ||
+                                    _dvImg != widget.dvDetails['dvImg']) {
                                   setState(() {
                                     _autoValidatedv = false;
                                   });
                                   deviceDetails['error'] = false;
                                   deviceDetails['dvName'] = _dvName;
                                   deviceDetails['dvPort'] = _dvPort;
+                                  deviceDetails['dvImg'] = _dvImg;
                                   Navigator.pop(context, deviceDetails);
                                 } else {
                                   deviceDetails['error'] = true;
