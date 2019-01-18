@@ -27,9 +27,21 @@ class DeviceScreenState extends State<DeviceScreen>
   var dvReFormKey = new GlobalKey<FormState>();
   bool _autoValidatedv = false;
   bool _autoValidatedvRe = false;
+  List<String> portList = <String>[
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    '0'
+  ];
   var dvRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
   List<Device> dvList = new List<Device>();
-  String _dvName, _dvPort;
+  String _dvName, _dvPort = "1";
   void _showSnackBar(String text) {
     showDvScaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
@@ -155,6 +167,7 @@ class DeviceScreenState extends State<DeviceScreen>
     }
 
     _showDeviceDialog() async {
+      _dvPort = portList[0];
       await showDialog<Null>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
@@ -173,6 +186,7 @@ class DeviceScreenState extends State<DeviceScreen>
                       key: dvFormKey,
                       autovalidate: _autoValidatedv,
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: <Widget>[
                           new TextFormField(
                             validator: (val) => deviceNameValidator(val, null),
@@ -182,13 +196,46 @@ class DeviceScreenState extends State<DeviceScreen>
                               labelText: 'Device Name',
                             ),
                           ),
-                          new TextFormField(
-                            onSaved: (val) => _dvPort = val,
-                            autofocus: true,
-                            validator: devicePortValidator,
-                            decoration: new InputDecoration(
-                              labelText: 'Device Port',
-                            ),
+                          new Column(
+                            children: <Widget>[
+                              Container(
+                                width: 300.0,
+                                child: InputDecorator(
+                                  decoration: InputDecoration(
+                                    labelText: 'Device Port',
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: new DropdownButton<String>(
+                                      value: _dvPort,
+                                      items: portList.map((String value) {
+                                        return new DropdownMenuItem<String>(
+                                          value: value,
+                                          child: new Text(value),
+                                        );
+                                      }).toList(),
+                                      onChanged: (String val) {
+                                        _dvPort = val;
+                                        var form = dvFormKey.currentState;
+                                        if (form.validate()) {
+                                          form.save();
+                                          Navigator.pop(context);
+                                          setState(() {
+                                            _isLoading = true;
+                                            _autoValidatedv = false;
+                                          });
+                                          _createDevice(_dvName, _dvPort,
+                                              widget.hardware);
+                                        } else {
+                                          setState(() {
+                                            _autoValidatedv = true;
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -196,36 +243,12 @@ class DeviceScreenState extends State<DeviceScreen>
                   ],
                 ),
               ),
-              actions: <Widget>[
-                new FlatButton(
-                    child: const Text('CANCEL'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    }),
-                new FlatButton(
-                    child: const Text('CREATE'),
-                    onPressed: () async {
-                      var form = dvFormKey.currentState;
-                      if (form.validate()) {
-                        form.save();
-                        Navigator.pop(context);
-                        setState(() {
-                          _isLoading = true;
-                          _autoValidatedv = false;
-                        });
-                        _createDevice(_dvName, _dvPort, widget.hardware);
-                      } else {
-                        setState(() {
-                          _autoValidatedv = true;
-                        });
-                      }
-                    })
-              ],
             ),
       );
     }
 
     _showDeviceReDialog(Device dv) async {
+      _dvPort = dv.dvPort;
       await showDialog<String>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
@@ -255,14 +278,50 @@ class DeviceScreenState extends State<DeviceScreen>
                               labelText: 'Device Name',
                             ),
                           ),
-                          new TextFormField(
-                            validator: devicePortValidator,
-                            onSaved: (val) => _dvPort = val,
-                            autofocus: true,
-                            initialValue: dv.dvPort,
-                            decoration: new InputDecoration(
-                              labelText: 'Device Port',
-                            ),
+                          new Column(
+                            children: <Widget>[
+                              Container(
+                                width: 300.0,
+                                child: InputDecorator(
+                                  decoration: InputDecoration(
+                                    labelText: 'Device Port',
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: new DropdownButton<String>(
+                                      value: _dvPort,
+                                      items: portList.map((String value) {
+                                        return new DropdownMenuItem<String>(
+                                          value: value,
+                                          child: new Text(value),
+                                        );
+                                      }).toList(),
+                                      onChanged: (String val) {
+                                        _dvPort = val;
+                                        var form = dvReFormKey.currentState;
+                                        if (form.validate()) {
+                                          form.save();
+                                          if (_dvName != dv.dvName ||
+                                              _dvPort != dv.dvPort) {
+                                            Navigator.pop(context);
+                                            setState(() {
+                                              _isLoading = true;
+                                              _autoValidatedvRe = false;
+                                            });
+                                            _renameDevice(dv, _dvName, _dvPort);
+                                          } else {
+                                            Navigator.pop(context);
+                                          }
+                                        } else {
+                                          setState(() {
+                                            _autoValidatedv = true;
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -270,35 +329,6 @@ class DeviceScreenState extends State<DeviceScreen>
                   ],
                 ),
               ),
-              actions: <Widget>[
-                new FlatButton(
-                    child: const Text('CANCEL'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    }),
-                new FlatButton(
-                    child: const Text('MODIFY'),
-                    onPressed: () async {
-                      var form = dvReFormKey.currentState;
-                      if (form.validate()) {
-                        form.save();
-                        if (_dvName != dv.dvName || _dvPort != dv.dvPort) {
-                          Navigator.pop(context);
-                          setState(() {
-                            _isLoading = true;
-                            _autoValidatedvRe = false;
-                          });
-                          _renameDevice(dv, _dvName, _dvPort);
-                        } else {
-                          Navigator.pop(context);
-                        }
-                      } else {
-                        setState(() {
-                          _autoValidatedv = true;
-                        });
-                      }
-                    })
-              ],
             ),
       );
     }
