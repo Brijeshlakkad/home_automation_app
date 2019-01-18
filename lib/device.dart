@@ -7,6 +7,7 @@ import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/logout.dart';
 import 'package:home_automation/models/hardware_data.dart';
 import 'package:home_automation/models/device_data.dart';
+
 class DeviceScreen extends StatefulWidget {
   final Home home;
   final Room room;
@@ -64,7 +65,7 @@ class DeviceScreenState extends State<DeviceScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.saveDevice(dv);
-    dvRefreshIndicatorKey.currentState?.show();
+    dvRefreshIndicatorKey.currentState.show();
   }
 
   @override
@@ -83,7 +84,7 @@ class DeviceScreenState extends State<DeviceScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteDevice(dv);
-    dvRefreshIndicatorKey.currentState?.show();
+    dvRefreshIndicatorKey.currentState.show();
   }
 
   @override
@@ -92,7 +93,7 @@ class DeviceScreenState extends State<DeviceScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.renameDevice(dv);
-    dvRefreshIndicatorKey.currentState?.show();
+    dvRefreshIndicatorKey.currentState.show();
   }
 
   @override
@@ -104,13 +105,11 @@ class DeviceScreenState extends State<DeviceScreen>
 
   @override
   Widget build(BuildContext context) {
-    _createDevice(
-        String dvName, String dvPort, Hardware hw) async {
+    _createDevice(String dvName, String dvPort, Hardware hw) async {
       await _presenter.doCreateDevice(dvName, dvPort, hw);
     }
 
-    _renameDevice( Device dv, dvName, dvPort
-       ) async {
+    _renameDevice(Device dv, dvName, dvPort) async {
       await _presenter.doRenameDevice(dv, dvName, dvPort);
     }
 
@@ -137,10 +136,10 @@ class DeviceScreenState extends State<DeviceScreen>
       return false;
     }
 
-    deviceNameValidator(String val) {
+    deviceNameValidator(String val, String ignoreName) {
       if (val.isEmpty) {
         return 'Please enter device name';
-      } else if (existDeviceName(val)) {
+      } else if (existDeviceName(val) && val != ignoreName) {
         return 'Device already exists';
       } else {
         return null;
@@ -159,70 +158,70 @@ class DeviceScreenState extends State<DeviceScreen>
       await showDialog<Null>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
-          contentPadding: const EdgeInsets.all(16.0),
-          content: Container(
-            width: double.maxFinite,
-            child: new ListView(
-              children: <Widget>[
-                new Container(
-                  child: Center(
-                    child: Text("Device details"),
-                  ),
-                  padding: EdgeInsets.only(bottom: 20.0),
-                ),
-                Form(
-                  key: dvFormKey,
-                  autovalidate: _autoValidatedv,
-                  child: Column(
-                    children: <Widget>[
-                      new TextFormField(
-                        validator: deviceNameValidator,
-                        onSaved: (val) => _dvName = val,
-                        autofocus: true,
-                        decoration: new InputDecoration(
-                          labelText: 'Device Name',
-                        ),
+              contentPadding: const EdgeInsets.all(16.0),
+              content: Container(
+                width: double.maxFinite,
+                child: new ListView(
+                  children: <Widget>[
+                    new Container(
+                      child: Center(
+                        child: Text("Device details"),
                       ),
-                      new TextFormField(
-                        onSaved: (val) => _dvPort = val,
-                        autofocus: true,
-                        validator: devicePortValidator,
-                        decoration: new InputDecoration(
-                          labelText: 'Device Port',
-                        ),
+                      padding: EdgeInsets.only(bottom: 20.0),
+                    ),
+                    Form(
+                      key: dvFormKey,
+                      autovalidate: _autoValidatedv,
+                      child: Column(
+                        children: <Widget>[
+                          new TextFormField(
+                            validator: (val) => deviceNameValidator(val, null),
+                            onSaved: (val) => _dvName = val,
+                            autofocus: true,
+                            decoration: new InputDecoration(
+                              labelText: 'Device Name',
+                            ),
+                          ),
+                          new TextFormField(
+                            onSaved: (val) => _dvPort = val,
+                            autofocus: true,
+                            validator: devicePortValidator,
+                            decoration: new InputDecoration(
+                              labelText: 'Device Port',
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+              ),
+              actions: <Widget>[
+                new FlatButton(
+                    child: const Text('CANCEL'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    }),
+                new FlatButton(
+                    child: const Text('CREATE'),
+                    onPressed: () async {
+                      var form = dvFormKey.currentState;
+                      if (form.validate()) {
+                        form.save();
+                        Navigator.pop(context);
+                        setState(() {
+                          _isLoading = true;
+                          _autoValidatedv = false;
+                        });
+                        _createDevice(_dvName, _dvPort, widget.hardware);
+                      } else {
+                        setState(() {
+                          _autoValidatedv = true;
+                        });
+                      }
+                    })
               ],
             ),
-          ),
-          actions: <Widget>[
-            new FlatButton(
-                child: const Text('CANCEL'),
-                onPressed: () {
-                  Navigator.pop(context);
-                }),
-            new FlatButton(
-                child: const Text('CREATE'),
-                onPressed: () async {
-                  var form = dvFormKey.currentState;
-                  if (form.validate()) {
-                    form.save();
-                    Navigator.pop(context);
-                    setState(() {
-                      _isLoading = true;
-                      _autoValidatedv = false;
-                    });
-                    _createDevice(_dvName, _dvPort, widget.hardware);
-                  } else {
-                    setState(() {
-                      _autoValidatedv = true;
-                    });
-                  }
-                })
-          ],
-        ),
       );
     }
 
@@ -230,72 +229,77 @@ class DeviceScreenState extends State<DeviceScreen>
       await showDialog<String>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
-          contentPadding: const EdgeInsets.all(16.0),
-          content: Container(
-            width: double.maxFinite,
-            child: new ListView(
-              children: <Widget>[
-                new Container(
-                  child: Center(
-                    child: Text("Hardware details"),
-                  ),
-                  padding: EdgeInsets.only(bottom: 20.0),
-                ),
-                Form(
-                  key: dvReFormKey,
-                  autovalidate: _autoValidatedvRe,
-                  child: Column(
-                    children: <Widget>[
-                      new TextFormField(
-                        validator: deviceNameValidator,
-                        initialValue: dv.dvName,
-                        onSaved: (val) => _dvName = val,
-                        autofocus: true,
-                        decoration: new InputDecoration(
-                          labelText: 'Device Name',
-                        ),
+              contentPadding: const EdgeInsets.all(16.0),
+              content: Container(
+                width: double.maxFinite,
+                child: new ListView(
+                  children: <Widget>[
+                    new Container(
+                      child: Center(
+                        child: Text("Device details"),
                       ),
-                      new TextFormField(
-                        validator: devicePortValidator,
-                        onSaved: (val) => _dvPort = val,
-                        autofocus: true,
-                        initialValue: dv.dvPort,
-                        decoration: new InputDecoration(
-                          labelText: 'Device Port',
-                        ),
+                      padding: EdgeInsets.only(bottom: 20.0),
+                    ),
+                    Form(
+                      key: dvReFormKey,
+                      autovalidate: _autoValidatedvRe,
+                      child: Column(
+                        children: <Widget>[
+                          new TextFormField(
+                            validator: (val) =>
+                                deviceNameValidator(val, dv.dvName),
+                            initialValue: dv.dvName,
+                            onSaved: (val) => _dvName = val,
+                            autofocus: true,
+                            decoration: new InputDecoration(
+                              labelText: 'Device Name',
+                            ),
+                          ),
+                          new TextFormField(
+                            validator: devicePortValidator,
+                            onSaved: (val) => _dvPort = val,
+                            autofocus: true,
+                            initialValue: dv.dvPort,
+                            decoration: new InputDecoration(
+                              labelText: 'Device Port',
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+              ),
+              actions: <Widget>[
+                new FlatButton(
+                    child: const Text('CANCEL'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    }),
+                new FlatButton(
+                    child: const Text('MODIFY'),
+                    onPressed: () async {
+                      var form = dvReFormKey.currentState;
+                      if (form.validate()) {
+                        form.save();
+                        if (_dvName != dv.dvName || _dvPort != dv.dvPort) {
+                          Navigator.pop(context);
+                          setState(() {
+                            _isLoading = true;
+                            _autoValidatedvRe = false;
+                          });
+                          _renameDevice(dv, _dvName, _dvPort);
+                        } else {
+                          Navigator.pop(context);
+                        }
+                      } else {
+                        setState(() {
+                          _autoValidatedv = true;
+                        });
+                      }
+                    })
               ],
             ),
-          ),
-          actions: <Widget>[
-            new FlatButton(
-                child: const Text('CANCEL'),
-                onPressed: () {
-                  Navigator.pop(context);
-                }),
-            new FlatButton(
-                child: const Text('MODIFY'),
-                onPressed: () async {
-                  var form = dvReFormKey.currentState;
-                  if (form.validate()) {
-                    form.save();
-                    Navigator.pop(context);
-                    setState(() {
-                      _isLoading = true;
-                      _autoValidatedvRe = false;
-                    });
-                    _renameDevice(dv, _dvName, _dvPort);
-                  } else {
-                    setState(() {
-                      _autoValidatedv = true;
-                    });
-                  }
-                })
-          ],
-        ),
       );
     }
 
@@ -305,25 +309,25 @@ class DeviceScreenState extends State<DeviceScreen>
       await showDialog<String>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
-          contentPadding: const EdgeInsets.all(16.0),
-          content: new Container(
-            child: Text('Are you sure?'),
-          ),
-          actions: <Widget>[
-            new FlatButton(
-                child: const Text('CANCEL'),
-                onPressed: () {
-                  Navigator.pop(context);
-                  status = false;
-                }),
-            new FlatButton(
-                child: const Text('OK'),
-                onPressed: () {
-                  Navigator.pop(context);
-                  status = true;
-                })
-          ],
-        ),
+              contentPadding: const EdgeInsets.all(16.0),
+              content: new Container(
+                child: Text('Are you sure?'),
+              ),
+              actions: <Widget>[
+                new FlatButton(
+                    child: const Text('CANCEL'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      status = false;
+                    }),
+                new FlatButton(
+                    child: const Text('OK'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      status = true;
+                    })
+              ],
+            ),
       );
     }
 
@@ -349,25 +353,25 @@ class DeviceScreenState extends State<DeviceScreen>
           if (index == len) {
             return Center(
                 child: SizedBox(
-                  width: 150.0,
-                  height: 150.0,
-                  child: RaisedButton(
-                    shape: new RoundedRectangleBorder(
-                        borderRadius: new BorderRadius.circular(30.0)),
-                    onPressed: () async {
-                      await _showDeviceDialog();
-                    },
-                    color: kHAutoBlue300,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Icon(Icons.add),
-                        Text('Add Device'),
-                      ],
-                    ),
-                  ),
-                ));
+              width: 150.0,
+              height: 150.0,
+              child: RaisedButton(
+                shape: new RoundedRectangleBorder(
+                    borderRadius: new BorderRadius.circular(30.0)),
+                onPressed: () async {
+                  await _showDeviceDialog();
+                },
+                color: kHAutoBlue300,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Icon(Icons.add),
+                    Text('Add Device'),
+                  ],
+                ),
+              ),
+            ));
           }
           return Center(
             child: InkWell(
@@ -429,10 +433,10 @@ class DeviceScreenState extends State<DeviceScreen>
       body: _isLoading
           ? ShowProgress()
           : RefreshIndicator(
-        key: dvRefreshIndicatorKey,
-        child: createListView(context, dvList),
-        onRefresh: getDeviceList,
-      ),
+              key: dvRefreshIndicatorKey,
+              child: createListView(context, dvList),
+              onRefresh: getDeviceList,
+            ),
     );
   }
 }

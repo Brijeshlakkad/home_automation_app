@@ -64,7 +64,7 @@ class HardwareScreenState extends State<HardwareScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.saveHardware(hw);
-    hwRefreshIndicatorKey.currentState?.show();
+    hwRefreshIndicatorKey.currentState.show();
   }
 
   @override
@@ -83,7 +83,7 @@ class HardwareScreenState extends State<HardwareScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteHardware(hw);
-    hwRefreshIndicatorKey.currentState?.show();
+    hwRefreshIndicatorKey.currentState.show();
   }
 
   @override
@@ -92,7 +92,7 @@ class HardwareScreenState extends State<HardwareScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.renameHardware(hw);
-    hwRefreshIndicatorKey.currentState?.show();
+    hwRefreshIndicatorKey.currentState.show();
   }
 
   @override
