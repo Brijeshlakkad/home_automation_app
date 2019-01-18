@@ -6,6 +6,7 @@ import 'package:home_automation/models/user.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/models/room_data.dart';
 import 'package:home_automation/models/hardware_data.dart';
+import 'package:home_automation/models/device_data.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -40,6 +41,8 @@ class DatabaseHelper {
         "CREATE TABLE Room(id INTEGER PRIMARY KEY, email TEXT, homeID INTEGER, roomName TEXT)");
     await db.execute(
         "CREATE TABLE Hardware(id INTEGER PRIMARY KEY, email TEXT, homeID INTEGER, roomID INTEGER, hwName TEXT, hwSeries Text, hwIP Text)");
+    await db.execute(
+        "CREATE TABLE Device(id INTEGER PRIMARY KEY, email TEXT, homeID INTEGER, roomID INTEGER, hwID INTEGER, dvName TEXT, dvPort Text)");
     print("Created tables");
   }
 
@@ -274,7 +277,90 @@ class DatabaseHelper {
   Future<int> renameHardware(Hardware hw) async {
     var dbClient = await db;
     var res = await dbClient.rawUpdate(
-        "UPDATE Hardware SET hwName = ? WHERE id = ?", [hw.hwName, hw.id]);
+        "UPDATE Hardware SET hwName = ?, hwSeries = ?, hwIP = ? WHERE id = ?", [hw.hwName, hw.hwSeries, hw.hwIP, hw.id]);
+    if (res > 0) {
+      return res;
+    } else {
+      return 0;
+    }
+  }
+
+  Future<int> saveDevice(Device dv) async {
+    var dbClient = await db;
+    int res = await dbClient.insert("Device", dv.toMap());
+    return res;
+  }
+
+  Future<int> saveAllDevice(List<Device> dvList) async {
+    var dbClient = await db;
+    int result = await dbClient.rawDelete('DELETE FROM Device');
+    int res=0;
+    for(int i=0;i<dvList.length;i++){
+      result = await dbClient.insert("Hardware", dvList[i].toMap());
+      res+=result;
+    }
+    return res;
+  }
+
+  Future<int> deleteDevice(Device dv) async {
+    var dbClient = await db;
+    int res = await dbClient.rawDelete(
+        'DELETE FROM Device WHERE id = ?',
+        [dv.id]);
+    return res;
+  }
+  Future<int> deleteAllDeviceWithHardware(Hardware hw) async {
+    var dbClient = await db;
+    int res = await dbClient.rawDelete(
+        'DELETE FROM Device WHERE hwID = ? and email = ?',
+        [hw.id, hw.email]);
+    return res;
+  }
+
+  Future<int> deleteAllDeviceWithRoom(Room room) async {
+    var dbClient = await db;
+    int res = await dbClient.rawDelete(
+        'DELETE FROM Device WHERE roomID = ? and email = ?',
+        [room.id, room.email]);
+    return res;
+  }
+
+  Future<int> deleteAllDeviceWithHome(Home home) async {
+    var dbClient = await db;
+    int res = await dbClient.rawDelete(
+        'DELETE FROM Device WHERE homeID = ? and email = ?',
+        [home.id, home.email]);
+    return res;
+  }
+
+  Future<String> getDevice() async {
+    var dbClient = await db;
+    var res = await dbClient.rawQuery("SELECT * FROM Device");
+    if (res.length > 0) {
+      return res.first['dvName'].toString();
+    } else {
+      return null;
+    }
+  }
+
+  Future<List<Device>> getAllDevice() async {
+    var dbClient = await db;
+    var res = await dbClient.rawQuery("SELECT * FROM Device");
+    if (res.length > 0) {
+      List<Device> list = new List<Device>();
+      for (int i = 0; i < res.length; i++) {
+        list.add(Device.map(res[i]));
+      }
+      return list;
+    } else {
+      return null;
+    }
+  }
+
+  Future<int> renameDevice(Device dv) async {
+    var dbClient = await db;
+    var res = await dbClient.rawUpdate(
+        "UPDATE Device SET dvName = ?, dvPort = ? WHERE id = ?", [dv.dvName, dv.dvPort, dv.id]);
     if (res > 0) {
       return res;
     } else {

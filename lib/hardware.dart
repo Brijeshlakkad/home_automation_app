@@ -6,6 +6,7 @@ import 'package:home_automation/models/room_data.dart';
 import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/logout.dart';
 import 'package:home_automation/models/hardware_data.dart';
+import 'package:home_automation/device.dart';
 
 class HardwareScreen extends StatefulWidget {
   final Home home;
@@ -395,7 +396,18 @@ class HardwareScreenState extends State<HardwareScreen>
           }
           return Center(
             child: InkWell(
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DeviceScreen(
+                          home: widget.home,
+                          room: widget.room,
+                          hardware: hwList[index],
+                        ),
+                  ),
+                );
+              },
               splashColor: kHAutoBlue300,
               child: Card(
                 child: Container(
