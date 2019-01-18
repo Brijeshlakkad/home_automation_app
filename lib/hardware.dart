@@ -21,11 +21,13 @@ class HardwareScreenState extends State<HardwareScreen>
     implements HardwareScreenContract {
   final showHwscaffoldKey = new GlobalKey<ScaffoldState>();
   bool _isLoading = false;
-  var refreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
+  var hwFormKey = new GlobalKey<FormState>();
+  var hwReFormKey = new GlobalKey<FormState>();
+  bool _autoValidatehw = false;
+  bool _autoValidatehwRe = false;
+  var hwRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
   List<Hardware> hwList = new List<Hardware>();
-  TextEditingController _hwNameController, _hwReNameController;
-  TextEditingController _hwSeriesController, _hwReSeriesController;
-  TextEditingController _hwIPController, _hwReIPController;
+  String _hwName, _hwSeries, _hwIP;
   void _showSnackBar(String text) {
     showHwscaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
@@ -33,27 +35,21 @@ class HardwareScreenState extends State<HardwareScreen>
 
   @override
   void initState() {
-    _hwNameController = new TextEditingController();
-    _hwReNameController = new TextEditingController();
-    _hwSeriesController = new TextEditingController();
-    _hwReSeriesController = new TextEditingController();
-    _hwIPController = new TextEditingController();
-    _hwReIPController = new TextEditingController();
     getHardwareList();
-    _presenter.doGetAllHardware(widget.room);
-    refreshIndicatorKey.currentState?.show();
+    hwRefreshIndicatorKey.currentState?.show();
     super.initState();
   }
 
   var db = new DatabaseHelper();
 
   Future getHardwareList() async {
-    refreshIndicatorKey.currentState?.show();
+    hwRefreshIndicatorKey.currentState?.show();
     hwList = await _presenter.api.getAllHardware(widget.room);
     if (hwList != null) {
       setState(() {
         hwList = hwList.toList();
       });
+      onSuccessGetAllHardware(hwList);
     }
   }
 
@@ -67,7 +63,7 @@ class HardwareScreenState extends State<HardwareScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.saveHardware(hw);
-    refreshIndicatorKey.currentState?.show();
+    hwRefreshIndicatorKey.currentState?.show();
   }
 
   @override
@@ -86,7 +82,7 @@ class HardwareScreenState extends State<HardwareScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteHardware(hw);
-    refreshIndicatorKey.currentState?.show();
+    hwRefreshIndicatorKey.currentState?.show();
   }
 
   @override
@@ -95,7 +91,7 @@ class HardwareScreenState extends State<HardwareScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.renameHardware(hw);
-    refreshIndicatorKey.currentState?.show();
+    hwRefreshIndicatorKey.currentState?.show();
   }
 
   @override
@@ -110,22 +106,15 @@ class HardwareScreenState extends State<HardwareScreen>
     _createHardware(
         String hwName, String hwSeries, String hwIP, Room room) async {
       await _presenter.doCreateHardware(hwName, hwSeries, hwIP, room);
-      _hwNameController.clear();
-      _hwSeriesController.clear();
-      _hwIPController.clear();
     }
 
     _renameHardware(
         Hardware hw, String hwName, String hwSeries, String hwIP) async {
       await _presenter.doRenameHardware(hw, hwName, hwSeries, hwIP);
-      _hwReNameController.clear();
-      _hwReSeriesController.clear();
-      _hwReIPController.clear();
     }
 
-    Future<List> getListOfHardwareName() async {
-      var db = new DatabaseHelper();
-      List<Hardware> list = await db.getAllHardware();
+    List getListOfHardwareName() {
+      List<Hardware> list = hwList;
       if (list != null) {
         List hwNameList = new List();
         for (int i = 0; i < list.length; i++) {
@@ -136,8 +125,8 @@ class HardwareScreenState extends State<HardwareScreen>
       return null;
     }
 
-    existHardwareName(String hwName) async {
-      List list = await getListOfHardwareName();
+    existHardwareName(String hwName) {
+      List list = getListOfHardwareName();
       if (list == null) {
         return false;
       }
@@ -147,23 +136,33 @@ class HardwareScreenState extends State<HardwareScreen>
       return false;
     }
 
-    validateHardwareName(String hwName) async {
-      Map validate = new Map();
-      validate['error'] = true;
-      validate['errorMessege'] = null;
-      if (hwName.isEmpty) {
-        validate['errorMessege'] = 'Please enter hardware name';
-      } else if (await existHardwareName(hwName)) {
-        validate['errorMessege'] = 'Hardware already exists';
+    hardwareNameValidator(String val) {
+      if (val.isEmpty) {
+        return 'Please enter hardware name';
+      } else if (existHardwareName(val)) {
+        return 'Hardware already exists';
       } else {
-        validate['error'] = false;
-        validate['errorMessege'] = null;
+        return null;
       }
-      return validate;
+    }
+
+    hardwareSeriesValidator(String val) {
+      if (val.isEmpty) {
+        return 'Please enter hardware series';
+      } else {
+        return null;
+      }
+    }
+
+    hardwareIPValidator(String val) {
+      if (val.isEmpty) {
+        return 'Please enter hardware IP value';
+      } else {
+        return null;
+      }
     }
 
     _showHardwareNameDialog() async {
-      _hwNameController.clear();
       await showDialog<Null>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
@@ -178,23 +177,36 @@ class HardwareScreenState extends State<HardwareScreen>
                       ),
                       padding: EdgeInsets.only(bottom: 20.0),
                     ),
-                    new TextField(
-                      controller: _hwNameController,
-                      autofocus: true,
-                      decoration: new InputDecoration(
-                        labelText: 'Hardware Name',
-                      ),
-                    ),
-                    new TextField(
-                      controller: _hwSeriesController,
-                      decoration: new InputDecoration(
-                        labelText: 'Hardware Series',
-                      ),
-                    ),
-                    new TextField(
-                      controller: _hwIPController,
-                      decoration: new InputDecoration(
-                        labelText: 'Hardware IP',
+                    Form(
+                      key: hwFormKey,
+                      autovalidate: _autoValidatehw,
+                      child: Column(
+                        children: <Widget>[
+                          new TextFormField(
+                            validator: hardwareNameValidator,
+                            onSaved: (val) => _hwName = val,
+                            autofocus: true,
+                            decoration: new InputDecoration(
+                              labelText: 'Hardware Name',
+                            ),
+                          ),
+                          new TextFormField(
+                            onSaved: (val) => _hwSeries = val,
+                            autofocus: true,
+                            validator: hardwareSeriesValidator,
+                            decoration: new InputDecoration(
+                              labelText: 'Hardware Series',
+                            ),
+                          ),
+                          new TextFormField(
+                            validator: hardwareIPValidator,
+                            onSaved: (val) => _hwIP = val,
+                            autofocus: true,
+                            decoration: new InputDecoration(
+                              labelText: 'Hardware IP',
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -209,20 +221,19 @@ class HardwareScreenState extends State<HardwareScreen>
                 new FlatButton(
                     child: const Text('CREATE'),
                     onPressed: () async {
-                      Navigator.pop(context);
-                      var res =
-                          await validateHardwareName(_hwNameController.text);
-                      if (res['error']) {
-                        _showSnackBar("${res['errorMessege']}");
-                      } else {
+                      var form = hwFormKey.currentState;
+                      if (form.validate()) {
+                        form.save();
+                        Navigator.pop(context);
                         setState(() {
                           _isLoading = true;
+                          _autoValidatehw = false;
                         });
-                        _createHardware(
-                            _hwNameController.text,
-                            _hwSeriesController.text,
-                            _hwIPController.text,
-                            widget.room);
+                        _createHardware(_hwName, _hwSeries, _hwIP, widget.room);
+                      } else {
+                        setState(() {
+                          _autoValidatehw = true;
+                        });
                       }
                     })
               ],
@@ -231,9 +242,6 @@ class HardwareScreenState extends State<HardwareScreen>
     }
 
     _showHardwareReNameDialog(Hardware hw) async {
-      _hwReNameController.text = hw.hwName;
-      _hwReSeriesController.text = hw.hwSeries;
-      _hwReIPController.text = hw.hwIP;
       await showDialog<String>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
@@ -248,23 +256,39 @@ class HardwareScreenState extends State<HardwareScreen>
                       ),
                       padding: EdgeInsets.only(bottom: 20.0),
                     ),
-                    new TextField(
-                      controller: _hwReNameController,
-                      autofocus: true,
-                      decoration: new InputDecoration(
-                        labelText: 'Hardware Name',
-                      ),
-                    ),
-                    new TextField(
-                      controller: _hwReSeriesController,
-                      decoration: new InputDecoration(
-                        labelText: 'Hardware Series',
-                      ),
-                    ),
-                    new TextField(
-                      controller: _hwReIPController,
-                      decoration: new InputDecoration(
-                        labelText: 'Hardware IP',
+                    Form(
+                      key: hwReFormKey,
+                      autovalidate: _autoValidatehwRe,
+                      child: Column(
+                        children: <Widget>[
+                          new TextFormField(
+                            validator: hardwareNameValidator,
+                            initialValue: hw.hwName,
+                            onSaved: (val) => _hwName = val,
+                            autofocus: true,
+                            decoration: new InputDecoration(
+                              labelText: 'Hardware Name',
+                            ),
+                          ),
+                          new TextFormField(
+                            validator: hardwareSeriesValidator,
+                            onSaved: (val) => _hwSeries = val,
+                            autofocus: true,
+                            initialValue: hw.hwSeries,
+                            decoration: new InputDecoration(
+                              labelText: 'Hardware Series',
+                            ),
+                          ),
+                          new TextFormField(
+                            onSaved: (val) => _hwIP = val,
+                            autofocus: true,
+                            validator: hardwareIPValidator,
+                            initialValue: hw.hwIP,
+                            decoration: new InputDecoration(
+                              labelText: 'Hardware IP',
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -279,17 +303,19 @@ class HardwareScreenState extends State<HardwareScreen>
                 new FlatButton(
                     child: const Text('MODIFY'),
                     onPressed: () async {
-                      Navigator.pop(context);
-                      var res =
-                          await validateHardwareName(_hwReNameController.text);
-                      if (res['error']) {
-                        _showSnackBar("${res['errorMessege']}");
-                      } else {
+                      var form = hwReFormKey.currentState;
+                      if (form.validate()) {
+                        form.save();
+                        Navigator.pop(context);
                         setState(() {
                           _isLoading = true;
+                          _autoValidatehwRe = false;
                         });
-                        _renameHardware(hw, _hwReNameController.text,
-                            _hwReSeriesController.text, _hwReIPController.text);
+                        _renameHardware(hw, _hwName, _hwSeries, _hwIP);
+                      } else {
+                        setState(() {
+                          _autoValidatehw = true;
+                        });
                       }
                     })
               ],
@@ -427,7 +453,7 @@ class HardwareScreenState extends State<HardwareScreen>
       body: _isLoading
           ? ShowProgress()
           : RefreshIndicator(
-              key: refreshIndicatorKey,
+              key: hwRefreshIndicatorKey,
               child: createListView(context, hwList),
               onRefresh: getHardwareList,
             ),

@@ -38,9 +38,13 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     implements RoomScreenContract {
   final showRoomscaffoldKey = new GlobalKey<ScaffoldState>();
   bool _isLoading = false;
-  var refreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
+  var roomNameFormKey = new GlobalKey<FormState>();
+  var roomReNameFormKey = new GlobalKey<FormState>();
+  bool _autoValidateRoomName = false;
+  bool _autoValidateRoomReName = false;
+  String _roomName;
+  var roomRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
   List<Room> roomList = new List<Room>();
-  TextEditingController _roomNameController, _roomReNameController;
   void _showSnackBar(String text) {
     showRoomscaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
@@ -48,22 +52,21 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
 
   @override
   void initState() {
-    _roomNameController = new TextEditingController();
-    _roomReNameController = new TextEditingController();
     getRoomList();
-    refreshIndicatorKey.currentState?.show();
+    roomRefreshIndicatorKey.currentState?.show();
     super.initState();
   }
 
   var db = new DatabaseHelper();
 
   Future getRoomList() async {
-    refreshIndicatorKey.currentState?.show();
+    roomRefreshIndicatorKey.currentState?.show();
     roomList = await _presenter.api.getAllRoom(widget.home);
     if (roomList != null) {
       setState(() {
         roomList = roomList.toList();
       });
+      onSuccessGetAllRoom(roomList);
     }
   }
 
@@ -77,7 +80,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.saveRoom(room);
-    refreshIndicatorKey.currentState?.show();
+    roomRefreshIndicatorKey.currentState.show();
   }
 
   @override
@@ -92,12 +95,11 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
 
   @override
   void onSuccessDelete(Room room) async {
-    print("1");
     _showSnackBar(room.toString());
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteRoom(room);
-    refreshIndicatorKey.currentState?.show();
+    roomRefreshIndicatorKey.currentState.show();
   }
 
   @override
@@ -106,7 +108,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.renameRoom(room);
-    refreshIndicatorKey.currentState?.show();
+    roomRefreshIndicatorKey.currentState.show();
   }
 
   @override
@@ -120,17 +122,14 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
   Widget build(BuildContext context) {
     _createRoom(String roomName, Home home) async {
       await _presenter.doCreateRoom(roomName, home);
-      _roomNameController.clear();
     }
 
     _renameRoom(Room room, String roomName) async {
       await _presenter.doRenameRoom(room, roomName);
-      _roomReNameController.clear();
     }
 
-    Future<List> getListOfRoomName() async {
-      var db = new DatabaseHelper();
-      List<Room> list = await db.getAllRoom();
+    List getListOfRoomName() {
+      List<Room> list = roomList;
       if (list != null) {
         List roomNameList = new List();
         for (int i = 0; i < list.length; i++) {
@@ -141,8 +140,8 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
       return null;
     }
 
-    existRoomName(String roomName) async {
-      List list = await getListOfRoomName();
+    existRoomName(String roomName) {
+      List list = getListOfRoomName();
       if (list == null) {
         return false;
       }
@@ -152,23 +151,17 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
       return false;
     }
 
-    validateRoomName(String roomName) async {
-      Map validate = new Map();
-      validate['error'] = true;
-      validate['errorMessege'] = null;
-      if (roomName.isEmpty) {
-        validate['errorMessege'] = 'Please enter room name';
-      } else if (await existRoomName(roomName)) {
-        validate['errorMessege'] = 'Room already exists';
+    roomValidator(String val) {
+      if (val.isEmpty) {
+        return 'Please enter room name';
+      } else if (existRoomName(val)) {
+        return 'Room already exists';
       } else {
-        validate['error'] = false;
-        validate['errorMessege'] = null;
+        return null;
       }
-      return validate;
     }
 
     _showRoomNameDialog() async {
-      _roomNameController.clear();
       await showDialog<String>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
@@ -176,11 +169,16 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
               content: new Row(
                 children: <Widget>[
                   new Expanded(
-                    child: new TextField(
-                      controller: _roomNameController,
-                      autofocus: true,
-                      decoration: new InputDecoration(
-                        labelText: 'Room',
+                    child: Form(
+                      key: roomNameFormKey,
+                      autovalidate: _autoValidateRoomName,
+                      child: new TextFormField(
+                        validator: roomValidator,
+                        onSaved: (val) => _roomName = val,
+                        autofocus: true,
+                        decoration: new InputDecoration(
+                          labelText: 'Room',
+                        ),
                       ),
                     ),
                   )
@@ -194,19 +192,21 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
                     }),
                 new FlatButton(
                     child: const Text('CREATE'),
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      var res =
-                          await validateRoomName(_roomNameController.text);
-                      if (res['error']) {
-                        _showSnackBar("${res['errorMessege']}");
-                      } else {
+                    onPressed: () {
+                      var form = roomNameFormKey.currentState;
+                      if (form.validate()) {
+                        form.save();
+                        Navigator.pop(context);
                         setState(() {
                           _isLoading = true;
+                          _autoValidateRoomName = false;
                         });
-                        _createRoom(_roomNameController.text, widget.home);
+                        _createRoom(_roomName, widget.home);
+                      } else {
+                        setState(() {
+                          _autoValidateRoomName = true;
+                        });
                       }
-                      _roomNameController.clear();
                     })
               ],
             ),
@@ -214,7 +214,6 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     }
 
     _showRoomReNameDialog(Room room) async {
-      _roomReNameController.text = room.roomName;
       await showDialog<String>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
@@ -222,11 +221,17 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
               content: new Row(
                 children: <Widget>[
                   new Expanded(
-                    child: new TextField(
-                      controller: _roomReNameController,
-                      autofocus: true,
-                      decoration: new InputDecoration(
-                        labelText: 'Home',
+                    child: Form(
+                      key: roomReNameFormKey,
+                      autovalidate: _autoValidateRoomReName,
+                      child: new TextFormField(
+                        validator: roomValidator,
+                        initialValue: room.roomName,
+                        onSaved: (val) => _roomName = val,
+                        autofocus: true,
+                        decoration: new InputDecoration(
+                          labelText: 'Room',
+                        ),
                       ),
                     ),
                   )
@@ -240,17 +245,20 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
                     }),
                 new FlatButton(
                     child: const Text('RENAME'),
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      var res =
-                          await validateRoomName(_roomReNameController.text);
-                      if (res['error']) {
-                        _showSnackBar("${res['errorMessege']}");
-                      } else {
+                    onPressed: () {
+                      var form = roomReNameFormKey.currentState;
+                      if (form.validate()) {
+                        form.save();
+                        Navigator.pop(context);
                         setState(() {
                           _isLoading = true;
+                          _autoValidateRoomReName = false;
                         });
-                        _renameRoom(room, _roomReNameController.text);
+                        _renameRoom(room, _roomName);
+                      } else {
+                        setState(() {
+                          _autoValidateRoomReName = true;
+                        });
                       }
                     })
               ],
@@ -395,7 +403,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
       body: _isLoading
           ? ShowProgress()
           : RefreshIndicator(
-              key: refreshIndicatorKey,
+              key: roomRefreshIndicatorKey,
               child: createListView(context, roomList),
               onRefresh: getRoomList,
             ),

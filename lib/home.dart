@@ -14,11 +14,15 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   final scaffoldKey = new GlobalKey<ScaffoldState>();
+  var homeNameFormKey = new GlobalKey<FormState>();
+  var homeReNameFormKey = new GlobalKey<FormState>();
   bool _isLoading = false;
-  var refreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
+  bool _autoValidateHomeName = false;
+  bool _autoValidateHomeReName = false;
+  var homeRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
   List<Home> homeList = new List<Home>();
   var db = new DatabaseHelper();
-  TextEditingController _homeNameController, _homeReNameController;
+  String _homeName;
   void _showSnackBar(String text) {
     scaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
@@ -26,10 +30,8 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
 
   @override
   void initState() {
-    _homeNameController = new TextEditingController();
-    _homeReNameController = new TextEditingController();
     getHomeList();
-    refreshIndicatorKey.currentState?.show();
+    homeRefreshIndicatorKey.currentState?.show();
     super.initState();
   }
 
@@ -43,12 +45,12 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.saveHome(home);
-    refreshIndicatorKey.currentState?.show();
+    homeRefreshIndicatorKey.currentState.show();
   }
 
   @override
   void onSuccessGetAllHome(List<Home> homeList) async {
-    if(homeList!=null){
+    if (homeList != null) {
       _showSnackBar("Got ${homeList.length}");
       setState(() => _isLoading = false);
       var db = new DatabaseHelper();
@@ -61,7 +63,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteHome(home);
-    refreshIndicatorKey.currentState?.show();
+    homeRefreshIndicatorKey.currentState.show();
   }
 
   void onSuccessRename(Home home) async {
@@ -69,7 +71,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.renameHome(home);
-    refreshIndicatorKey.currentState?.show();
+    homeRefreshIndicatorKey.currentState.show();
   }
 
   @override
@@ -87,34 +89,29 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     );
   }
 
-
   Future getHomeList() async {
-    refreshIndicatorKey.currentState?.show();
+    homeRefreshIndicatorKey.currentState?.show();
     homeList = await _presenter.api.getAllHome();
     if (homeList != null) {
       setState(() {
         homeList = homeList.toList();
       });
+      onSuccessGetAllHome(homeList);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-
-
     _createHome(String homeName) async {
       await _presenter.doCreateHome(homeName);
-      _homeNameController.clear();
     }
 
     _renameHome(Home home, String homeName) async {
       await _presenter.doRenameHome(home, homeName);
-      _homeReNameController.clear();
     }
 
-    Future<List> getListOfHomeName() async {
-      var db = new DatabaseHelper();
-      List<Home> list = await db.getAllHome();
+    List getListOfHomeName() {
+      List<Home> list = homeList;
       if (list != null) {
         List homeNameList = new List();
         for (int i = 0; i < list.length; i++) {
@@ -125,8 +122,8 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       return null;
     }
 
-    existHomeName(String homeName) async {
-      List list = await getListOfHomeName();
+    existHomeName(String homeName) {
+      List list = getListOfHomeName();
       if (list == null) {
         return false;
       }
@@ -136,23 +133,17 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       return false;
     }
 
-    validateHomeName(String homeName) async {
-      Map validate = new Map();
-      validate['error'] = true;
-      validate['errorMessege'] = null;
-      if (homeName.isEmpty) {
-        validate['errorMessege'] = 'Please enter home name';
-      } else if (await existHomeName(homeName)) {
-        validate['errorMessege'] = 'Home exists';
+    homeValidator(String val) {
+      if (val.isEmpty) {
+        return 'Please enter home name';
+      } else if (existHomeName(val)) {
+        return 'Home already exists';
       } else {
-        validate['error'] = false;
-        validate['errorMessege'] = null;
+        return null;
       }
-      return validate;
     }
 
     _showHomeNameDialog() async {
-      _homeNameController.clear();
       await showDialog<String>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
@@ -160,11 +151,16 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
               content: new Row(
                 children: <Widget>[
                   new Expanded(
-                    child: new TextField(
-                      controller: _homeNameController,
-                      autofocus: true,
-                      decoration: new InputDecoration(
-                        labelText: 'Home',
+                    child: Form(
+                      autovalidate: _autoValidateHomeName,
+                      key: homeNameFormKey,
+                      child: new TextFormField(
+                        onSaved: (val) => _homeName = val,
+                        autofocus: true,
+                        validator: homeValidator,
+                        decoration: new InputDecoration(
+                          labelText: 'Home',
+                        ),
                       ),
                     ),
                   )
@@ -178,19 +174,21 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                     }),
                 new FlatButton(
                     child: const Text('CREATE'),
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      var res =
-                          await validateHomeName(_homeNameController.text);
-                      if (res['error']) {
-                        _showSnackBar("${res['errorMessege']}");
-                      } else {
+                    onPressed: () {
+                      var form = homeNameFormKey.currentState;
+                      if (form.validate()) {
+                        form.save();
+                        Navigator.pop(context);
                         setState(() {
                           _isLoading = true;
+                          _autoValidateHomeName = false;
                         });
-                        _createHome(_homeNameController.text);
+                        _createHome(_homeName);
+                      } else {
+                        setState(() {
+                          _autoValidateHomeName = true;
+                        });
                       }
-                      _homeNameController.clear();
                     })
               ],
             ),
@@ -198,7 +196,6 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     }
 
     _showHomeReNameDialog(Home home) async {
-      _homeReNameController.text = home.homeName;
       await showDialog<String>(
         context: context,
         builder: (BuildContext context) => new AlertDialog(
@@ -206,11 +203,17 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
               content: new Row(
                 children: <Widget>[
                   new Expanded(
-                    child: new TextField(
-                      controller: _homeReNameController,
-                      autofocus: true,
-                      decoration: new InputDecoration(
-                        labelText: 'Home',
+                    child: Form(
+                      autovalidate: _autoValidateHomeReName,
+                      key: homeReNameFormKey,
+                      child: new TextFormField(
+                        initialValue: home.homeName,
+                        onSaved: (val) => _homeName = val,
+                        autofocus: true,
+                        validator: homeValidator,
+                        decoration: new InputDecoration(
+                          labelText: 'Home',
+                        ),
                       ),
                     ),
                   )
@@ -224,17 +227,20 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                     }),
                 new FlatButton(
                     child: const Text('RENAME'),
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      var res =
-                          await validateHomeName(_homeReNameController.text);
-                      if (res['error']) {
-                        _showSnackBar("${res['errorMessege']}");
-                      } else {
+                    onPressed: () {
+                      var form = homeReNameFormKey.currentState;
+                      if (form.validate()) {
+                        form.save();
+                        Navigator.pop(context);
                         setState(() {
                           _isLoading = true;
+                          _autoValidateHomeReName = false;
                         });
-                        _renameHome(home, _homeReNameController.text);
+                        _renameHome(home, _homeName);
+                      } else {
+                        setState(() {
+                          _autoValidateHomeReName = true;
+                        });
                       }
                     })
               ],
@@ -379,7 +385,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       body: _isLoading
           ? showProgress()
           : RefreshIndicator(
-              key: refreshIndicatorKey,
+              key: homeRefreshIndicatorKey,
               child: createListView(context, homeList),
               onRefresh: getHomeList,
             ),
