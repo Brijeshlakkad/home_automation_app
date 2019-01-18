@@ -5,7 +5,9 @@ class GetDeviceDetails extends StatefulWidget {
   final hardware;
   final List<Device> deviceList;
   final Map dvDetails;
-  GetDeviceDetails({this.hardware, this.deviceList, this.dvDetails});
+  final List<DeviceImg> imgList;
+  GetDeviceDetails(
+      {this.hardware, this.deviceList, this.dvDetails, this.imgList});
   @override
   GetDeviceDetailsState createState() {
     return new GetDeviceDetailsState();
@@ -15,10 +17,11 @@ class GetDeviceDetails extends StatefulWidget {
 class GetDeviceDetailsState extends State<GetDeviceDetails> {
   var dvFormKey = new GlobalKey<FormState>();
   var dvReFormKey = new GlobalKey<FormState>();
-  bool _autoValidatedv = false;
+  bool _autoValidateDv = false;
+  bool _autoValidateDvRe = false;
   Map deviceDetails = new Map();
   List<Device> dvList = new List<Device>();
-  String _dvName, _dvImg, _dvPort = "1";
+  String _dvName, _dvPort, _dvImg;
   List<String> portList = <String>[
     '1',
     '2',
@@ -31,6 +34,19 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
     '9',
     '0'
   ];
+  @override
+  void initState(){
+    if(widget.dvDetails['isModifying']){
+      setState(() {
+        _dvName = widget.dvDetails['dvName'];
+        _dvPort = widget.dvDetails['dvPort'];
+        _dvImg = widget.dvDetails['dvImg'];
+      });
+    }else{
+      _dvPort = portList[0];
+      _dvImg = widget.imgList[0].key;
+    }
+  }
   List getListOfDeviceName() {
     List<Device> list = widget.deviceList;
     if (list != null) {
@@ -75,7 +91,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
             children: <Widget>[
               Form(
                 key: dvFormKey,
-                autovalidate: _autoValidatedv,
+                autovalidate: _autoValidateDv,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
@@ -87,11 +103,25 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                         labelText: 'Device Name',
                       ),
                     ),
-                    new TextFormField(
-                      onSaved: (val) => _dvImg = val,
-                      autofocus: true,
-                      decoration: new InputDecoration(
-                        labelText: 'Choose device',
+                    new InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: 'Choose a device',
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: new DropdownButton<String>(
+                          value: _dvImg,
+                          items: widget.imgList.map((DeviceImg deviceImg) {
+                            return new DropdownMenuItem<String>(
+                              value: deviceImg.key,
+                              child: new Text(deviceImg.value),
+                            );
+                          }).toList(),
+                          onChanged: (String val) {
+                            setState(() {
+                              _dvImg = val;
+                            });
+                          },
+                        ),
                       ),
                     ),
                     new InputDecorator(
@@ -108,7 +138,6 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                             );
                           }).toList(),
                           onChanged: (String val) {
-                            _dvPort = val;
                             setState(() {
                               _dvPort = val;
                             });
@@ -141,7 +170,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                               if (form.validate()) {
                                 form.save();
                                 setState(() {
-                                  _autoValidatedv = false;
+                                  _autoValidateDv = false;
                                 });
                                 deviceDetails['error'] = false;
                                 deviceDetails['dvName'] = _dvName;
@@ -150,7 +179,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                                 Navigator.pop(context, deviceDetails);
                               } else {
                                 setState(() {
-                                  _autoValidatedv = true;
+                                  _autoValidateDv = true;
                                 });
                               }
                             },
@@ -168,9 +197,6 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
     }
 
     Widget modifyDevice() {
-      _dvName = widget.dvDetails['dvName'];
-      _dvPort = widget.dvDetails['dvPort'];
-      _dvImg = widget.dvDetails['dvImg'];
       return new Center(
         child: Container(
           padding: EdgeInsets.only(top: 40.0),
@@ -179,7 +205,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
             children: <Widget>[
               Form(
                 key: dvFormKey,
-                autovalidate: _autoValidatedv,
+                autovalidate: _autoValidateDvRe,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
@@ -192,12 +218,26 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                         labelText: 'Device Name',
                       ),
                     ),
-                    new TextFormField(
-                      onSaved: (val) => _dvImg = val,
-                      autofocus: true,
-                      initialValue: _dvImg,
-                      decoration: new InputDecoration(
-                        labelText: 'Choose device',
+                    new InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: 'Choose a device',
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: new DropdownButton<String>(
+                          value: _dvImg,
+                          items: widget.imgList.map((DeviceImg deviceImg) {
+                            return new DropdownMenuItem<String>(
+                              value: deviceImg.key,
+                              child: new Text(deviceImg.value),
+                            );
+                          }).toList(),
+                          onChanged: (String val) {
+                            print(val);
+                            setState(() {
+                              _dvImg = val;
+                            });
+                          },
+                        ),
                       ),
                     ),
                     new InputDecorator(
@@ -214,7 +254,6 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                             );
                           }).toList(),
                           onChanged: (String val) {
-                            _dvPort = val;
                             setState(() {
                               _dvPort = val;
                             });
@@ -250,7 +289,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                                     _dvPort != widget.dvDetails['dvPort'] ||
                                     _dvImg != widget.dvDetails['dvImg']) {
                                   setState(() {
-                                    _autoValidatedv = false;
+                                    _autoValidateDvRe = false;
                                   });
                                   deviceDetails['error'] = false;
                                   deviceDetails['dvName'] = _dvName;
@@ -263,7 +302,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                                 }
                               } else {
                                 setState(() {
-                                  _autoValidatedv = true;
+                                  _autoValidateDvRe = true;
                                 });
                               }
                             },

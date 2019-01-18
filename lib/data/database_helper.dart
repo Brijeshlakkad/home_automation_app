@@ -42,7 +42,7 @@ class DatabaseHelper {
     await db.execute(
         "CREATE TABLE Hardware(id INTEGER PRIMARY KEY, email TEXT, homeID INTEGER, roomID INTEGER, hwName TEXT, hwSeries Text, hwIP Text)");
     await db.execute(
-        "CREATE TABLE Device(id INTEGER PRIMARY KEY, email TEXT, homeID INTEGER, roomID INTEGER, hwID INTEGER, dvName TEXT, dvPort Text, dvImg Text, dvStatus INTEGER DEFAULT 0)");
+        "CREATE TABLE Device(id INTEGER PRIMARY KEY, email TEXT, homeID INTEGER, roomID INTEGER, hwID INTEGER, dvName TEXT, dvPort Text, dvImg Text, dvStatus INTEGER)");
     print("Created tables");
   }
 

@@ -26,6 +26,7 @@ class DeviceScreenState extends State<DeviceScreen>
   bool _isLoading = false;
   var dvRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
   List<Device> dvList = new List<Device>();
+  List<DeviceImg> dvImgList = new List<DeviceImg>();
   void _showSnackBar(String text) {
     showDvScaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
@@ -34,6 +35,7 @@ class DeviceScreenState extends State<DeviceScreen>
   @override
   void initState() {
     getDeviceList();
+    getDeviceImgList();
     dvRefreshIndicatorKey.currentState?.show();
     super.initState();
   }
@@ -48,6 +50,17 @@ class DeviceScreenState extends State<DeviceScreen>
         dvList = dvList.toList();
       });
       onSuccessGetAllDevice(dvList);
+    }
+  }
+
+  Future getDeviceImgList() async {
+    dvRefreshIndicatorKey.currentState?.show();
+    dvImgList = await _presenter.api.getAllDeviceImg();
+    print(dvImgList.toString());
+    if (dvImgList != null) {
+      setState(() {
+        dvImgList = dvImgList.toList();
+      });
     }
   }
 
@@ -101,14 +114,14 @@ class DeviceScreenState extends State<DeviceScreen>
 
   @override
   Widget build(BuildContext context) {
-    _createDevice(String dvName, String dvPort, String dvImg, Hardware hw) async {
+    _createDevice(
+        String dvName, String dvPort, String dvImg, Hardware hw) async {
       await _presenter.doCreateDevice(dvName, dvPort, dvImg, hw);
     }
 
     _renameDevice(Device dv, String dvName, String dvPort, String dvImg) async {
       await _presenter.doRenameDevice(dv, dvName, dvPort, dvImg);
     }
-
 
     // to show dialogue to ensure of deleting operation
     bool status = false;
@@ -175,16 +188,17 @@ class DeviceScreenState extends State<DeviceScreen>
                             hardware: widget.hardware,
                             deviceList: dvList,
                             dvDetails: dvDetails,
+                            imgList: dvImgList,
                           ),
                     ),
                   );
                   print(result.toString());
-                  if (result!=null && !result['error']) {
+                  if (result != null && !result['error']) {
                     setState(() {
                       _isLoading = true;
                     });
-                    _createDevice(
-                        result['dvName'], result['dvPort'], result['dvImg'], widget.hardware);
+                    _createDevice(result['dvName'], result['dvPort'],
+                        result['dvImg'], widget.hardware);
                   }
                 },
                 color: kHAutoBlue300,
@@ -210,10 +224,13 @@ class DeviceScreenState extends State<DeviceScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Expanded(
-                        child: Text(
-                          '${dvList[index].dvName}',
-                          textAlign: TextAlign.left,
-                          style: Theme.of(context).textTheme.headline,
+                        child: ListTile(
+                          title: Text(
+                            '${dvList[index].dvName}',
+                            textAlign: TextAlign.left,
+                            style: Theme.of(context).textTheme.headline,
+                          ),
+                          subtitle: Text("Port ${dvList[index].dvPort}"),
                         ),
                       ),
                       SizedBox(
@@ -224,24 +241,26 @@ class DeviceScreenState extends State<DeviceScreen>
                           FlatButton(
                             onPressed: () async {
                               Map dvDetails = new Map();
-                              dvDetails=dvList[index].toMap();
+                              dvDetails = dvList[index].toMap();
                               dvDetails['isModifying'] = true;
                               final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => GetDeviceDetails(
-                                    hardware: widget.hardware,
-                                    deviceList: dvList,
-                                    dvDetails: dvDetails,
-                                  ),
+                                        hardware: widget.hardware,
+                                        deviceList: dvList,
+                                        dvDetails: dvDetails,
+                                        imgList: dvImgList,
+                                      ),
                                 ),
                               );
                               print(result.toString());
-                              if (result!=null && !result['error']) {
+                              if (result != null && !result['error']) {
                                 setState(() {
                                   _isLoading = true;
                                 });
-                                _renameDevice(dvList[index], result['dvName'], result['dvImg'], result['dvPort']);
+                                _renameDevice(dvList[index], result['dvName'],
+                                    result['dvImg'], result['dvPort']);
                               }
                             },
                             child: Icon(Icons.edit),

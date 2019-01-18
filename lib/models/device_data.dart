@@ -52,6 +52,27 @@ class Device {
     return dvName;
   }
 }
+class DeviceImg {
+  String _key;
+  String _value;
+  DeviceImg(this._key, this._value);
+  String get key => _key;
+  String get value => _value;
+  DeviceImg.map(dynamic obj) {
+    this._key = obj["key"];
+    this._value = obj["value"];
+  }
+  Map<String, String> toMap() {
+    var map = new Map<String, String>();
+    map["key"] = _key;
+    map["value"] = _value;
+    return map;
+  }
+  @override
+  String toString() {
+    return value;
+  }
+}
 
 class SendDeviceData {
   NetworkUtil _netUtil = new NetworkUtil();
@@ -79,6 +100,20 @@ class SendDeviceData {
         dvList.add(Device.map(res['user']['device'][i]));
       }
       return dvList;
+    });
+  }
+  Future<List<DeviceImg>> getAllDeviceImg() async {
+    return _netUtil.post(finalURL, body: {
+      "action": "4"
+    }).then((dynamic res) {
+      print(res.toString());
+      if (res["error"]) throw new Exception(res["errorMessege"]);
+      int total = int.parse(res['total'].toString());
+      List<DeviceImg> dvImgList = new List<DeviceImg>();
+      for (int i = 0; i < total; i++) {
+        dvImgList.add(DeviceImg.map(res['user']['deviceImg'][i]));
+      }
+      return dvImgList;
     });
   }
 
