@@ -29,12 +29,16 @@ class DeviceScreenState extends State<DeviceScreen>
   List<Device> dvList = new List<Device>();
   List<DeviceImg> dvImgList = new List<DeviceImg>();
   void _showSnackBar(String text) {
+    showDvScaffoldKey.currentState.removeCurrentSnackBar();
     showDvScaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
   @override
   void initState() {
+    setState(() {
+      _isLoading = true;
+    });
     getDeviceList();
     getDeviceImgList();
     dvRefreshIndicatorKey.currentState?.show();
@@ -76,6 +80,9 @@ class DeviceScreenState extends State<DeviceScreen>
     var db = new DatabaseHelper();
     await db.saveDevice(dv);
     dvRefreshIndicatorKey.currentState.show();
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -245,10 +252,16 @@ class DeviceScreenState extends State<DeviceScreen>
                     children: <Widget>[
                       Expanded(
                         child: ListTile(
-                          title: Text(
-                            '${dvList[index].dvName}',
-                            textAlign: TextAlign.left,
-                            style: Theme.of(context).textTheme.headline,
+                          title: Hero(
+                            tag: dvList[index].id,
+                            child: SizedBox(
+                              width: 100.0,
+                              child: Text(
+                                '${dvList[index].dvName}',
+                                textAlign: TextAlign.left,
+                                style: Theme.of(context).textTheme.headline,
+                              ),
+                            ),
                           ),
                           subtitle:
                               Text("${getDeviceCategory(dvList[index].dvImg)}"),
@@ -310,7 +323,29 @@ class DeviceScreenState extends State<DeviceScreen>
     return Scaffold(
       key: showDvScaffoldKey,
       appBar: AppBar(
-        title: Text('Device'),
+        title: Center(
+          child: Row(
+            children: <Widget>[
+              Text(
+                'Hardware',
+                style: Theme.of(context).textTheme.headline,
+              ),
+              SizedBox(
+                width: 15.0,
+              ),
+              new Hero(
+                tag: widget.hardware.id,
+                child: SizedBox(
+                  width: 100.0,
+                  child: Text(
+                    "${widget.hardware.hwName}",
+                    style: Theme.of(context).textTheme.headline,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
         actions: <Widget>[
           GetLogOut(),
         ],

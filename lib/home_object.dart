@@ -46,12 +46,16 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
   var roomRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
   List<Room> roomList = new List<Room>();
   void _showSnackBar(String text) {
+    showRoomscaffoldKey.currentState.removeCurrentSnackBar();
     showRoomscaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
   @override
   void initState() {
+    setState(() {
+      _isLoading = true;
+    });
     getRoomList();
     roomRefreshIndicatorKey.currentState?.show();
     super.initState();
@@ -81,6 +85,9 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     var db = new DatabaseHelper();
     await db.saveRoom(room);
     roomRefreshIndicatorKey.currentState.show();
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -354,10 +361,16 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Expanded(
-                        child: Text(
-                          '${roomList[index].roomName}',
-                          textAlign: TextAlign.left,
-                          style: Theme.of(context).textTheme.headline,
+                        child: Hero(
+                          tag: roomList[index].id,
+                          child: SizedBox(
+                            width: 100.0,
+                            child: Text(
+                              '${roomList[index].roomName}',
+                              textAlign: TextAlign.left,
+                              style: Theme.of(context).textTheme.headline,
+                            ),
+                          ),
                         ),
                       ),
                       SizedBox(
@@ -395,7 +408,29 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     return new Scaffold(
       key: showRoomscaffoldKey,
       appBar: new AppBar(
-        title: new Text("Home: ${widget.home.homeName}"),
+        title: Center(
+          child: Row(
+            children: <Widget>[
+              Text(
+                'Home',
+                style: Theme.of(context).textTheme.headline,
+              ),
+              SizedBox(
+                width: 15.0,
+              ),
+              new Hero(
+                tag: widget.home.id,
+                child: SizedBox(
+                  width: 100.0,
+                  child: Text(
+                    "${widget.home.homeName}",
+                    style: Theme.of(context).textTheme.headline,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
         actions: <Widget>[
           GetLogOut(),
         ],

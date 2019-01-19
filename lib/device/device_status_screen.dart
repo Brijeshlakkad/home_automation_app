@@ -155,11 +155,40 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
         ),
       );
     }
+    String getName(){
+      if(device!=null)
+        {
+          return device.dvName;
+        }
+        return widget.device.dvName;
+    }
 
     return Scaffold(
       key: showDvStatusScaffoldKey,
       appBar: AppBar(
-        title: Text('${widget.device.dvName} Device Status'),
+        title: Center(
+          child: Row(
+            children: <Widget>[
+              Text(
+                'Device',
+                style: Theme.of(context).textTheme.headline,
+              ),
+              SizedBox(
+                width: 15.0,
+              ),
+              new Hero(
+                tag: widget.device.id,
+                child: SizedBox(
+                  width: 100.0,
+                  child: Text(
+                    "${getName()}",
+                    style: Theme.of(context).textTheme.headline,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
         actions: <Widget>[
           GetLogOut(),
         ],

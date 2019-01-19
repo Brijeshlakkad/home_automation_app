@@ -24,12 +24,16 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   var db = new DatabaseHelper();
   String _homeName;
   void _showSnackBar(String text) {
+    scaffoldKey.currentState.removeCurrentSnackBar();
     scaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
   @override
   void initState() {
+    setState(() {
+      _isLoading = true;
+    });
     getHomeList();
     homeRefreshIndicatorKey.currentState?.show();
     super.initState();
@@ -46,6 +50,9 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     var db = new DatabaseHelper();
     await db.saveHome(home);
     homeRefreshIndicatorKey.currentState.show();
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -335,10 +342,16 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Expanded(
-                        child: Text(
-                          '${homeList[index].homeName}',
-                          textAlign: TextAlign.left,
-                          style: Theme.of(context).textTheme.headline,
+                        child: Hero(
+                          tag: homeList[index].id,
+                          child: SizedBox(
+                            width: 100.0,
+                            child: Text(
+                              '${homeList[index].homeName}',
+                              textAlign: TextAlign.left,
+                              style: Theme.of(context).textTheme.headline,
+                            ),
+                          ),
                         ),
                       ),
                       SizedBox(

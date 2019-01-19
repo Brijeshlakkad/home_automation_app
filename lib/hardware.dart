@@ -30,12 +30,16 @@ class HardwareScreenState extends State<HardwareScreen>
   List<Hardware> hwList = new List<Hardware>();
   String _hwName, _hwSeries, _hwIP;
   void _showSnackBar(String text) {
+    showHwscaffoldKey.currentState.removeCurrentSnackBar();
     showHwscaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
   @override
   void initState() {
+    setState(() {
+      _isLoading = true;
+    });
     getHardwareList();
     hwRefreshIndicatorKey.currentState?.show();
     super.initState();
@@ -65,6 +69,9 @@ class HardwareScreenState extends State<HardwareScreen>
     var db = new DatabaseHelper();
     await db.saveHardware(hw);
     hwRefreshIndicatorKey.currentState.show();
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -318,7 +325,7 @@ class HardwareScreenState extends State<HardwareScreen>
                             _autoValidatehwRe = false;
                           });
                           _renameHardware(hw, _hwName, _hwSeries, _hwIP);
-                        }else{
+                        } else {
                           Navigator.pop(context);
                         }
                       } else {
@@ -424,10 +431,16 @@ class HardwareScreenState extends State<HardwareScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Expanded(
-                        child: Text(
-                          '${hwList[index].hwName}',
-                          textAlign: TextAlign.left,
-                          style: Theme.of(context).textTheme.headline,
+                        child: Hero(
+                          tag: hwList[index].id,
+                          child: SizedBox(
+                            width: 100.0,
+                            child: Text(
+                              '${hwList[index].hwName}',
+                              textAlign: TextAlign.left,
+                              style: Theme.of(context).textTheme.headline,
+                            ),
+                          ),
                         ),
                       ),
                       SizedBox(
@@ -465,7 +478,29 @@ class HardwareScreenState extends State<HardwareScreen>
     return Scaffold(
       key: showHwscaffoldKey,
       appBar: AppBar(
-        title: Text('Hardware'),
+        title: Center(
+          child: Row(
+            children: <Widget>[
+              Text(
+                'Room',
+                style: Theme.of(context).textTheme.headline,
+              ),
+              SizedBox(
+                width: 15.0,
+              ),
+              new Hero(
+                tag: widget.room.id,
+                child: SizedBox(
+                  width: 100.0,
+                  child: Text(
+                    "${widget.room.roomName}",
+                    style: Theme.of(context).textTheme.headline,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
         actions: <Widget>[
           GetLogOut(),
         ],
