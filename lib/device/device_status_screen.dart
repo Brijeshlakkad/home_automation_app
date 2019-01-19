@@ -68,13 +68,22 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
     if (device2 != null) {
       setState(() {
         device = device2;
-        vSlide = device2.deviceSlider.value.toDouble();
       });
+      if(device2.deviceSlider!=null){
+        setState(() {
+          vSlide = device2.deviceSlider.value.toDouble();
+        });
+      }
     } else {
       setState(() {
         device = widget.device;
         vSlide = widget.device.deviceSlider.value.toDouble();
       });
+      if(widget.device.deviceSlider!=null){
+        setState(() {
+          vSlide = widget.device.deviceSlider.value.toDouble();
+        });
+      }
     }
     setState(() {
       _isLoading = false;
