@@ -18,12 +18,14 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
   var showDvStatusScaffoldKey = new GlobalKey<ScaffoldState>();
   var dvStatusRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
   bool _isLoading = false;
+  bool _isLoadingValue = false;
   Device device;
+  double vSlide = 0.0;
   DeviceStatusScreenPresenter _presenter;
   @override
   initState() {
     setState(() {
-      _isLoading=true;
+      _isLoading = true;
     });
     getDeviceStatus();
     super.initState();
@@ -66,18 +68,42 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
     if (device2 != null) {
       setState(() {
         device = device2;
+        vSlide = device2.deviceSlider.value.toDouble();
       });
     } else {
       setState(() {
         device = widget.device;
+        vSlide = widget.device.deviceSlider.value.toDouble();
       });
     }
     setState(() {
-      _isLoading=false;
+      _isLoading = false;
     });
   }
 
   Widget build(BuildContext context) {
+    Widget showDeviceSlider(BuildContext context, Device device) {
+      return Container(
+        child: Slider(
+          value: vSlide,
+          min: 0.0,
+          max: 5.0,
+          divisions: 5,
+          onChanged: (val) async {
+            setState(() {
+              vSlide = val;
+              _isLoadingValue = true;
+            });
+            await _presenter.api
+                .changeDeviceSlider(device.deviceSlider, val.toInt());
+            setState(() {
+              _isLoadingValue = false;
+            });
+          },
+        ),
+      );
+    }
+
     Widget createDeviceView(BuildContext context, Device device) {
       return Container(
         padding: EdgeInsets.only(top: 40.0, left: 20.0, right: 20.0),
@@ -106,6 +132,15 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                         child: Text("OFF"),
                       ),
               ),
+            ),
+            device.dvStatus == 1 && device.deviceSlider != null
+                ? Container(
+                    child: showDeviceSlider(context, device),
+                  )
+                : Container(),
+            Container(
+              padding: EdgeInsets.only(top: 50.0),
+              child: _isLoadingValue ? ShowProgress() : null,
             )
           ],
         ),

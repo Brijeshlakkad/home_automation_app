@@ -43,6 +43,8 @@ class DatabaseHelper {
         "CREATE TABLE Hardware(id INTEGER PRIMARY KEY, email TEXT, homeID INTEGER, roomID INTEGER, hwName TEXT, hwSeries Text, hwIP Text)");
     await db.execute(
         "CREATE TABLE Device(id INTEGER PRIMARY KEY, email TEXT, homeID INTEGER, roomID INTEGER, hwID INTEGER, dvName TEXT, dvPort Text, dvImg Text, dvStatus INTEGER)");
+    await db.execute(
+        "CREATE TABLE DeviceSlider(id INTEGER PRIMARY KEY, email TEXT, dvID INTEGER, value INTEGER)");
     print("Created tables");
   }
 
@@ -296,9 +298,17 @@ class DatabaseHelper {
     int result = await dbClient.rawDelete('DELETE FROM Device');
     int res=0;
     for(int i=0;i<dvList.length;i++){
-      result = await dbClient.insert("Device", dvList[i].toMap());
+      result = await dbClient.rawInsert("INSERT INTO Device(id,email,dvName,dvPort,dvImg,dvStatus,hwID,roomID,homeID) VALUES(?,?,?,?,?,?,?,?,?)", [dvList[i].id,dvList[i].email,dvList[i].dvName,dvList[i].dvPort,dvList[i].dvImg,dvList[i].dvStatus,dvList[i].hwID,dvList[i].roomID,dvList[i].homeID]);
+      if(dvList[i].deviceSlider!=null){
+        await saveDeviceSlider(dvList[i].deviceSlider);
+      }
       res+=result;
     }
+    return res;
+  }
+  Future<int> saveDeviceSlider(DeviceSlider dvSlider) async {
+    var dbClient = await db;
+    int res = await dbClient.insert("DeviceSlider", dvSlider.toMap());
     return res;
   }
 
@@ -307,8 +317,17 @@ class DatabaseHelper {
     int res = await dbClient.rawDelete(
         'DELETE FROM Device WHERE id = ?',
         [dv.id]);
+    await deleteDeviceSlider(dv.id);
     return res;
   }
+  Future<int> deleteDeviceSlider(int dvID) async {
+    var dbClient = await db;
+    int res = await dbClient.rawDelete(
+        'DELETE FROM DeviceSlider WHERE dvID = ?',
+        [dvID]);
+    return res;
+  }
+
   Future<int> deleteAllDeviceWithHardware(Hardware hw) async {
     var dbClient = await db;
     int res = await dbClient.rawDelete(
