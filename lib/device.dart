@@ -8,6 +8,7 @@ import 'package:home_automation/logout.dart';
 import 'package:home_automation/models/hardware_data.dart';
 import 'package:home_automation/models/device_data.dart';
 import 'package:home_automation/device/get_device_details.dart';
+import 'package:home_automation/device/device_status_screen.dart';
 
 class DeviceScreen extends StatefulWidget {
   final Home home;
@@ -110,6 +111,17 @@ class DeviceScreenState extends State<DeviceScreen>
     print("x");
     _showSnackBar(errorTxt);
     setState(() => _isLoading = false);
+  }
+
+  String getDeviceCategory(String key) {
+    var value;
+    for (int i = 0; i < dvImgList.length; i++) {
+      DeviceImg dvImg = dvImgList[i];
+      if (key == dvImg.key) {
+        value = dvImg.value;
+      }
+    }
+    return value;
   }
 
   @override
@@ -215,7 +227,15 @@ class DeviceScreenState extends State<DeviceScreen>
           }
           return Center(
             child: InkWell(
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        DeviceStatusScreen(device: dvList[index]),
+                  ),
+                );
+              },
               splashColor: kHAutoBlue300,
               child: Card(
                 child: Container(
@@ -230,7 +250,8 @@ class DeviceScreenState extends State<DeviceScreen>
                             textAlign: TextAlign.left,
                             style: Theme.of(context).textTheme.headline,
                           ),
-                          subtitle: Text("Port ${dvList[index].dvPort}"),
+                          subtitle:
+                              Text("${getDeviceCategory(dvList[index].dvImg)}"),
                         ),
                       ),
                       SizedBox(

@@ -46,6 +46,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
       _dvPort = portList[0];
       _dvImg = widget.imgList[0].key;
     }
+    super.initState();
   }
   List getListOfDeviceName() {
     List<Device> list = widget.deviceList;
@@ -232,7 +233,6 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                             );
                           }).toList(),
                           onChanged: (String val) {
-                            print(val);
                             setState(() {
                               _dvImg = val;
                             });

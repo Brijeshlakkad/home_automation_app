@@ -9,7 +9,7 @@ class Device {
       this._roomID, this._homeID, this._hwID, this._id);
   Device.map(dynamic obj) {
     this._dvName = obj["dvName"];
-    this._dvPort = obj["dvPort"];
+    this._dvPort = obj["dvPort"].toString();
     this._dvImg = obj['dvImg'];
     this._email = obj["email"];
     var id = obj['id'].toString();
@@ -52,6 +52,7 @@ class Device {
     return dvName;
   }
 }
+
 class DeviceImg {
   String _key;
   String _value;
@@ -68,6 +69,7 @@ class DeviceImg {
     map["value"] = _value;
     return map;
   }
+
   @override
   String toString() {
     return value;
@@ -102,10 +104,9 @@ class SendDeviceData {
       return dvList;
     });
   }
+
   Future<List<DeviceImg>> getAllDeviceImg() async {
-    return _netUtil.post(finalURL, body: {
-      "action": "4"
-    }).then((dynamic res) {
+    return _netUtil.post(finalURL, body: {"action": "4"}).then((dynamic res) {
       print(res.toString());
       if (res["error"]) throw new Exception(res["errorMessege"]);
       int total = int.parse(res['total'].toString());
@@ -169,6 +170,35 @@ class SendDeviceData {
       return dv;
     });
   }
+
+  Future<Device> getDevice(Device dv) async {
+    final user = dv.email;
+    final dvID = dv.id.toString();
+    return _netUtil.post(finalURL, body: {
+      "email": user,
+      "deviceID": dvID,
+      "action": "5"
+    }).then((dynamic res) {
+      print(res.toString());
+      if (res["error"]) throw new Exception(res["errorMessege"]);
+      return Device.map(res['user']);
+    });
+  }
+
+  Future<Device> changeDeviceStatus(Device dv, int status) async {
+    final user = dv.email;
+    final dvID = dv.id.toString();
+    return _netUtil.post(finalURL, body: {
+      "email": user,
+      "deviceID": dvID,
+      "status": status.toString(),
+      "action": "6",
+    }).then((dynamic res) {
+      print(res.toString());
+      if (res["error"]) throw new Exception(res["errorMessege"]);
+      return Device.map(res['user']);
+    });
+  }
 }
 
 abstract class DeviceScreenContract {
@@ -219,6 +249,27 @@ class DeviceScreenPresenter {
     try {
       List<Device> dvList = await api.getAllDevice(hw);
       _view.onSuccessGetAllDevice(dvList);
+    } on Exception catch (error) {
+      _view.onError(error.toString());
+      print('Error');
+    }
+  }
+}
+
+abstract class DeviceStatusScreenContract {
+  void onSuccess(Device dv);
+  void onError(String errorTxt);
+}
+
+class DeviceStatusScreenPresenter {
+  DeviceStatusScreenContract _view;
+  SendDeviceData api = new SendDeviceData();
+  DeviceStatusScreenPresenter(this._view);
+
+  doChangeDeviceStatus(Device dv, int status) async {
+    try {
+      var d = await api.changeDeviceStatus(dv, status);
+      _view.onSuccess(d);
     } on Exception catch (error) {
       _view.onError(error.toString());
       print('Error');
