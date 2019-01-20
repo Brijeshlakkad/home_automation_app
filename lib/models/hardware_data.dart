@@ -88,7 +88,7 @@ class SendHardwareData {
     }).then((dynamic res) {
       print(res.toString());
       if (res["error"]) throw new Exception(res["errorMessege"]);
-      return new Hardware.map(res['user']);
+      return new Hardware.map(res['user']['hw']);
     });
   }
 

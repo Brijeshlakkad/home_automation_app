@@ -289,7 +289,8 @@ class DatabaseHelper {
 
   Future<int> saveDevice(Device dv) async {
     var dbClient = await db;
-    int res = await dbClient.insert("Device", dv.toMap());
+    int res = await dbClient.rawInsert("INSERT INTO Device(id,email,dvName,dvPort,dvImg,dvStatus,hwID,roomID,homeID) VALUES(?,?,?,?,?,?,?,?,?)", [dv.id,dv.email,dv.dvName,dv.dvPort,dv.dvImg,dv.dvStatus,dv.hwID,dv.roomID,dv.homeID]);
+    await saveDeviceSlider(dv.deviceSlider);
     return res;
   }
 

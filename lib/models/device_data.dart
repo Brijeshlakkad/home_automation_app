@@ -179,7 +179,7 @@ class SendDeviceData {
     }).then((dynamic res) {
       print(res.toString());
       if (res["error"]) throw new Exception(res["errorMessege"]);
-      return new Device.map(res['user']);
+      return new Device.map(res['user']['device']);
     });
   }
 

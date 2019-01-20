@@ -61,23 +61,21 @@ class SendHomeData {
     }).then((dynamic res) {
       print(res.toString());
       if (res["error"]) throw new Exception(res["errorMessage"]);
-      return new Home.map(res['user']);
+      return new Home.map(res['user']['home']);
     });
   }
 
   Future<Home> delete(Home home) async {
     final user = home.email;
-    final homeName = home.homeName;
     final id = home.id.toString();
     return _netUtil.post(finalURL, body: {
-      "homeName": homeName,
       "email": user,
       "action": "2",
       "id": id
     }).then((dynamic res) {
       print(res.toString());
       if (res["error"]) throw new Exception(res["errorMessege"]);
-      return new Home.map(res['user']);
+      return home;
     });
   }
 
@@ -92,7 +90,8 @@ class SendHomeData {
     }).then((dynamic res) {
       print(res.toString());
       if (res["error"]) throw new Exception(res["errorMessege"]);
-      return new Home.map(res['user']);
+      home._homeName=homeName;
+      return home;
     });
   }
 }
