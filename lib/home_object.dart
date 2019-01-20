@@ -84,10 +84,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.saveRoom(room);
-    roomRefreshIndicatorKey.currentState.show();
-    setState(() {
-      _isLoading = false;
-    });
+    roomRefreshIndicatorKey.currentState?.show();
   }
 
   @override
@@ -106,7 +103,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteRoom(room);
-    roomRefreshIndicatorKey.currentState.show();
+    roomRefreshIndicatorKey.currentState?.show();
   }
 
   @override
@@ -115,7 +112,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.renameRoom(room);
-    roomRefreshIndicatorKey.currentState.show();
+    roomRefreshIndicatorKey.currentState?.show();
   }
 
   @override

@@ -79,10 +79,7 @@ class DeviceScreenState extends State<DeviceScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.saveDevice(dv);
-    dvRefreshIndicatorKey.currentState.show();
-    setState(() {
-      _isLoading = false;
-    });
+    dvRefreshIndicatorKey.currentState?.show();
   }
 
   @override
@@ -101,7 +98,7 @@ class DeviceScreenState extends State<DeviceScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteDevice(dv);
-    dvRefreshIndicatorKey.currentState.show();
+    dvRefreshIndicatorKey.currentState?.show();
   }
 
   @override
@@ -110,7 +107,7 @@ class DeviceScreenState extends State<DeviceScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.renameDevice(dv);
-    dvRefreshIndicatorKey.currentState.show();
+    dvRefreshIndicatorKey.currentState?.show();
   }
 
   @override
