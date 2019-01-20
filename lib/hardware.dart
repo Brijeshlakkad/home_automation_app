@@ -7,6 +7,7 @@ import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/logout.dart';
 import 'package:home_automation/models/hardware_data.dart';
 import 'package:home_automation/device.dart';
+import 'package:flutter/cupertino.dart';
 
 class HardwareScreen extends StatefulWidget {
   final Home home;
@@ -83,7 +84,7 @@ class HardwareScreenState extends State<HardwareScreen>
 
   @override
   void onSuccessDelete(Hardware hw) async {
-    _showSnackBar(hw.toString());
+    _showSnackBar("Hardware ${hw.hwName} deleted");
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteHardware(hw);
@@ -104,6 +105,10 @@ class HardwareScreenState extends State<HardwareScreen>
     print("x");
     _showSnackBar(errorTxt);
     setState(() => _isLoading = false);
+  }
+
+  bool _isIOS(BuildContext context) {
+    return Theme.of(context).platform == TargetPlatform.iOS ? true : false;
   }
 
   @override
@@ -474,34 +479,62 @@ class HardwareScreenState extends State<HardwareScreen>
 
     return Scaffold(
       key: showHwscaffoldKey,
-      appBar: AppBar(
-        title: Center(
-          child: Row(
-            children: <Widget>[
-              Text(
-                'Room',
-                style: Theme.of(context).textTheme.headline,
-              ),
-              SizedBox(
-                width: 15.0,
-              ),
-              new Hero(
-                tag: widget.room.id,
-                child: SizedBox(
-                  width: 100.0,
-                  child: Text(
-                    "${widget.room.roomName}",
-                    style: Theme.of(context).textTheme.headline,
-                  ),
+      appBar: _isIOS(context)
+          ? CupertinoNavigationBar(
+              backgroundColor: kHAutoBlue100,
+              middle: Center(
+                child: Row(
+                  children: <Widget>[
+                    Text(
+                      'Room',
+                      style: Theme.of(context).textTheme.headline,
+                    ),
+                    SizedBox(
+                      width: 15.0,
+                    ),
+                    new Hero(
+                      tag: widget.room.id,
+                      child: SizedBox(
+                        width: 100.0,
+                        child: Text(
+                          "${widget.room.roomName}",
+                          style: Theme.of(context).textTheme.headline,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-        actions: <Widget>[
-          GetLogOut(),
-        ],
-      ),
+              trailing: GetLogOut(),
+            )
+          : AppBar(
+              title: Center(
+                child: Row(
+                  children: <Widget>[
+                    Text(
+                      'Room',
+                      style: Theme.of(context).textTheme.headline,
+                    ),
+                    SizedBox(
+                      width: 15.0,
+                    ),
+                    new Hero(
+                      tag: widget.room.id,
+                      child: SizedBox(
+                        width: 100.0,
+                        child: Text(
+                          "${widget.room.roomName}",
+                          style: Theme.of(context).textTheme.headline,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                GetLogOut(),
+              ],
+            ),
       body: _isLoading
           ? ShowProgress()
           : RefreshIndicator(

@@ -9,6 +9,7 @@ import 'package:home_automation/models/hardware_data.dart';
 import 'package:home_automation/models/device_data.dart';
 import 'package:home_automation/device/get_device_details.dart';
 import 'package:home_automation/device/device_status_screen.dart';
+import 'package:flutter/cupertino.dart';
 
 class DeviceScreen extends StatefulWidget {
   final Home home;
@@ -115,6 +116,10 @@ class DeviceScreenState extends State<DeviceScreen>
     print("x");
     _showSnackBar(errorTxt);
     setState(() => _isLoading = false);
+  }
+
+  bool _isIOS(BuildContext context) {
+    return Theme.of(context).platform == TargetPlatform.iOS ? true : false;
   }
 
   String getDeviceCategory(String key) {
@@ -319,34 +324,62 @@ class DeviceScreenState extends State<DeviceScreen>
 
     return Scaffold(
       key: showDvScaffoldKey,
-      appBar: AppBar(
-        title: Center(
-          child: Row(
-            children: <Widget>[
-              Text(
-                'Hardware',
-                style: Theme.of(context).textTheme.headline,
-              ),
-              SizedBox(
-                width: 15.0,
-              ),
-              new Hero(
-                tag: widget.hardware.id,
-                child: SizedBox(
-                  width: 100.0,
-                  child: Text(
-                    "${widget.hardware.hwName}",
-                    style: Theme.of(context).textTheme.headline,
-                  ),
+      appBar: _isIOS(context)
+          ? CupertinoNavigationBar(
+              backgroundColor: kHAutoBlue100,
+              middle: Center(
+                child: Row(
+                  children: <Widget>[
+                    Text(
+                      'Hardware',
+                      style: Theme.of(context).textTheme.headline,
+                    ),
+                    SizedBox(
+                      width: 15.0,
+                    ),
+                    new Hero(
+                      tag: widget.hardware.id,
+                      child: SizedBox(
+                        width: 100.0,
+                        child: Text(
+                          "${widget.hardware.hwName}",
+                          style: Theme.of(context).textTheme.headline,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-        actions: <Widget>[
-          GetLogOut(),
-        ],
-      ),
+              trailing: GetLogOut(),
+            )
+          : AppBar(
+              title: Center(
+                child: Row(
+                  children: <Widget>[
+                    Text(
+                      'Hardware',
+                      style: Theme.of(context).textTheme.headline,
+                    ),
+                    SizedBox(
+                      width: 15.0,
+                    ),
+                    new Hero(
+                      tag: widget.hardware.id,
+                      child: SizedBox(
+                        width: 100.0,
+                        child: Text(
+                          "${widget.hardware.hwName}",
+                          style: Theme.of(context).textTheme.headline,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                GetLogOut(),
+              ],
+            ),
       body: _isLoading
           ? ShowProgress()
           : RefreshIndicator(

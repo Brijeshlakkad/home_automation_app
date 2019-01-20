@@ -6,6 +6,7 @@ import 'package:home_automation/models/room_data.dart';
 import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/logout.dart';
 import 'package:home_automation/hardware.dart';
+import 'package:flutter/cupertino.dart';
 
 class HomeObject extends StatefulWidget {
   final Home home;
@@ -36,7 +37,7 @@ class ShowRoomsOfHome extends StatefulWidget {
 
 class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     implements RoomScreenContract {
-  final showRoomscaffoldKey = new GlobalKey<ScaffoldState>();
+  final showRoomScaffoldKey = new GlobalKey<ScaffoldState>();
   bool _isLoading = false;
   var roomNameFormKey = new GlobalKey<FormState>();
   var roomReNameFormKey = new GlobalKey<FormState>();
@@ -46,8 +47,8 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
   var roomRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
   List<Room> roomList = new List<Room>();
   void _showSnackBar(String text) {
-    showRoomscaffoldKey.currentState.removeCurrentSnackBar();
-    showRoomscaffoldKey.currentState
+    showRoomScaffoldKey.currentState.removeCurrentSnackBar();
+    showRoomScaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
@@ -99,7 +100,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
 
   @override
   void onSuccessDelete(Room room) async {
-    _showSnackBar(room.toString());
+    _showSnackBar("Deleted ${room.roomName} room");
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteRoom(room);
@@ -120,6 +121,10 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     print("x");
     _showSnackBar(errorTxt);
     setState(() => _isLoading = false);
+  }
+
+  bool _isIOS(BuildContext context) {
+    return Theme.of(context).platform == TargetPlatform.iOS ? true : false;
   }
 
   @override
@@ -155,10 +160,10 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
       return false;
     }
 
-    roomValidator(String val) {
+    roomValidator(String val, String ignoreName) {
       if (val.isEmpty) {
         return 'Please enter room name';
-      } else if (existRoomName(val)) {
+      } else if (existRoomName(val) && val != ignoreName) {
         return 'Room already exists';
       } else {
         return null;
@@ -166,136 +171,214 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     }
 
     _showRoomNameDialog() async {
-      await showDialog<String>(
-        context: context,
-        builder: (BuildContext context) => new AlertDialog(
-              contentPadding: const EdgeInsets.all(16.0),
-              content: new Row(
-                children: <Widget>[
-                  new Expanded(
-                    child: Form(
-                      key: roomNameFormKey,
-                      autovalidate: _autoValidateRoomName,
-                      child: new TextFormField(
-                        validator: roomValidator,
-                        onSaved: (val) => _roomName = val,
-                        autofocus: true,
-                        decoration: new InputDecoration(
-                          labelText: 'Room',
-                        ),
-                      ),
+      _isIOS(context)
+          ? await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => CupertinoAlertDialog(
+                    title: Text("Create Room Here"),
+                    content: CupertinoTextField(
+                      autofocus: true,
+                      clearButtonMode: OverlayVisibilityMode.editing,
+                      onSubmitted: (val) {
+                        if (roomValidator(val, null) == null) {
+                          Navigator.pop(context);
+                          setState(() {
+                            _isLoading = true;
+                          });
+                          _createRoom(val, widget.home);
+                        } else {
+                          Navigator.pop(context);
+                          _showSnackBar("${roomValidator(val, null)}");
+                        }
+                      },
                     ),
-                  )
-                ],
-              ),
-              actions: <Widget>[
-                new FlatButton(
-                    child: const Text('CANCEL'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    }),
-                new FlatButton(
-                    child: const Text('CREATE'),
-                    onPressed: () {
-                      var form = roomNameFormKey.currentState;
-                      if (form.validate()) {
-                        form.save();
-                        Navigator.pop(context);
-                        setState(() {
-                          _isLoading = true;
-                          _autoValidateRoomName = false;
-                        });
-                        _createRoom(_roomName, widget.home);
-                      } else {
-                        setState(() {
-                          _autoValidateRoomName = true;
-                        });
-                      }
-                    })
-              ],
-            ),
-      );
+                  ),
+            )
+          : await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => new AlertDialog(
+                    contentPadding: const EdgeInsets.all(16.0),
+                    content: new Row(
+                      children: <Widget>[
+                        new Expanded(
+                          child: Form(
+                            key: roomNameFormKey,
+                            autovalidate: _autoValidateRoomName,
+                            child: new TextFormField(
+                              validator: (val) => roomValidator(val, null),
+                              onSaved: (val) => _roomName = val,
+                              autofocus: true,
+                              decoration: new InputDecoration(
+                                labelText: 'Room',
+                              ),
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                    actions: <Widget>[
+                      new FlatButton(
+                          child: const Text('CANCEL'),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          }),
+                      new FlatButton(
+                          child: const Text('CREATE'),
+                          onPressed: () {
+                            var form = roomNameFormKey.currentState;
+                            if (form.validate()) {
+                              form.save();
+                              Navigator.pop(context);
+                              setState(() {
+                                _isLoading = true;
+                                _autoValidateRoomName = false;
+                              });
+                              _createRoom(_roomName, widget.home);
+                            } else {
+                              setState(() {
+                                _autoValidateRoomName = true;
+                              });
+                            }
+                          })
+                    ],
+                  ),
+            );
     }
 
     _showRoomReNameDialog(Room room) async {
-      await showDialog<String>(
-        context: context,
-        builder: (BuildContext context) => new AlertDialog(
-              contentPadding: const EdgeInsets.all(16.0),
-              content: new Row(
-                children: <Widget>[
-                  new Expanded(
-                    child: Form(
-                      key: roomReNameFormKey,
-                      autovalidate: _autoValidateRoomReName,
-                      child: new TextFormField(
-                        validator: roomValidator,
-                        initialValue: room.roomName,
-                        onSaved: (val) => _roomName = val,
-                        autofocus: true,
-                        decoration: new InputDecoration(
-                          labelText: 'Room',
-                        ),
-                      ),
+      _isIOS(context)
+          ? await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => CupertinoAlertDialog(
+                    title: Text("Modify Your Room Name Here"),
+                    content: CupertinoTextField(
+                      autofocus: true,
+                      clearButtonMode: OverlayVisibilityMode.editing,
+                      onSubmitted: (val) {
+                        if (val != room.roomName) {
+                          if (roomValidator(val, room.roomName) == null) {
+                            Navigator.pop(context);
+                            setState(() {
+                              _isLoading = true;
+                            });
+                            _renameRoom(room, val);
+                          } else {
+                            Navigator.pop(context);
+                            _showSnackBar(
+                                "${roomValidator(val, room.roomName)}");
+                          }
+                        } else {
+                          Navigator.pop(context);
+                        }
+                      },
                     ),
-                  )
-                ],
-              ),
-              actions: <Widget>[
-                new FlatButton(
-                    child: const Text('CANCEL'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    }),
-                new FlatButton(
-                    child: const Text('RENAME'),
-                    onPressed: () {
-                      var form = roomReNameFormKey.currentState;
-                      if (form.validate()) {
-                        form.save();
-                        Navigator.pop(context);
-                        setState(() {
-                          _isLoading = true;
-                          _autoValidateRoomReName = false;
-                        });
-                        _renameRoom(room, _roomName);
-                      } else {
-                        setState(() {
-                          _autoValidateRoomReName = true;
-                        });
-                      }
-                    })
-              ],
-            ),
-      );
+                  ),
+            )
+          : await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => new AlertDialog(
+                    contentPadding: const EdgeInsets.all(16.0),
+                    content: new Row(
+                      children: <Widget>[
+                        new Expanded(
+                          child: Form(
+                            key: roomReNameFormKey,
+                            autovalidate: _autoValidateRoomReName,
+                            child: new TextFormField(
+                              validator: (val) =>
+                                  roomValidator(val, room.roomName),
+                              initialValue: room.roomName,
+                              onSaved: (val) => _roomName = val,
+                              autofocus: true,
+                              decoration: new InputDecoration(
+                                labelText: 'Room',
+                              ),
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                    actions: <Widget>[
+                      new FlatButton(
+                          child: const Text('CANCEL'),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          }),
+                      new FlatButton(
+                          child: const Text('RENAME'),
+                          onPressed: () {
+                            var form = roomReNameFormKey.currentState;
+                            if (form.validate()) {
+                              form.save();
+                              Navigator.pop(context);
+                              setState(() {
+                                _isLoading = true;
+                                _autoValidateRoomReName = false;
+                              });
+                              _renameRoom(room, _roomName);
+                            } else {
+                              setState(() {
+                                _autoValidateRoomReName = true;
+                              });
+                            }
+                          })
+                    ],
+                  ),
+            );
     }
 
     // to show dialogue to ensure of deleting operation
     bool status = false;
     _showConfirmDialog() async {
-      await showDialog<String>(
-        context: context,
-        builder: (BuildContext context) => new AlertDialog(
-              contentPadding: const EdgeInsets.all(16.0),
-              content: new Container(
-                child: Text('Are you sure?'),
-              ),
-              actions: <Widget>[
-                new FlatButton(
-                    child: const Text('CANCEL'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      status = false;
-                    }),
-                new FlatButton(
-                    child: const Text('OK'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      status = true;
-                    })
-              ],
-            ),
-      );
+      _isIOS(context)
+          ? await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => CupertinoAlertDialog(
+                    title: Text('Are you sure?'),
+                    actions: <Widget>[
+                      new CupertinoDialogAction(
+                        child: const Text('CANCEL'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          status = false;
+                        },
+                      ),
+                      new CupertinoDialogAction(
+                        child: const Text(
+                          'OK',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          status = true;
+                        },
+                      )
+                    ],
+                  ),
+            )
+          : await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => new AlertDialog(
+                    contentPadding: const EdgeInsets.all(16.0),
+                    content: new Container(
+                      child: Text('Are you sure?'),
+                    ),
+                    actions: <Widget>[
+                      new FlatButton(
+                          child: const Text('CANCEL'),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            status = false;
+                          }),
+                      new FlatButton(
+                          child: const Text('OK'),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            status = true;
+                          })
+                    ],
+                  ),
+            );
     }
 
     _deleteRoom(Room room) async {
@@ -403,35 +486,63 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     }
 
     return new Scaffold(
-      key: showRoomscaffoldKey,
-      appBar: new AppBar(
-        title: Center(
-          child: Row(
-            children: <Widget>[
-              Text(
-                'Home',
-                style: Theme.of(context).textTheme.headline,
-              ),
-              SizedBox(
-                width: 15.0,
-              ),
-              new Hero(
-                tag: widget.home.id,
-                child: SizedBox(
-                  width: 100.0,
-                  child: Text(
-                    "${widget.home.homeName}",
-                    style: Theme.of(context).textTheme.headline,
-                  ),
+      key: showRoomScaffoldKey,
+      appBar: _isIOS(context)
+          ? CupertinoNavigationBar(
+              backgroundColor: kHAutoBlue100,
+              middle: Center(
+                child: Row(
+                  children: <Widget>[
+                    Text(
+                      'Home',
+                      style: Theme.of(context).textTheme.headline,
+                    ),
+                    SizedBox(
+                      width: 15.0,
+                    ),
+                    new Hero(
+                      tag: widget.home.id,
+                      child: SizedBox(
+                        width: 100.0,
+                        child: Text(
+                          "${widget.home.homeName}",
+                          style: Theme.of(context).textTheme.headline,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-        actions: <Widget>[
-          GetLogOut(),
-        ],
-      ),
+              trailing: GetLogOut(),
+            )
+          : new AppBar(
+              title: Center(
+                child: Row(
+                  children: <Widget>[
+                    Text(
+                      'Home',
+                      style: Theme.of(context).textTheme.headline,
+                    ),
+                    SizedBox(
+                      width: 15.0,
+                    ),
+                    new Hero(
+                      tag: widget.home.id,
+                      child: SizedBox(
+                        width: 100.0,
+                        child: Text(
+                          "${widget.home.homeName}",
+                          style: Theme.of(context).textTheme.headline,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                GetLogOut(),
+              ],
+            ),
       body: _isLoading
           ? ShowProgress()
           : RefreshIndicator(

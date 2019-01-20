@@ -4,7 +4,8 @@ import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/home_object.dart';
 import 'package:home_automation/logout.dart';
-
+import 'package:flutter/cupertino.dart';
+import 'package:home_automation/show_progress.dart';
 class HomeScreen extends StatefulWidget {
   @override
   HomeScreenState createState() {
@@ -61,7 +62,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   }
 
   void onSuccessDelete(Home home) async {
-    _showSnackBar(home.toString());
+    _showSnackBar("Deleted ${home.homeName} home");
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteHome(home);
@@ -83,12 +84,8 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     setState(() => _isLoading = false);
   }
 
-  Widget showProgress() {
-    return Container(
-      child: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+  bool _isIOS(BuildContext context) {
+    return Theme.of(context).platform == TargetPlatform.iOS ? true : false;
   }
 
   Future getHomeList() async {
@@ -135,10 +132,10 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       return false;
     }
 
-    homeValidator(String val) {
+    homeValidator(String val, String ignoreName) {
       if (val.isEmpty) {
         return 'Please enter home name';
-      } else if (existHomeName(val)) {
+      } else if (existHomeName(val) && val != ignoreName) {
         return 'Home already exists';
       } else {
         return null;
@@ -146,136 +143,215 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     }
 
     _showHomeNameDialog() async {
-      await showDialog<String>(
-        context: context,
-        builder: (BuildContext context) => new AlertDialog(
-              contentPadding: const EdgeInsets.all(16.0),
-              content: new Row(
-                children: <Widget>[
-                  new Expanded(
-                    child: Form(
-                      autovalidate: _autoValidateHomeName,
-                      key: homeNameFormKey,
-                      child: new TextFormField(
-                        onSaved: (val) => _homeName = val,
-                        autofocus: true,
-                        validator: homeValidator,
-                        decoration: new InputDecoration(
-                          labelText: 'Home',
-                        ),
-                      ),
+      _isIOS(context)
+          ? await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => CupertinoAlertDialog(
+                    title: Text("Create Home Here"),
+                    content: CupertinoTextField(
+                      autofocus: true,
+                      clearButtonMode: OverlayVisibilityMode.editing,
+                      onSubmitted: (val) {
+                        if (homeValidator(val, null) == null) {
+                          Navigator.pop(context);
+                          setState(() {
+                            _isLoading = true;
+                          });
+                          _createHome(val);
+                        } else {
+                          Navigator.pop(context);
+                          _showSnackBar("${homeValidator(val, null)}");
+                        }
+                      },
                     ),
-                  )
-                ],
-              ),
-              actions: <Widget>[
-                new FlatButton(
-                    child: const Text('CANCEL'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    }),
-                new FlatButton(
-                    child: const Text('CREATE'),
-                    onPressed: () {
-                      var form = homeNameFormKey.currentState;
-                      if (form.validate()) {
-                        form.save();
-                        Navigator.pop(context);
-                        setState(() {
-                          _isLoading = true;
-                          _autoValidateHomeName = false;
-                        });
-                        _createHome(_homeName);
-                      } else {
-                        setState(() {
-                          _autoValidateHomeName = true;
-                        });
-                      }
-                    })
-              ],
-            ),
-      );
+                  ),
+            )
+          : await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => new AlertDialog(
+                    contentPadding: const EdgeInsets.all(16.0),
+                    content: new Row(
+                      children: <Widget>[
+                        new Expanded(
+                          child: Form(
+                            autovalidate: _autoValidateHomeName,
+                            key: homeNameFormKey,
+                            child: new TextFormField(
+                              onSaved: (val) => _homeName = val,
+                              autofocus: true,
+                              validator: (val) => homeValidator(val, null),
+                              decoration: new InputDecoration(
+                                labelText: 'Home',
+                              ),
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                    actions: <Widget>[
+                      new FlatButton(
+                          child: const Text('CANCEL'),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          }),
+                      new FlatButton(
+                          child: const Text('CREATE'),
+                          onPressed: () {
+                            var form = homeNameFormKey.currentState;
+                            if (form.validate()) {
+                              form.save();
+                              Navigator.pop(context);
+                              setState(() {
+                                _isLoading = true;
+                                _autoValidateHomeName = false;
+                              });
+                              _createHome(_homeName);
+                            } else {
+                              setState(() {
+                                _autoValidateHomeName = true;
+                              });
+                            }
+                          })
+                    ],
+                  ),
+            );
     }
 
     _showHomeReNameDialog(Home home) async {
-      await showDialog<String>(
-        context: context,
-        builder: (BuildContext context) => new AlertDialog(
-              contentPadding: const EdgeInsets.all(16.0),
-              content: new Row(
-                children: <Widget>[
-                  new Expanded(
-                    child: Form(
-                      autovalidate: _autoValidateHomeReName,
-                      key: homeReNameFormKey,
-                      child: new TextFormField(
-                        initialValue: home.homeName,
-                        onSaved: (val) => _homeName = val,
-                        autofocus: true,
-                        validator: homeValidator,
-                        decoration: new InputDecoration(
-                          labelText: 'Home',
-                        ),
-                      ),
+      _isIOS(context)
+          ? await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => CupertinoAlertDialog(
+                    title: Text("Modify Your Home Name Here"),
+                    content: CupertinoTextField(
+                      autofocus: true,
+                      clearButtonMode: OverlayVisibilityMode.editing,
+                      onSubmitted: (val) {
+                        if (val != home.homeName) {
+                          if (homeValidator(val, home.homeName) == null) {
+                            Navigator.pop(context);
+                            setState(() {
+                              _isLoading = true;
+                            });
+                            _renameHome(home, val);
+                          } else {
+                            Navigator.pop(context);
+                            _showSnackBar(
+                                "${homeValidator(val, home.homeName)}");
+                          }
+                        } else {
+                          Navigator.pop(context);
+                        }
+                      },
                     ),
-                  )
-                ],
-              ),
-              actions: <Widget>[
-                new FlatButton(
-                    child: const Text('CANCEL'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    }),
-                new FlatButton(
-                    child: const Text('RENAME'),
-                    onPressed: () {
-                      var form = homeReNameFormKey.currentState;
-                      if (form.validate()) {
-                        form.save();
-                        Navigator.pop(context);
-                        setState(() {
-                          _isLoading = true;
-                          _autoValidateHomeReName = false;
-                        });
-                        _renameHome(home, _homeName);
-                      } else {
-                        setState(() {
-                          _autoValidateHomeReName = true;
-                        });
-                      }
-                    })
-              ],
-            ),
-      );
+                  ),
+            )
+          : await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => new AlertDialog(
+                    contentPadding: const EdgeInsets.all(16.0),
+                    content: new Row(
+                      children: <Widget>[
+                        new Expanded(
+                          child: Form(
+                            autovalidate: _autoValidateHomeReName,
+                            key: homeReNameFormKey,
+                            child: new TextFormField(
+                              initialValue: home.homeName,
+                              onSaved: (val) => _homeName = val,
+                              autofocus: true,
+                              validator: (val) => homeValidator(val, null),
+                              decoration: new InputDecoration(
+                                labelText: 'Home',
+                              ),
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                    actions: <Widget>[
+                      new FlatButton(
+                        child: const Text('CANCEL'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                      new FlatButton(
+                        child: const Text('RENAME'),
+                        onPressed: () {
+                          var form = homeReNameFormKey.currentState;
+                          if (form.validate()) {
+                            form.save();
+                            Navigator.pop(context);
+                            setState(() {
+                              _isLoading = true;
+                              _autoValidateHomeReName = false;
+                            });
+                            _renameHome(home, _homeName);
+                          } else {
+                            setState(() {
+                              _autoValidateHomeReName = true;
+                            });
+                          }
+                        },
+                      )
+                    ],
+                  ),
+            );
     }
 
     // to show dialogue to ensure of deleting operation
     bool status = false;
     _showConfirmDialog() async {
-      await showDialog<String>(
-        context: context,
-        builder: (BuildContext context) => new AlertDialog(
-              contentPadding: const EdgeInsets.all(16.0),
-              content: new Container(
-                child: Text('Are you sure?'),
-              ),
-              actions: <Widget>[
-                new FlatButton(
-                    child: const Text('CANCEL'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      status = false;
-                    }),
-                new FlatButton(
-                    child: const Text('OK'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      status = true;
-                    })
-              ],
-            ),
-      );
+      _isIOS(context)
+          ? await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => CupertinoAlertDialog(
+                    title: Text('Are you sure?'),
+                    actions: <Widget>[
+                      new CupertinoDialogAction(
+                        child: const Text('CANCEL'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          status = false;
+                        },
+                      ),
+                      new CupertinoDialogAction(
+                        child: const Text(
+                          'OK',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          status = true;
+                        },
+                      )
+                    ],
+                  ),
+            )
+          : await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => new AlertDialog(
+                    contentPadding: const EdgeInsets.all(16.0),
+                    content: new Container(
+                      child: Text('Are you sure?'),
+                    ),
+                    actions: <Widget>[
+                      new FlatButton(
+                          child: const Text('CANCEL'),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            status = false;
+                          }),
+                      new FlatButton(
+                          child: const Text('OK'),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            status = true;
+                          })
+                    ],
+                  ),
+            );
     }
 
     _deleteHome(Home home) async {
@@ -383,15 +459,22 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
 
     return new Scaffold(
       key: scaffoldKey,
-      appBar: new AppBar(
-        leading: Container(),
-        title: new Text("Home Automation"),
-        actions: <Widget>[
-          GetLogOut(),
-        ],
-      ),
+      appBar: _isIOS(context)
+          ? CupertinoNavigationBar(
+              backgroundColor: kHAutoBlue100,
+              leading: Container(),
+              middle: new Text("Home Automation"),
+              trailing: GetLogOut(),
+            )
+          : new AppBar(
+              leading: Container(),
+              title: new Text("Home Automation"),
+              actions: <Widget>[
+                GetLogOut(),
+              ],
+            ),
       body: _isLoading
-          ? showProgress()
+          ? ShowProgress()
           : RefreshIndicator(
               key: homeRefreshIndicatorKey,
               child: createListView(context, homeList),

@@ -3,6 +3,7 @@ import 'package:home_automation/colors.dart';
 import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/logout.dart';
 import 'package:home_automation/models/device_data.dart';
+import 'package:flutter/cupertino.dart';
 
 class DeviceStatusScreen extends StatefulWidget {
   final Device device;
@@ -54,6 +55,10 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
     setState(() => _isLoading = false);
   }
 
+  bool _isIOS(BuildContext context) {
+    return Theme.of(context).platform == TargetPlatform.iOS ? true : false;
+  }
+
   void _showSnackBar(String text) {
     showDvStatusScaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
@@ -69,7 +74,7 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
       setState(() {
         device = device2;
       });
-      if(device2.deviceSlider!=null){
+      if (device2.deviceSlider != null) {
         setState(() {
           vSlide = device2.deviceSlider.value.toDouble();
         });
@@ -79,7 +84,7 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
         device = widget.device;
         vSlide = widget.device.deviceSlider.value.toDouble();
       });
-      if(widget.device.deviceSlider!=null){
+      if (widget.device.deviceSlider != null) {
         setState(() {
           vSlide = widget.device.deviceSlider.value.toDouble();
         });
@@ -155,44 +160,72 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
         ),
       );
     }
-    String getName(){
-      if(device!=null)
-        {
-          return device.dvName;
-        }
-        return widget.device.dvName;
+
+    String getName() {
+      if (device != null) {
+        return device.dvName;
+      }
+      return widget.device.dvName;
     }
 
     return Scaffold(
       key: showDvStatusScaffoldKey,
-      appBar: AppBar(
-        title: Center(
-          child: Row(
-            children: <Widget>[
-              Text(
-                'Device',
-                style: Theme.of(context).textTheme.headline,
-              ),
-              SizedBox(
-                width: 15.0,
-              ),
-              new Hero(
-                tag: widget.device.id,
-                child: SizedBox(
-                  width: 100.0,
-                  child: Text(
-                    "${getName()}",
-                    style: Theme.of(context).textTheme.headline,
-                  ),
+      appBar: _isIOS(context)
+          ? CupertinoNavigationBar(
+              backgroundColor: kHAutoBlue100,
+              middle: Center(
+                child: Row(
+                  children: <Widget>[
+                    Text(
+                      'Device',
+                      style: Theme.of(context).textTheme.headline,
+                    ),
+                    SizedBox(
+                      width: 15.0,
+                    ),
+                    new Hero(
+                      tag: widget.device.id,
+                      child: SizedBox(
+                        width: 100.0,
+                        child: Text(
+                          "${getName()}",
+                          style: Theme.of(context).textTheme.headline,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-        actions: <Widget>[
-          GetLogOut(),
-        ],
-      ),
+              trailing: GetLogOut(),
+            )
+          : AppBar(
+              title: Center(
+                child: Row(
+                  children: <Widget>[
+                    Text(
+                      'Device',
+                      style: Theme.of(context).textTheme.headline,
+                    ),
+                    SizedBox(
+                      width: 15.0,
+                    ),
+                    new Hero(
+                      tag: widget.device.id,
+                      child: SizedBox(
+                        width: 100.0,
+                        child: Text(
+                          "${getName()}",
+                          style: Theme.of(context).textTheme.headline,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                GetLogOut(),
+              ],
+            ),
       body: _isLoading
           ? ShowProgress()
           : RefreshIndicator(
