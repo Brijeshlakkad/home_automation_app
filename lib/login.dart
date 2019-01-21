@@ -5,7 +5,7 @@ import 'package:home_automation/models/user.dart';
 import 'login_screen_presenter.dart';
 import 'dart:ui';
 import 'package:home_automation/colors.dart';
-
+import 'package:home_automation/internet_access.dart';
 class LoginScreen extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
@@ -31,16 +31,21 @@ class LoginScreenState extends State<LoginScreen>
   }
 
   void _submit() async {
-    final form = formKey.currentState;
-    setState(() => _showError = false);
-    if (form.validate()) {
-      setState(() => _isLoading = true);
-      form.save();
-      await _presenter.doLogin(_email, _password);
-    } else {
-      setState(() {
-        _autoValidate = true;
-      });
+    CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
+    if(await checkInternetAccess.check()){
+      final form = formKey.currentState;
+      setState(() => _showError = false);
+      if (form.validate()) {
+        setState(() => _isLoading = true);
+        form.save();
+        await _presenter.doLogin(_email, _password);
+      } else {
+        setState(() {
+          _autoValidate = true;
+        });
+      }
+    }else{
+      _showSnackBar("Please check internet connection");
     }
   }
 
@@ -51,7 +56,9 @@ class LoginScreenState extends State<LoginScreen>
 
   @override
   onAuthStateChanged(AuthState state) {
-    if (state == AuthState.LOGGED_IN) Navigator.of(_ctx).pushNamed("/home");
+    if (state == AuthState.LOGGED_IN){
+      Navigator.of(_ctx).pushNamed("/home");
+    }
   }
 
   @override
@@ -208,6 +215,8 @@ class LoginScreenState extends State<LoginScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.saveUser(user);
+    final form = formKey.currentState;
+    form.reset();
     var authStateProvider = new AuthStateProvider();
     authStateProvider.notify(AuthState.LOGGED_IN);
   }

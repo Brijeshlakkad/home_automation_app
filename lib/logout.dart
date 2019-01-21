@@ -19,7 +19,8 @@ class GetLogOutState extends State<GetLogOut> {
       var db = new DatabaseHelper();
       await db.deleteUsers();
       print("logout");
-      Navigator.of(context).pushNamed('/login');
+      Navigator.popUntil(context, ModalRoute.withName('/'));
+      Navigator.pushNamed(context, "/logout");
     }
 
     return _isIOS(context)

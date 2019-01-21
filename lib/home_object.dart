@@ -7,6 +7,7 @@ import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/logout.dart';
 import 'package:home_automation/hardware.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:home_automation/internet_access.dart';
 
 class HomeObject extends StatefulWidget {
   final Home home;
@@ -46,6 +47,8 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
   String _roomName;
   var roomRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
   List<Room> roomList = new List<Room>();
+  bool internetAccess = false;
+  var db = new DatabaseHelper();
   void _showSnackBar(String text) {
     showRoomScaffoldKey.currentState.removeCurrentSnackBar();
     showRoomScaffoldKey.currentState
@@ -62,16 +65,31 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     super.initState();
   }
 
-  var db = new DatabaseHelper();
+  Future getInternetAccessObject() async {
+    CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
+    bool internetAccessDummy = await checkInternetAccess.check();
+    setState(() {
+      internetAccess = internetAccessDummy;
+    });
+  }
 
   Future getRoomList() async {
-    roomRefreshIndicatorKey.currentState?.show();
-    roomList = await _presenter.api.getAllRoom(widget.home);
-    if (roomList != null) {
+    await getInternetAccessObject();
+    if (internetAccess) {
+      roomRefreshIndicatorKey.currentState?.show();
+      roomList = await _presenter.api.getAllRoom(widget.home);
+      if (roomList != null) {
+        setState(() {
+          roomList = roomList.toList();
+        });
+        onSuccessGetAllRoom(roomList);
+      }
+    } else {
       setState(() {
-        roomList = roomList.toList();
+        roomList = new List<Room>();
+        _isLoading = false;
       });
-      onSuccessGetAllRoom(roomList);
+      _showSnackBar("Please check internet connection");
     }
   }
 
@@ -436,7 +454,8 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
               splashColor: kHAutoBlue300,
               child: Card(
                 child: Container(
-                  padding: EdgeInsets.only(left: 10.0, top: 20.0, bottom: 20.0),
+                  padding: EdgeInsets.only(
+                      left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
@@ -458,20 +477,26 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
                       ),
                       Row(
                         children: <Widget>[
-                          FlatButton(
-                            onPressed: () async {
-                              await _showRoomReNameDialog(roomList[index]);
-                            },
-                            child: Icon(Icons.edit),
+                          SizedBox(
+                            width: 40.0,
+                            child: FlatButton(
+                              onPressed: () async {
+                                await _showRoomReNameDialog(roomList[index]);
+                              },
+                              child: Icon(Icons.edit),
+                            ),
                           ),
                           SizedBox(
-                            width: 10.0,
+                            width: 20.0,
                           ),
-                          FlatButton(
-                            onPressed: () async {
-                              await _deleteRoom(roomList[index]);
-                            },
-                            child: Icon(Icons.delete),
+                          SizedBox(
+                            width: 40.0,
+                            child: FlatButton(
+                              onPressed: () async {
+                                await _deleteRoom(roomList[index]);
+                              },
+                              child: Icon(Icons.delete),
+                            ),
                           ),
                         ],
                       ),

@@ -6,6 +6,8 @@ import 'package:home_automation/home_object.dart';
 import 'package:home_automation/logout.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:home_automation/show_progress.dart';
+import 'package:home_automation/internet_access.dart';
+
 class HomeScreen extends StatefulWidget {
   @override
   HomeScreenState createState() {
@@ -13,7 +15,9 @@ class HomeScreen extends StatefulWidget {
   }
 }
 
-class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
+class HomeScreenState extends State<HomeScreen>
+    with WidgetsBindingObserver
+    implements HomeScreenContract {
   final scaffoldKey = new GlobalKey<ScaffoldState>();
   var homeNameFormKey = new GlobalKey<FormState>();
   var homeReNameFormKey = new GlobalKey<FormState>();
@@ -24,6 +28,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   List<Home> homeList = new List<Home>();
   var db = new DatabaseHelper();
   String _homeName;
+  bool internetAccess = false;
   void _showSnackBar(String text) {
     scaffoldKey.currentState.removeCurrentSnackBar();
     scaffoldKey.currentState
@@ -37,12 +42,55 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     });
     getHomeList();
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
   }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  didPopRoute() {
+    print("f");
+    return new Future<bool>.value(true);
+  }
+
 
   HomeScreenPresenter _presenter;
   HomeScreenState() {
     _presenter = new HomeScreenPresenter(this);
   }
+
+  Future getInternetAccessObject() async {
+    CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
+    bool internetAccessDummy = await checkInternetAccess.check();
+    setState(() {
+      internetAccess = internetAccessDummy;
+    });
+  }
+
+  Future getHomeList() async {
+    await getInternetAccessObject();
+    if (internetAccess) {
+      homeRefreshIndicatorKey.currentState?.show();
+      homeList = await _presenter.api.getAllHome();
+      if (homeList != null) {
+        setState(() {
+          homeList = homeList.toList();
+        });
+        onSuccessGetAllHome(homeList);
+      }
+    } else {
+      setState(() {
+        homeList = new List<Home>();
+        _isLoading = false;
+      });
+      _showSnackBar("Please check internet connection");
+    }
+  }
+
   @override
   void onSuccess(Home home) async {
     _showSnackBar("Created ${home.toString()} home");
@@ -88,16 +136,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     return Theme.of(context).platform == TargetPlatform.iOS ? true : false;
   }
 
-  Future getHomeList() async {
-    homeRefreshIndicatorKey.currentState?.show();
-    homeList = await _presenter.api.getAllHome();
-    if (homeList != null) {
-      setState(() {
-        homeList = homeList.toList();
-      });
-      onSuccessGetAllHome(homeList);
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -430,20 +469,26 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                       ),
                       Row(
                         children: <Widget>[
-                          FlatButton(
-                            onPressed: () async {
-                              await _showHomeReNameDialog(homeList[index]);
-                            },
-                            child: Icon(Icons.edit),
+                          SizedBox(
+                            width: 40.0,
+                            child: FlatButton(
+                              onPressed: () async {
+                                await _showHomeReNameDialog(homeList[index]);
+                              },
+                              child: Icon(Icons.edit),
+                            ),
                           ),
                           SizedBox(
-                            width: 10.0,
+                            width: 20.0,
                           ),
-                          FlatButton(
-                            onPressed: () async {
-                              await _deleteHome(homeList[index]);
-                            },
-                            child: Icon(Icons.delete),
+                          SizedBox(
+                            width: 40.0,
+                            child: FlatButton(
+                              onPressed: () async {
+                                await _deleteHome(homeList[index]);
+                              },
+                              child: Icon(Icons.delete),
+                            ),
                           ),
                         ],
                       ),

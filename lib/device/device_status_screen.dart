@@ -161,6 +161,73 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
       );
     }
 
+    Widget showIOSDeviceSlider(BuildContext context, Device device) {
+      return Container(
+        child: CupertinoSlider(
+          value: vSlide,
+          min: 0.0,
+          max: 5.0,
+          divisions: 5,
+          onChanged: (val) async {
+            setState(() {
+              vSlide = val;
+              _isLoadingValue = true;
+            });
+            await _presenter.api
+                .changeDeviceSlider(device.deviceSlider, val.toInt());
+            setState(() {
+              _isLoadingValue = false;
+            });
+          },
+        ),
+      );
+    }
+
+    Widget createIOSDeviceView(BuildContext context, Device device) {
+      return Container(
+        padding: EdgeInsets.only(top: 40.0, left: 20.0, right: 20.0),
+        child: ListView(
+          children: <Widget>[
+            MergeSemantics(
+              child: ListTile(
+                title: Text('${device.dvName}'),
+                trailing: CupertinoSwitch(
+                  value: device.dvStatus == 1 ? true : false,
+                  onChanged: (bool value) {
+                    setState(() {
+                      _isLoading = true;
+                    });
+                    device.dvStatus == 1
+                        ? _presenter.doChangeDeviceStatus(device, 0)
+                        : _presenter.doChangeDeviceStatus(device, 1);
+                  },
+                ),
+                onTap: () {
+                  setState(() {
+                    setState(() {
+                      _isLoading = true;
+                    });
+                    device.dvStatus == 1
+                        ? _presenter.doChangeDeviceStatus(device, 0)
+                        : _presenter.doChangeDeviceStatus(device, 1);
+                  });
+                },
+              ),
+            ),
+            device.dvStatus == 1 && device.deviceSlider != null
+                ? Container(
+                    child: showIOSDeviceSlider(context, device),
+                  )
+                : Container(),
+            Container(
+              padding: EdgeInsets.only(top: 50.0),
+              child: _isLoadingValue ? ShowProgress() : null,
+            )
+          ],
+        ),
+      );
+    }
+
     String getName() {
       if (device != null) {
         return device.dvName;
@@ -230,7 +297,9 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
           ? ShowProgress()
           : RefreshIndicator(
               key: dvStatusRefreshIndicatorKey,
-              child: createDeviceView(context, device),
+              child: _isIOS(context)
+                  ? createIOSDeviceView(context, device)
+                  : createDeviceView(context, device),
               onRefresh: getDeviceStatus,
             ),
     );

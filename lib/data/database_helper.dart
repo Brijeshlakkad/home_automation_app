@@ -57,6 +57,11 @@ class DatabaseHelper {
   Future<int> deleteUsers() async {
     var dbClient = await db;
     int res = await dbClient.delete("User");
+    await dbClient.delete("Home");
+    await dbClient.delete("Room");
+    await dbClient.delete("Hardware");
+    await dbClient.delete("Device");
+    await dbClient.delete("DeviceSlider");
     return res;
   }
 
@@ -87,13 +92,14 @@ class DatabaseHelper {
     int res = await dbClient.insert("Home", home.toMap());
     return res;
   }
+
   Future<int> saveAllHome(List<Home> homeList) async {
     var dbClient = await db;
     int result = await dbClient.rawDelete('DELETE FROM Home');
-    int res=0;
-    for(int i=0;i<homeList.length;i++){
+    int res = 0;
+    for (int i = 0; i < homeList.length; i++) {
       result = await dbClient.insert("Home", homeList[i].toMap());
-      res+=result;
+      res += result;
     }
     return res;
   }
@@ -151,10 +157,10 @@ class DatabaseHelper {
   Future<int> saveAllRoom(List<Room> roomList) async {
     var dbClient = await db;
     int result = await dbClient.rawDelete('DELETE FROM Room');
-    int res=0;
-    for(int i=0;i<roomList.length;i++){
+    int res = 0;
+    for (int i = 0; i < roomList.length; i++) {
       result = await dbClient.insert("Room", roomList[i].toMap());
-      res+=result;
+      res += result;
     }
     return res;
   }
@@ -211,6 +217,7 @@ class DatabaseHelper {
       return 0;
     }
   }
+
   Future<int> saveHardware(Hardware hw) async {
     var dbClient = await db;
     int res = await dbClient.insert("Hardware", hw.toMap());
@@ -220,15 +227,16 @@ class DatabaseHelper {
   Future<int> saveAllHardware(List<Hardware> hwList) async {
     var dbClient = await db;
     int result = await dbClient.rawDelete('DELETE FROM Hardware');
-    int res=0;
-    for(int i=0;i<hwList.length;i++){
+    int res = 0;
+    for (int i = 0; i < hwList.length; i++) {
       result = await dbClient.insert("Hardware", hwList[i].toMap());
-      res+=result;
+      res += result;
     }
     return res;
   }
 
   Future<int> deleteHardware(Hardware hw) async {
+    await deleteAllDeviceWithHardware(hw);
     var dbClient = await db;
     int res = await dbClient.rawDelete(
         'DELETE FROM Hardware WHERE hwName = ? and roomID = ? and homeID = ? and email = ?',
@@ -237,6 +245,7 @@ class DatabaseHelper {
   }
 
   Future<int> deleteAllHardwareWithRoom(Room room) async {
+    await deleteAllDeviceWithRoom(room);
     var dbClient = await db;
     int res = await dbClient.rawDelete(
         'DELETE FROM Hardware WHERE roomID = ? and email = ?',
@@ -245,6 +254,7 @@ class DatabaseHelper {
   }
 
   Future<int> deleteAllHardwareWithHome(Home home) async {
+    await deleteAllDeviceWithHome(home);
     var dbClient = await db;
     int res = await dbClient.rawDelete(
         'DELETE FROM Hardware WHERE homeID = ? and email = ?',
@@ -279,7 +289,8 @@ class DatabaseHelper {
   Future<int> renameHardware(Hardware hw) async {
     var dbClient = await db;
     var res = await dbClient.rawUpdate(
-        "UPDATE Hardware SET hwName = ?, hwSeries = ?, hwIP = ? WHERE id = ?", [hw.hwName, hw.hwSeries, hw.hwIP, hw.id]);
+        "UPDATE Hardware SET hwName = ?, hwSeries = ?, hwIP = ? WHERE id = ?",
+        [hw.hwName, hw.hwSeries, hw.hwIP, hw.id]);
     if (res > 0) {
       return res;
     } else {
@@ -289,24 +300,61 @@ class DatabaseHelper {
 
   Future<int> saveDevice(Device dv) async {
     var dbClient = await db;
-    int res = await dbClient.rawInsert("INSERT INTO Device(id,email,dvName,dvPort,dvImg,dvStatus,hwID,roomID,homeID) VALUES(?,?,?,?,?,?,?,?,?)", [dv.id,dv.email,dv.dvName,dv.dvPort,dv.dvImg,dv.dvStatus,dv.hwID,dv.roomID,dv.homeID]);
-    await saveDeviceSlider(dv.deviceSlider);
+    int res = await dbClient.rawInsert(
+        "INSERT INTO Device(id,email,dvName,dvPort,dvImg,dvStatus,hwID,roomID,homeID) VALUES(?,?,?,?,?,?,?,?,?)",
+        [
+          dv.id,
+          dv.email,
+          dv.dvName,
+          dv.dvPort,
+          dv.dvImg,
+          dv.dvStatus,
+          dv.hwID,
+          dv.roomID,
+          dv.homeID
+        ]);
     return res;
   }
 
   Future<int> saveAllDevice(List<Device> dvList) async {
     var dbClient = await db;
+    List<DeviceSlider> dvSliderList = new List<DeviceSlider>();
     int result = await dbClient.rawDelete('DELETE FROM Device');
-    int res=0;
-    for(int i=0;i<dvList.length;i++){
-      result = await dbClient.rawInsert("INSERT INTO Device(id,email,dvName,dvPort,dvImg,dvStatus,hwID,roomID,homeID) VALUES(?,?,?,?,?,?,?,?,?)", [dvList[i].id,dvList[i].email,dvList[i].dvName,dvList[i].dvPort,dvList[i].dvImg,dvList[i].dvStatus,dvList[i].hwID,dvList[i].roomID,dvList[i].homeID]);
-      if(dvList[i].deviceSlider!=null){
-        await saveDeviceSlider(dvList[i].deviceSlider);
+    int res = 0;
+    for (int i = 0; i < dvList.length; i++) {
+      result = await dbClient.rawInsert(
+          "INSERT INTO Device(id,email,dvName,dvPort,dvImg,dvStatus,hwID,roomID,homeID) VALUES(?,?,?,?,?,?,?,?,?)",
+          [
+            dvList[i].id,
+            dvList[i].email,
+            dvList[i].dvName,
+            dvList[i].dvPort,
+            dvList[i].dvImg,
+            dvList[i].dvStatus,
+            dvList[i].hwID,
+            dvList[i].roomID,
+            dvList[i].homeID
+          ]);
+      if (dvList[i].deviceSlider != null) {
+        dvSliderList.add(dvList[i].deviceSlider);
       }
-      res+=result;
+      res += result;
+    }
+    saveAllDeviceSlider(dvSliderList);
+    return res;
+  }
+
+  Future<int> saveAllDeviceSlider(List<DeviceSlider> dvSliderList) async {
+    var dbClient = await db;
+    int res = 0;
+    int result = await dbClient.rawDelete('DELETE FROM DeviceSlider');
+    for (int i = 0; i < dvSliderList.length; i++) {
+      result = await dbClient.insert("DeviceSlider", dvSliderList[i].toMap());
+      res += result;
     }
     return res;
   }
+
   Future<int> saveDeviceSlider(DeviceSlider dvSlider) async {
     var dbClient = await db;
     int res = await dbClient.insert("DeviceSlider", dvSlider.toMap());
@@ -315,25 +363,23 @@ class DatabaseHelper {
 
   Future<int> deleteDevice(Device dv) async {
     var dbClient = await db;
-    int res = await dbClient.rawDelete(
-        'DELETE FROM Device WHERE id = ?',
-        [dv.id]);
+    int res =
+        await dbClient.rawDelete('DELETE FROM Device WHERE id = ?', [dv.id]);
     await deleteDeviceSlider(dv.id);
     return res;
   }
+
   Future<int> deleteDeviceSlider(int dvID) async {
     var dbClient = await db;
-    int res = await dbClient.rawDelete(
-        'DELETE FROM DeviceSlider WHERE dvID = ?',
-        [dvID]);
+    int res = await dbClient
+        .rawDelete('DELETE FROM DeviceSlider WHERE dvID = ?', [dvID]);
     return res;
   }
 
   Future<int> deleteAllDeviceWithHardware(Hardware hw) async {
     var dbClient = await db;
     int res = await dbClient.rawDelete(
-        'DELETE FROM Device WHERE hwID = ? and email = ?',
-        [hw.id, hw.email]);
+        'DELETE FROM Device WHERE hwID = ? and email = ?', [hw.id, hw.email]);
     return res;
   }
 
@@ -380,7 +426,8 @@ class DatabaseHelper {
   Future<int> renameDevice(Device dv) async {
     var dbClient = await db;
     var res = await dbClient.rawUpdate(
-        "UPDATE Device SET dvName = ?, dvPort = ?, dvImg = ? WHERE id = ?", [dv.dvName, dv.dvPort, dv.dvImg, dv.id]);
+        "UPDATE Device SET dvName = ?, dvPort = ?, dvImg = ? WHERE id = ?",
+        [dv.dvName, dv.dvPort, dv.dvImg, dv.id]);
     if (res > 0) {
       return res;
     } else {

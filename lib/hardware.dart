@@ -8,6 +8,8 @@ import 'package:home_automation/logout.dart';
 import 'package:home_automation/models/hardware_data.dart';
 import 'package:home_automation/device.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:home_automation/get_hardware_details.dart';
+import 'package:home_automation/internet_access.dart';
 
 class HardwareScreen extends StatefulWidget {
   final Home home;
@@ -21,18 +23,19 @@ class HardwareScreen extends StatefulWidget {
 
 class HardwareScreenState extends State<HardwareScreen>
     implements HardwareScreenContract {
-  final showHwscaffoldKey = new GlobalKey<ScaffoldState>();
+  final showHwScaffoldKey = new GlobalKey<ScaffoldState>();
   bool _isLoading = false;
   var hwFormKey = new GlobalKey<FormState>();
   var hwReFormKey = new GlobalKey<FormState>();
-  bool _autoValidatehw = false;
-  bool _autoValidatehwRe = false;
+  bool _autoValidateHw = false;
+  bool _autoValidateHwRe = false;
   var hwRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
   List<Hardware> hwList = new List<Hardware>();
   String _hwName, _hwSeries, _hwIP;
+  bool internetAccess = false;
   void _showSnackBar(String text) {
-    showHwscaffoldKey.currentState.removeCurrentSnackBar();
-    showHwscaffoldKey.currentState
+    showHwScaffoldKey.currentState.removeCurrentSnackBar();
+    showHwScaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
@@ -48,14 +51,31 @@ class HardwareScreenState extends State<HardwareScreen>
 
   var db = new DatabaseHelper();
 
+  Future getInternetAccessObject() async {
+    CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
+    bool internetAccessDummy = await checkInternetAccess.check();
+    setState(() {
+      internetAccess = internetAccessDummy;
+    });
+  }
+
   Future getHardwareList() async {
-    hwRefreshIndicatorKey.currentState?.show();
-    hwList = await _presenter.api.getAllHardware(widget.room);
-    if (hwList != null) {
+    await getInternetAccessObject();
+    if (internetAccess) {
+      hwRefreshIndicatorKey.currentState?.show();
+      hwList = await _presenter.api.getAllHardware(widget.room);
+      if (hwList != null) {
+        setState(() {
+          hwList = hwList.toList();
+        });
+        onSuccessGetAllHardware(hwList);
+      }
+    } else {
       setState(() {
-        hwList = hwList.toList();
+        hwList = new List<Hardware>();
+        _isLoading = false;
       });
-      onSuccessGetAllHardware(hwList);
+      _showSnackBar("Please check internet connection");
     }
   }
 
@@ -189,7 +209,7 @@ class HardwareScreenState extends State<HardwareScreen>
                     ),
                     Form(
                       key: hwFormKey,
-                      autovalidate: _autoValidatehw,
+                      autovalidate: _autoValidateHw,
                       child: Column(
                         children: <Widget>[
                           new TextFormField(
@@ -238,12 +258,12 @@ class HardwareScreenState extends State<HardwareScreen>
                         Navigator.pop(context);
                         setState(() {
                           _isLoading = true;
-                          _autoValidatehw = false;
+                          _autoValidateHw = false;
                         });
                         _createHardware(_hwName, _hwSeries, _hwIP, widget.room);
                       } else {
                         setState(() {
-                          _autoValidatehw = true;
+                          _autoValidateHw = true;
                         });
                       }
                     })
@@ -269,7 +289,7 @@ class HardwareScreenState extends State<HardwareScreen>
                     ),
                     Form(
                       key: hwReFormKey,
-                      autovalidate: _autoValidatehwRe,
+                      autovalidate: _autoValidateHwRe,
                       child: Column(
                         children: <Widget>[
                           new TextFormField(
@@ -324,7 +344,7 @@ class HardwareScreenState extends State<HardwareScreen>
                           Navigator.pop(context);
                           setState(() {
                             _isLoading = true;
-                            _autoValidatehwRe = false;
+                            _autoValidateHwRe = false;
                           });
                           _renameHardware(hw, _hwName, _hwSeries, _hwIP);
                         } else {
@@ -332,7 +352,7 @@ class HardwareScreenState extends State<HardwareScreen>
                         }
                       } else {
                         setState(() {
-                          _autoValidatehw = true;
+                          _autoValidateHw = true;
                         });
                       }
                     })
@@ -344,29 +364,55 @@ class HardwareScreenState extends State<HardwareScreen>
     // to show dialogue to ensure of deleting operation
     bool status = false;
     _showConfirmDialog() async {
-      await showDialog<String>(
-        context: context,
-        builder: (BuildContext context) => new AlertDialog(
-              contentPadding: const EdgeInsets.all(16.0),
-              content: new Container(
-                child: Text('Are you sure?'),
-              ),
-              actions: <Widget>[
-                new FlatButton(
-                    child: const Text('CANCEL'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      status = false;
-                    }),
-                new FlatButton(
-                    child: const Text('OK'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      status = true;
-                    })
-              ],
-            ),
-      );
+      _isIOS(context)
+          ? await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => CupertinoAlertDialog(
+                    title: Text('Are you sure?'),
+                    actions: <Widget>[
+                      new CupertinoDialogAction(
+                        child: const Text('CANCEL'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          status = false;
+                        },
+                      ),
+                      new CupertinoDialogAction(
+                        child: const Text(
+                          'OK',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          status = true;
+                        },
+                      )
+                    ],
+                  ),
+            )
+          : await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => new AlertDialog(
+                    contentPadding: const EdgeInsets.all(16.0),
+                    content: new Container(
+                      child: Text('Are you sure?'),
+                    ),
+                    actions: <Widget>[
+                      new FlatButton(
+                          child: const Text('CANCEL'),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            status = false;
+                          }),
+                      new FlatButton(
+                          child: const Text('OK'),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            status = true;
+                          })
+                    ],
+                  ),
+            );
     }
 
     _deleteHardware(Hardware hw) async {
@@ -397,7 +443,30 @@ class HardwareScreenState extends State<HardwareScreen>
                 shape: new RoundedRectangleBorder(
                     borderRadius: new BorderRadius.circular(30.0)),
                 onPressed: () async {
-                  await _showHardwareNameDialog();
+                  if (_isIOS(context)) {
+                    Map hwDetails = new Map();
+                    hwDetails['isModifying'] = false;
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => GetHardwareDetails(
+                              room: widget.room,
+                              hwList: hwList,
+                              hwDetails: hwDetails,
+                            ),
+                      ),
+                    );
+                    print(result.toString());
+                    if (result != null && !result['error']) {
+                      setState(() {
+                        _isLoading = true;
+                      });
+                      _createHardware(result['hwName'], result['hwSeries'],
+                          result['hwIP'], widget.room);
+                    }
+                  } else {
+                    await _showHardwareNameDialog();
+                  }
                 },
                 color: kHAutoBlue300,
                 child: Column(
@@ -428,7 +497,8 @@ class HardwareScreenState extends State<HardwareScreen>
               splashColor: kHAutoBlue300,
               child: Card(
                 child: Container(
-                  padding: EdgeInsets.only(left: 10.0, top: 20.0, bottom: 20.0),
+                  padding: EdgeInsets.only(
+                      left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
@@ -450,20 +520,54 @@ class HardwareScreenState extends State<HardwareScreen>
                       ),
                       Row(
                         children: <Widget>[
-                          FlatButton(
-                            onPressed: () async {
-                              await _showHardwareReNameDialog(hwList[index]);
-                            },
-                            child: Icon(Icons.edit),
+                          SizedBox(
+                            width: 40.0,
+                            child: FlatButton(
+                              onPressed: () async {
+                                if (_isIOS(context)) {
+                                  Map hwDetails = new Map();
+                                  hwDetails = hwList[index].toMap();
+                                  hwDetails['isModifying'] = true;
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => GetHardwareDetails(
+                                            room: widget.room,
+                                            hwList: hwList,
+                                            hwDetails: hwDetails,
+                                          ),
+                                    ),
+                                  );
+                                  print(result.toString());
+                                  if (result != null && !result['error']) {
+                                    setState(() {
+                                      _isLoading = true;
+                                    });
+                                    _renameHardware(
+                                        hwList[index],
+                                        result['hwName'],
+                                        result['hwSeries'],
+                                        result['hwIP']);
+                                  }
+                                } else {
+                                  await _showHardwareReNameDialog(
+                                      hwList[index]);
+                                }
+                              },
+                              child: Icon(Icons.edit),
+                            ),
                           ),
                           SizedBox(
-                            width: 10.0,
+                            width: 20.0,
                           ),
-                          FlatButton(
-                            onPressed: () async {
-                              await _deleteHardware(hwList[index]);
-                            },
-                            child: Icon(Icons.delete),
+                          SizedBox(
+                            width: 40.0,
+                            child: FlatButton(
+                              onPressed: () async {
+                                await _deleteHardware(hwList[index]);
+                              },
+                              child: Icon(Icons.delete),
+                            ),
                           ),
                         ],
                       ),
@@ -478,7 +582,7 @@ class HardwareScreenState extends State<HardwareScreen>
     }
 
     return Scaffold(
-      key: showHwscaffoldKey,
+      key: showHwScaffoldKey,
       appBar: _isIOS(context)
           ? CupertinoNavigationBar(
               backgroundColor: kHAutoBlue100,

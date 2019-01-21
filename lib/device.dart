@@ -10,6 +10,7 @@ import 'package:home_automation/models/device_data.dart';
 import 'package:home_automation/device/get_device_details.dart';
 import 'package:home_automation/device/device_status_screen.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:home_automation/internet_access.dart';
 
 class DeviceScreen extends StatefulWidget {
   final Home home;
@@ -29,6 +30,7 @@ class DeviceScreenState extends State<DeviceScreen>
   var dvRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
   List<Device> dvList = new List<Device>();
   List<DeviceImg> dvImgList = new List<DeviceImg>();
+  bool internetAccess = false;
   void _showSnackBar(String text) {
     showDvScaffoldKey.currentState.removeCurrentSnackBar();
     showDvScaffoldKey.currentState
@@ -46,16 +48,33 @@ class DeviceScreenState extends State<DeviceScreen>
     super.initState();
   }
 
+  Future getInternetAccessObject() async {
+    CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
+    bool internetAccessDummy = await checkInternetAccess.check();
+    setState(() {
+      internetAccess = internetAccessDummy;
+    });
+  }
+
   var db = new DatabaseHelper();
 
   Future getDeviceList() async {
-    dvRefreshIndicatorKey.currentState?.show();
-    dvList = await _presenter.api.getAllDevice(widget.hardware);
-    if (dvList != null) {
+    await getInternetAccessObject();
+    if (internetAccess) {
+      dvRefreshIndicatorKey.currentState?.show();
+      dvList = await _presenter.api.getAllDevice(widget.hardware);
+      if (dvList != null) {
+        setState(() {
+          dvList = dvList.toList();
+        });
+        onSuccessGetAllDevice(dvList);
+      }
+    } else {
       setState(() {
-        dvList = dvList.toList();
+        dvList = new List<Device>();
+        _isLoading = false;
       });
-      onSuccessGetAllDevice(dvList);
+      _showSnackBar("Please check internet connection");
     }
   }
 
@@ -147,29 +166,55 @@ class DeviceScreenState extends State<DeviceScreen>
     // to show dialogue to ensure of deleting operation
     bool status = false;
     _showConfirmDialog() async {
-      await showDialog<String>(
-        context: context,
-        builder: (BuildContext context) => new AlertDialog(
-              contentPadding: const EdgeInsets.all(16.0),
-              content: new Container(
-                child: Text('Are you sure?'),
-              ),
-              actions: <Widget>[
-                new FlatButton(
-                    child: const Text('CANCEL'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      status = false;
-                    }),
-                new FlatButton(
-                    child: const Text('OK'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      status = true;
-                    })
-              ],
-            ),
-      );
+      _isIOS(context)
+          ? await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => CupertinoAlertDialog(
+                    title: Text('Are you sure?'),
+                    actions: <Widget>[
+                      new CupertinoDialogAction(
+                        child: const Text('CANCEL'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          status = false;
+                        },
+                      ),
+                      new CupertinoDialogAction(
+                        child: const Text(
+                          'OK',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          status = true;
+                        },
+                      )
+                    ],
+                  ),
+            )
+          : await showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => new AlertDialog(
+                    contentPadding: const EdgeInsets.all(16.0),
+                    content: new Container(
+                      child: Text('Are you sure?'),
+                    ),
+                    actions: <Widget>[
+                      new FlatButton(
+                          child: const Text('CANCEL'),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            status = false;
+                          }),
+                      new FlatButton(
+                          child: const Text('OK'),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            status = true;
+                          })
+                    ],
+                  ),
+            );
     }
 
     _deleteDevice(Device dv) async {
@@ -248,7 +293,8 @@ class DeviceScreenState extends State<DeviceScreen>
               splashColor: kHAutoBlue300,
               child: Card(
                 child: Container(
-                  padding: EdgeInsets.only(left: 10.0, top: 20.0, bottom: 20.0),
+                  padding: EdgeInsets.only(
+                      left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
@@ -274,41 +320,47 @@ class DeviceScreenState extends State<DeviceScreen>
                       ),
                       Row(
                         children: <Widget>[
-                          FlatButton(
-                            onPressed: () async {
-                              Map dvDetails = new Map();
-                              dvDetails = dvList[index].toMap();
-                              dvDetails['isModifying'] = true;
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => GetDeviceDetails(
-                                        hardware: widget.hardware,
-                                        deviceList: dvList,
-                                        dvDetails: dvDetails,
-                                        imgList: dvImgList,
-                                      ),
-                                ),
-                              );
-                              print(result.toString());
-                              if (result != null && !result['error']) {
-                                setState(() {
-                                  _isLoading = true;
-                                });
-                                _renameDevice(dvList[index], result['dvName'],
-                                    result['dvImg'], result['dvPort']);
-                              }
-                            },
-                            child: Icon(Icons.edit),
+                          SizedBox(
+                            width: 40.0,
+                            child: FlatButton(
+                              onPressed: () async {
+                                Map dvDetails = new Map();
+                                dvDetails = dvList[index].toMap();
+                                dvDetails['isModifying'] = true;
+                                final result = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => GetDeviceDetails(
+                                          hardware: widget.hardware,
+                                          deviceList: dvList,
+                                          dvDetails: dvDetails,
+                                          imgList: dvImgList,
+                                        ),
+                                  ),
+                                );
+                                print(result.toString());
+                                if (result != null && !result['error']) {
+                                  setState(() {
+                                    _isLoading = true;
+                                  });
+                                  _renameDevice(dvList[index], result['dvName'],
+                                      result['dvImg'], result['dvPort']);
+                                }
+                              },
+                              child: Icon(Icons.edit),
+                            ),
                           ),
                           SizedBox(
-                            width: 10.0,
+                            width: 20.0,
                           ),
-                          FlatButton(
-                            onPressed: () async {
-                              await _deleteDevice(dvList[index]);
-                            },
-                            child: Icon(Icons.delete),
+                          SizedBox(
+                            width: 40.0,
+                            child: FlatButton(
+                              onPressed: () async {
+                                await _deleteDevice(dvList[index]);
+                              },
+                              child: Icon(Icons.delete),
+                            ),
                           ),
                         ],
                       ),
