@@ -11,6 +11,7 @@ class HomeAutomationState extends State<HomeAutomation>{
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Home Automation',
       theme: _kHomeAutomationTheme,
       initialRoute: '/',

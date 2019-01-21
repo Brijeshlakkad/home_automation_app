@@ -117,6 +117,7 @@ class LoginScreenState extends State<LoginScreen>
               new Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: new TextFormField(
+                  autofocus: true,
                   keyboardType: TextInputType.emailAddress,
                   onSaved: (val) => _email = val,
                   validator: validateEmail,

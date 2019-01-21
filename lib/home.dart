@@ -15,9 +15,7 @@ class HomeScreen extends StatefulWidget {
   }
 }
 
-class HomeScreenState extends State<HomeScreen>
-    with WidgetsBindingObserver
-    implements HomeScreenContract {
+class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   final scaffoldKey = new GlobalKey<ScaffoldState>();
   var homeNameFormKey = new GlobalKey<FormState>();
   var homeReNameFormKey = new GlobalKey<FormState>();
@@ -42,21 +40,7 @@ class HomeScreenState extends State<HomeScreen>
     });
     getHomeList();
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
   }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  didPopRoute() {
-    print("f");
-    return new Future<bool>.value(true);
-  }
-
 
   HomeScreenPresenter _presenter;
   HomeScreenState() {
@@ -135,8 +119,6 @@ class HomeScreenState extends State<HomeScreen>
   bool _isIOS(BuildContext context) {
     return Theme.of(context).platform == TargetPlatform.iOS ? true : false;
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -502,29 +484,54 @@ class HomeScreenState extends State<HomeScreen>
       );
     }
 
-    return new Scaffold(
-      key: scaffoldKey,
-      appBar: _isIOS(context)
-          ? CupertinoNavigationBar(
-              backgroundColor: kHAutoBlue100,
-              leading: Container(),
-              middle: new Text("Home Automation"),
-              trailing: GetLogOut(),
-            )
-          : new AppBar(
-              leading: Container(),
-              title: new Text("Home Automation"),
+    Future<bool> _backButtonPressed() {
+      return showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) => new AlertDialog(
+              contentPadding: const EdgeInsets.all(16.0),
+              title: new Container(
+                child: Text('Are you sure, you want to log out?'),
+              ),
               actions: <Widget>[
-                GetLogOut(),
+                new FlatButton(
+                  child: const Text('NO'),
+                  onPressed: () => Navigator.pop(context, false),
+                ),
+                new FlatButton(
+                  child: const Text('YES'),
+                  onPressed: () => Navigator.pop(context, true),
+                ),
               ],
             ),
-      body: _isLoading
-          ? ShowProgress()
-          : RefreshIndicator(
-              key: homeRefreshIndicatorKey,
-              child: createListView(context, homeList),
-              onRefresh: getHomeList,
-            ),
+      );
+    }
+
+    return WillPopScope(
+      onWillPop: () => new Future<bool>.value(false),
+      child: new Scaffold(
+        key: scaffoldKey,
+        appBar: _isIOS(context)
+            ? CupertinoNavigationBar(
+                backgroundColor: kHAutoBlue100,
+                leading: Container(),
+                middle: new Text("Home Automation"),
+                trailing: GetLogOut(),
+              )
+            : new AppBar(
+                leading: Container(),
+                title: new Text("Home Automation"),
+                actions: <Widget>[
+                  GetLogOut(),
+                ],
+              ),
+        body: _isLoading
+            ? ShowProgress()
+            : RefreshIndicator(
+                key: homeRefreshIndicatorKey,
+                child: createListView(context, homeList),
+                onRefresh: getHomeList,
+              ),
+      ),
     );
   }
 }

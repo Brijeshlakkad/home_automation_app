@@ -37,7 +37,7 @@ class SignupScreenState extends State<SignupScreen> implements SignupScreenContr
   void onSignupSuccess() async {
     _showSnackBar("Created");
     setState(() => _isLoading = false);
-    Navigator.of(context).pushNamed('/login');
+    Navigator.of(context).pop();
   }
   @override
   void onSignupError(String errorTxt) {
@@ -220,7 +220,7 @@ class SignupScreenState extends State<SignupScreen> implements SignupScreenContr
                 Container(
                   child: new FlatButton(
                     onPressed: () {
-                      Navigator.of(context).pushNamed('/login');
+                      Navigator.of(context).pop();
                     },
                     child: Text(
                       'Login?',

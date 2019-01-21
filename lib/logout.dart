@@ -20,7 +20,7 @@ class GetLogOutState extends State<GetLogOut> {
       await db.deleteUsers();
       print("logout");
       Navigator.popUntil(context, ModalRoute.withName('/'));
-      Navigator.pushNamed(context, "/logout");
+      Navigator.pushNamed(context, "/login");
     }
 
     return _isIOS(context)
