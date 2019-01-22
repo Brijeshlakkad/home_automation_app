@@ -504,7 +504,7 @@ class HardwareScreenState extends State<HardwareScreen>
                     children: <Widget>[
                       Expanded(
                         child: Hero(
-                          tag: hwList[index].id,
+                          tag: hwList[index].hwName,
                           child: SizedBox(
                             width: 100.0,
                             child: Text(
@@ -623,7 +623,7 @@ class HardwareScreenState extends State<HardwareScreen>
                       width: 15.0,
                     ),
                     new Hero(
-                      tag: widget.room.id,
+                      tag: widget.room.roomName,
                       child: SizedBox(
                         width: 100.0,
                         child: Text(

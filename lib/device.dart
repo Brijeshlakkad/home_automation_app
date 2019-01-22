@@ -301,7 +301,7 @@ class DeviceScreenState extends State<DeviceScreen>
                       Expanded(
                         child: ListTile(
                           title: Hero(
-                            tag: dvList[index].id,
+                            tag: dvList[index].dvName,
                             child: SizedBox(
                               width: 100.0,
                               child: Text(
@@ -416,7 +416,7 @@ class DeviceScreenState extends State<DeviceScreen>
                       width: 15.0,
                     ),
                     new Hero(
-                      tag: widget.hardware.id,
+                      tag: widget.hardware.hwName,
                       child: SizedBox(
                         width: 100.0,
                         child: Text(

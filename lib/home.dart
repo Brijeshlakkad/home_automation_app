@@ -435,7 +435,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                     children: <Widget>[
                       Expanded(
                         child: Hero(
-                          tag: homeList[index].id,
+                          tag: homeList[index].homeName,
                           child: SizedBox(
                             width: 100.0,
                             child: Text(

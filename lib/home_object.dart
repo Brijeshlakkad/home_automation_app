@@ -461,7 +461,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
                     children: <Widget>[
                       Expanded(
                         child: Hero(
-                          tag: roomList[index].id,
+                          tag: roomList[index].roomName,
                           child: SizedBox(
                             width: 100.0,
                             child: Text(
@@ -552,7 +552,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
                       width: 15.0,
                     ),
                     new Hero(
-                      tag: widget.home.id,
+                      tag: widget.home.homeName,
                       child: SizedBox(
                         width: 100.0,
                         child: Text(

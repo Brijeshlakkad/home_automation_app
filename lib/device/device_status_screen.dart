@@ -251,7 +251,7 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                       width: 15.0,
                     ),
                     new Hero(
-                      tag: widget.device.id,
+                      tag: widget.device.dvName,
                       child: SizedBox(
                         width: 100.0,
                         child: Text(

@@ -4,7 +4,7 @@ import 'package:home_automation/models/user.dart';
 
 class RestDatasource {
   NetworkUtil _netUtil = new NetworkUtil();
-  static final baseURL = 'https://86d2ad5a.ngrok.io/Home Automation';
+  static final baseURL = 'https://homeautomations.tk/brijesh/server_files';
   static final loginURL = baseURL + "/login_data.php";
   static final signupURL = baseURL + "/signup_data.php";
   static final _apiKEY = "somerandomkey";

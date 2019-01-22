@@ -121,7 +121,7 @@ class DeviceSlider {
 
 class SendDeviceData {
   NetworkUtil _netUtil = new NetworkUtil();
-  static final baseURL = 'https://86d2ad5a.ngrok.io/Home Automation';
+  static final baseURL = 'https://homeautomations.tk/brijesh/server_files';
   static final finalURL = baseURL + "/device_actions.php";
   static final db = new DatabaseHelper();
 
