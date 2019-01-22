@@ -20,6 +20,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   var homeNameFormKey = new GlobalKey<FormState>();
   var homeReNameFormKey = new GlobalKey<FormState>();
   bool _isLoading = false;
+  bool flag = false;
   bool _autoValidateHomeName = false;
   bool _autoValidateHomeReName = false;
   var homeRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
@@ -98,7 +99,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteHome(home);
-    homeRefreshIndicatorKey.currentState?.show();
+    getHomeList();
   }
 
   void onSuccessRename(Home home) async {
@@ -106,7 +107,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.renameHome(home);
-    homeRefreshIndicatorKey.currentState?.show();
+    getHomeList();
   }
 
   @override
@@ -437,7 +438,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                         child: Hero(
                           tag: homeList[index].homeName,
                           child: Padding(
-                            padding: EdgeInsets.only(left: 15.0,top:10.0),
+                            padding: EdgeInsets.only(left: 15.0, top: 10.0),
                             child: Text(
                               '${homeList[index].homeName}',
                               textAlign: TextAlign.left,
@@ -484,6 +485,111 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       );
     }
 
+    Widget createListViewIOS(BuildContext context, List<Home> homeList) {
+      var len = 0;
+      if (homeList != null) {
+        len = homeList.length;
+      }
+      return new SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          childAspectRatio: 1.0,
+          crossAxisCount: 2,
+        ),
+        delegate: new SliverChildBuilderDelegate(
+          (BuildContext context, int index) {
+            if (index == len) {
+              return Center(
+                  child: SizedBox(
+                width: 150.0,
+                height: 150.0,
+                child: RaisedButton(
+                  shape: new RoundedRectangleBorder(
+                      borderRadius: new BorderRadius.circular(30.0)),
+                  onPressed: () async {
+                    await _showHomeNameDialog();
+                  },
+                  color: kHAutoBlue300,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(Icons.add),
+                      Text('Add Home'),
+                    ],
+                  ),
+                ),
+              ));
+            }
+            return Center(
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            HomeObject(home: homeList[index])),
+                  );
+                },
+                splashColor: kHAutoBlue300,
+                child: Container(
+                  padding: EdgeInsets.only(left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
+                  child: Card(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          child: Hero(
+                            tag: homeList[index].homeName,
+                            child: Padding(
+                              padding: EdgeInsets.only(left: 15.0, top: 10.0),
+                              child: Text(
+                                '${homeList[index].homeName}',
+                                textAlign: TextAlign.left,
+                                style: Theme.of(context).textTheme.headline,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 40.0,
+                        ),
+                        Row(
+                          children: <Widget>[
+                            SizedBox(
+                              width: 40.0,
+                              child: FlatButton(
+                                onPressed: () async {
+                                  await _showHomeReNameDialog(homeList[index]);
+                                },
+                                child: Icon(Icons.edit),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 20.0,
+                            ),
+                            SizedBox(
+                              width: 40.0,
+                              child: FlatButton(
+                                onPressed: () async {
+                                  await _deleteHome(homeList[index]);
+                                },
+                                child: Icon(Icons.delete),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+          childCount: len + 1,
+        ),
+      );
+    }
+
     Future<bool> _backButtonPressed() {
       return showDialog<bool>(
         context: context,
@@ -526,11 +632,21 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
               ),
         body: _isLoading
             ? ShowProgress()
-            : RefreshIndicator(
-                key: homeRefreshIndicatorKey,
-                child: createListView(context, homeList),
-                onRefresh: getHomeList,
-              ),
+            : _isIOS(context)
+                ? new CustomScrollView(
+                    slivers: <Widget>[
+                      new CupertinoSliverRefreshControl(onRefresh: getHomeList),
+                      new SliverSafeArea(
+                        top: false,
+                        sliver: createListViewIOS(context, homeList),
+                      ),
+                    ],
+                  )
+                : RefreshIndicator(
+                    key: homeRefreshIndicatorKey,
+                    child: createListView(context, homeList),
+                    onRefresh: getHomeList,
+                  ),
       ),
     );
   }

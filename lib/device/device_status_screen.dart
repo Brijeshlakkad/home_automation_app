@@ -184,47 +184,50 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
     }
 
     Widget createIOSDeviceView(BuildContext context, Device device) {
-      return Container(
-        padding: EdgeInsets.only(top: 40.0, left: 20.0, right: 20.0),
-        child: ListView(
-          children: <Widget>[
-            MergeSemantics(
-              child: ListTile(
-                title: Text('${device.dvName}'),
-                trailing: CupertinoSwitch(
-                  value: device.dvStatus == 1 ? true : false,
-                  onChanged: (bool value) {
-                    setState(() {
-                      _isLoading = true;
-                    });
-                    device.dvStatus == 1
-                        ? _presenter.doChangeDeviceStatus(device, 0)
-                        : _presenter.doChangeDeviceStatus(device, 1);
-                  },
-                ),
-                onTap: () {
-                  setState(() {
-                    setState(() {
-                      _isLoading = true;
-                    });
-                    device.dvStatus == 1
-                        ? _presenter.doChangeDeviceStatus(device, 0)
-                        : _presenter.doChangeDeviceStatus(device, 1);
-                  });
-                },
-              ),
+      List<Widget> list = [
+        MergeSemantics(
+          child: ListTile(
+            title: Text('${device.dvName}'),
+            trailing: CupertinoSwitch(
+              value: device.dvStatus == 1 ? true : false,
+              onChanged: (bool value) {
+                setState(() {
+                  _isLoading = true;
+                });
+                device.dvStatus == 1
+                    ? _presenter.doChangeDeviceStatus(device, 0)
+                    : _presenter.doChangeDeviceStatus(device, 1);
+              },
             ),
-            device.dvStatus == 1 && device.deviceSlider != null
-                ? Container(
-                    child: showIOSDeviceSlider(context, device),
-                  )
-                : Container(),
-            Container(
-              padding: EdgeInsets.only(top: 50.0),
-              child: _isLoadingValue ? ShowProgress() : null,
-            )
-          ],
+            onTap: () {
+              setState(() {
+                setState(() {
+                  _isLoading = true;
+                });
+                device.dvStatus == 1
+                    ? _presenter.doChangeDeviceStatus(device, 0)
+                    : _presenter.doChangeDeviceStatus(device, 1);
+              });
+            },
+          ),
         ),
+        device.dvStatus == 1 && device.deviceSlider != null
+            ? Container(
+                child: showIOSDeviceSlider(context, device),
+              )
+            : Container(),
+        Container(
+          padding: EdgeInsets.only(top: 50.0),
+          child: _isLoadingValue ? ShowProgress() : null,
+        )
+      ];
+      return SliverList(
+        delegate: SliverChildBuilderDelegate((BuildContext context, int index) {
+          return Container(
+            padding: EdgeInsets.only(top: 40.0, left: 20.0, right: 20.0),
+            child: list[index],
+          );
+        }, childCount: list.length),
       );
     }
 
@@ -239,19 +242,6 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
       key: showDvStatusScaffoldKey,
       appBar: _isIOS(context)
           ? CupertinoNavigationBar(
-              padding: EdgeInsetsDirectional.only(start: 0.0, top: 0.0),
-              leading: Material(
-                color: kHAutoBlue100,
-                child: new IconButton(
-                  icon: Icon(
-                    Icons.arrow_back_ios,
-                    color: kHAutoBlue900,
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              ),
               backgroundColor: kHAutoBlue100,
               middle: Center(
                 child: Row(
@@ -318,13 +308,21 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
             ),
       body: _isLoading
           ? ShowProgress()
-          : RefreshIndicator(
-              key: dvStatusRefreshIndicatorKey,
-              child: _isIOS(context)
-                  ? createIOSDeviceView(context, device)
-                  : createDeviceView(context, device),
-              onRefresh: getDeviceStatus,
-            ),
+          : _isIOS(context)
+              ? new CustomScrollView(
+                  slivers: <Widget>[
+                    new CupertinoSliverRefreshControl(
+                        onRefresh: getDeviceStatus),
+                    new SliverSafeArea(
+                        top: false,
+                        sliver: createIOSDeviceView(context, device)),
+                  ],
+                )
+              : RefreshIndicator(
+                  key: dvStatusRefreshIndicatorKey,
+                  child: createDeviceView(context, device),
+                  onRefresh: getDeviceStatus,
+                ),
     );
   }
 }

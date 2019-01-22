@@ -61,7 +61,6 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
       _isLoading = true;
     });
     getRoomList();
-    roomRefreshIndicatorKey.currentState?.show();
     super.initState();
   }
 
@@ -103,7 +102,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.saveRoom(room);
-    roomRefreshIndicatorKey.currentState?.show();
+    getRoomList();
   }
 
   @override
@@ -122,7 +121,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteRoom(room);
-    roomRefreshIndicatorKey.currentState?.show();
+    getRoomList();
   }
 
   @override
@@ -131,7 +130,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.renameRoom(room);
-    roomRefreshIndicatorKey.currentState?.show();
+    getRoomList();
   }
 
   @override
@@ -463,7 +462,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
                         child: Hero(
                           tag: roomList[index].roomName,
                           child: Padding(
-                            padding: EdgeInsets.only(left: 15.0,top:10.0),
+                            padding: EdgeInsets.only(left: 15.0, top: 10.0),
                             child: Text(
                               '${roomList[index].roomName}',
                               textAlign: TextAlign.left,
@@ -507,6 +506,112 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
             ),
           );
         }),
+      );
+    }
+
+    Widget createListViewIOS(BuildContext context, List<Room> roomList) {
+      var len = 0;
+      if (roomList != null) {
+        len = roomList.length;
+      }
+      return new SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          childAspectRatio: 1.0,
+          crossAxisCount: 2,
+        ),
+        delegate: new SliverChildBuilderDelegate(
+          (BuildContext context, int index) {
+            if (index == len) {
+              return Center(
+                  child: SizedBox(
+                width: 150.0,
+                height: 150.0,
+                child: RaisedButton(
+                  shape: new RoundedRectangleBorder(
+                      borderRadius: new BorderRadius.circular(30.0)),
+                  onPressed: () async {
+                    await _showRoomNameDialog();
+                  },
+                  color: kHAutoBlue300,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(Icons.add),
+                      Text('Add Room'),
+                    ],
+                  ),
+                ),
+              ));
+            }
+            return Center(
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => HardwareScreen(
+                            home: widget.home, room: roomList[index])),
+                  );
+                },
+                splashColor: kHAutoBlue300,
+                child: Container(
+                  padding: EdgeInsets.only(
+                      left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
+                  child: Card(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          child: Hero(
+                            tag: roomList[index].roomName,
+                            child: Padding(
+                              padding: EdgeInsets.only(left: 15.0, top: 10.0),
+                              child: Text(
+                                '${roomList[index].roomName}',
+                                textAlign: TextAlign.left,
+                                style: Theme.of(context).textTheme.headline,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 40.0,
+                        ),
+                        Row(
+                          children: <Widget>[
+                            SizedBox(
+                              width: 40.0,
+                              child: FlatButton(
+                                onPressed: () async {
+                                  await _showRoomReNameDialog(roomList[index]);
+                                },
+                                child: Icon(Icons.edit),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 20.0,
+                            ),
+                            SizedBox(
+                              width: 40.0,
+                              child: FlatButton(
+                                onPressed: () async {
+                                  await _deleteRoom(roomList[index]);
+                                },
+                                child: Icon(Icons.delete),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+          childCount: len + 1,
+        ),
       );
     }
 
@@ -570,11 +675,21 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
             ),
       body: _isLoading
           ? ShowProgress()
-          : RefreshIndicator(
-              key: roomRefreshIndicatorKey,
-              child: createListView(context, roomList),
-              onRefresh: getRoomList,
-            ),
+          : _isIOS(context)
+              ? new CustomScrollView(
+                  slivers: <Widget>[
+                    new CupertinoSliverRefreshControl(onRefresh: getRoomList),
+                    new SliverSafeArea(
+                      top: false,
+                      sliver: createListViewIOS(context, roomList),
+                    ),
+                  ],
+                )
+              : RefreshIndicator(
+                  key: roomRefreshIndicatorKey,
+                  child: createListView(context, roomList),
+                  onRefresh: getRoomList,
+                ),
     );
   }
 }

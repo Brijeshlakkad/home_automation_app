@@ -43,8 +43,6 @@ class DeviceScreenState extends State<DeviceScreen>
       _isLoading = true;
     });
     getDeviceList();
-    getDeviceImgList();
-    dvRefreshIndicatorKey.currentState?.show();
     super.initState();
   }
 
@@ -61,7 +59,6 @@ class DeviceScreenState extends State<DeviceScreen>
   Future getDeviceList() async {
     await getInternetAccessObject();
     if (internetAccess) {
-      dvRefreshIndicatorKey.currentState?.show();
       dvList = await _presenter.api.getAllDevice(widget.hardware);
       if (dvList != null) {
         setState(() {
@@ -69,6 +66,7 @@ class DeviceScreenState extends State<DeviceScreen>
         });
         onSuccessGetAllDevice(dvList);
       }
+      getDeviceImgList();
     } else {
       setState(() {
         dvList = new List<Device>();
@@ -79,9 +77,7 @@ class DeviceScreenState extends State<DeviceScreen>
   }
 
   Future getDeviceImgList() async {
-    dvRefreshIndicatorKey.currentState?.show();
     dvImgList = await _presenter.api.getAllDeviceImg();
-    print(dvImgList.toString());
     if (dvImgList != null) {
       setState(() {
         dvImgList = dvImgList.toList();
@@ -99,7 +95,7 @@ class DeviceScreenState extends State<DeviceScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.saveDevice(dv);
-    dvRefreshIndicatorKey.currentState?.show();
+    getDeviceList();
   }
 
   @override
@@ -118,7 +114,7 @@ class DeviceScreenState extends State<DeviceScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteDevice(dv);
-    dvRefreshIndicatorKey.currentState?.show();
+    getDeviceList();
   }
 
   @override
@@ -127,7 +123,7 @@ class DeviceScreenState extends State<DeviceScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.renameDevice(dv);
-    dvRefreshIndicatorKey.currentState?.show();
+    getDeviceList();
   }
 
   @override
@@ -289,8 +285,7 @@ class DeviceScreenState extends State<DeviceScreen>
                         DeviceStatusScreen(device: dvList[index]),
                   ),
                 );
-                print("f");
-                dvRefreshIndicatorKey.currentState.show();
+                getDeviceList();
               },
               splashColor: kHAutoBlue300,
               child: Container(
@@ -317,7 +312,9 @@ class DeviceScreenState extends State<DeviceScreen>
                             height: 10.0,
                             decoration: new BoxDecoration(
                               shape: BoxShape.circle,
-                              color: dvList[index].dvStatus == 1? Colors.green :Colors.red,
+                              color: dvList[index].dvStatus == 1
+                                  ? Colors.green
+                                  : Colors.red,
                             ),
                           ),
                         ),
@@ -381,6 +378,169 @@ class DeviceScreenState extends State<DeviceScreen>
       );
     }
 
+    Widget createListViewIOS(BuildContext context, List<Device> dvList) {
+      var len = 0;
+      if (dvList != null) {
+        len = dvList.length;
+      }
+      return new SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          childAspectRatio: 1.0,
+          crossAxisCount: 2,
+        ),
+        delegate: new SliverChildBuilderDelegate(
+          (BuildContext context, int index) {
+            if (index == len) {
+              return Center(
+                  child: SizedBox(
+                width: 150.0,
+                height: 150.0,
+                child: RaisedButton(
+                  shape: new RoundedRectangleBorder(
+                      borderRadius: new BorderRadius.circular(30.0)),
+                  onPressed: () async {
+                    Map dvDetails = new Map();
+                    dvDetails['isModifying'] = false;
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => GetDeviceDetails(
+                              hardware: widget.hardware,
+                              deviceList: dvList,
+                              dvDetails: dvDetails,
+                              imgList: dvImgList,
+                            ),
+                      ),
+                    );
+                    print(result.toString());
+                    if (result != null && !result['error']) {
+                      setState(() {
+                        _isLoading = true;
+                      });
+                      _createDevice(result['dvName'], result['dvPort'],
+                          result['dvImg'], widget.hardware);
+                    }
+                  },
+                  color: kHAutoBlue300,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(Icons.add),
+                      Text('Add Device'),
+                    ],
+                  ),
+                ),
+              ));
+            }
+            return Center(
+              child: InkWell(
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          DeviceStatusScreen(device: dvList[index]),
+                    ),
+                  );
+                  getDeviceList();
+                },
+                splashColor: kHAutoBlue300,
+                child: Container(
+                  padding: EdgeInsets.only(
+                      left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
+                  child: Card(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          child: ListTile(
+                            title: Hero(
+                              tag: dvList[index].dvName,
+                              child: Text(
+                                '${dvList[index].dvName}',
+                                textAlign: TextAlign.left,
+                                style: Theme.of(context).textTheme.headline,
+                              ),
+                            ),
+                            subtitle: Text(
+                                "${getDeviceCategory(dvList[index].dvImg)}"),
+                            trailing: new Container(
+                              width: 10.0,
+                              height: 10.0,
+                              decoration: new BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: dvList[index].dvStatus == 1
+                                    ? Colors.green
+                                    : Colors.red,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 40.0,
+                        ),
+                        Row(
+                          children: <Widget>[
+                            SizedBox(
+                              width: 40.0,
+                              child: FlatButton(
+                                onPressed: () async {
+                                  Map dvDetails = new Map();
+                                  dvDetails = dvList[index].toMap();
+                                  dvDetails['isModifying'] = true;
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => GetDeviceDetails(
+                                            hardware: widget.hardware,
+                                            deviceList: dvList,
+                                            dvDetails: dvDetails,
+                                            imgList: dvImgList,
+                                          ),
+                                    ),
+                                  );
+                                  print(result.toString());
+                                  if (result != null && !result['error']) {
+                                    setState(() {
+                                      _isLoading = true;
+                                    });
+                                    _renameDevice(
+                                        dvList[index],
+                                        result['dvName'],
+                                        result['dvImg'],
+                                        result['dvPort']);
+                                  }
+                                },
+                                child: Icon(Icons.edit),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 20.0,
+                            ),
+                            SizedBox(
+                              width: 40.0,
+                              child: FlatButton(
+                                onPressed: () async {
+                                  await _deleteDevice(dvList[index]);
+                                },
+                                child: Icon(Icons.delete),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+          childCount: len + 1,
+        ),
+      );
+    }
+
     return Scaffold(
       key: showDvScaffoldKey,
       appBar: _isIOS(context)
@@ -441,11 +601,21 @@ class DeviceScreenState extends State<DeviceScreen>
             ),
       body: _isLoading
           ? ShowProgress()
-          : RefreshIndicator(
-              key: dvRefreshIndicatorKey,
-              child: createListView(context, dvList),
-              onRefresh: getDeviceList,
-            ),
+          : _isIOS(context)
+              ? new CustomScrollView(
+                  slivers: <Widget>[
+                    new CupertinoSliverRefreshControl(onRefresh: getDeviceList),
+                    new SliverSafeArea(
+                      top: false,
+                      sliver: createListViewIOS(context, dvList),
+                    ),
+                  ],
+                )
+              : RefreshIndicator(
+                  key: dvRefreshIndicatorKey,
+                  child: createListView(context, dvList),
+                  onRefresh: getDeviceList,
+                ),
     );
   }
 }

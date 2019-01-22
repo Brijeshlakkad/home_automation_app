@@ -45,7 +45,6 @@ class HardwareScreenState extends State<HardwareScreen>
       _isLoading = true;
     });
     getHardwareList();
-    hwRefreshIndicatorKey.currentState?.show();
     super.initState();
   }
 
@@ -89,7 +88,7 @@ class HardwareScreenState extends State<HardwareScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.saveHardware(hw);
-    hwRefreshIndicatorKey.currentState?.show();
+    getHardwareList();
   }
 
   @override
@@ -108,7 +107,7 @@ class HardwareScreenState extends State<HardwareScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.deleteHardware(hw);
-    hwRefreshIndicatorKey.currentState?.show();
+    getHardwareList();
   }
 
   @override
@@ -117,7 +116,7 @@ class HardwareScreenState extends State<HardwareScreen>
     setState(() => _isLoading = false);
     var db = new DatabaseHelper();
     await db.renameHardware(hw);
-    hwRefreshIndicatorKey.currentState?.show();
+    getHardwareList();
   }
 
   @override
@@ -433,151 +432,317 @@ class HardwareScreenState extends State<HardwareScreen>
       return new GridView.count(
         crossAxisCount: 2,
         // Generate 100 Widgets that display their index in the List
-        children: List.generate(len + 1, (index) {
-          if (index == len) {
-            return Center(
-                child: SizedBox(
-              width: 150.0,
-              height: 150.0,
-              child: RaisedButton(
-                shape: new RoundedRectangleBorder(
-                    borderRadius: new BorderRadius.circular(30.0)),
-                onPressed: () async {
-                  if (_isIOS(context)) {
-                    Map hwDetails = new Map();
-                    hwDetails['isModifying'] = false;
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => GetHardwareDetails(
-                              room: widget.room,
-                              hwList: hwList,
-                              hwDetails: hwDetails,
-                            ),
-                      ),
-                    );
-                    print(result.toString());
-                    if (result != null && !result['error']) {
-                      setState(() {
-                        _isLoading = true;
-                      });
-                      _createHardware(result['hwName'], result['hwSeries'],
-                          result['hwIP'], widget.room);
+        children: List.generate(
+          len + 1,
+          (index) {
+            if (index == len) {
+              return Center(
+                  child: SizedBox(
+                width: 150.0,
+                height: 150.0,
+                child: RaisedButton(
+                  shape: new RoundedRectangleBorder(
+                      borderRadius: new BorderRadius.circular(30.0)),
+                  onPressed: () async {
+                    if (_isIOS(context)) {
+                      Map hwDetails = new Map();
+                      hwDetails['isModifying'] = false;
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => GetHardwareDetails(
+                                room: widget.room,
+                                hwList: hwList,
+                                hwDetails: hwDetails,
+                              ),
+                        ),
+                      );
+                      print(result.toString());
+                      if (result != null && !result['error']) {
+                        setState(() {
+                          _isLoading = true;
+                        });
+                        _createHardware(result['hwName'], result['hwSeries'],
+                            result['hwIP'], widget.room);
+                      }
+                    } else {
+                      await _showHardwareNameDialog();
                     }
-                  } else {
-                    await _showHardwareNameDialog();
-                  }
-                },
-                color: kHAutoBlue300,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(Icons.add),
-                    Text('Add Hardware'),
-                  ],
-                ),
-              ),
-            ));
-          }
-          return Center(
-            child: InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => DeviceScreen(
-                          home: widget.home,
-                          room: widget.room,
-                          hardware: hwList[index],
-                        ),
-                  ),
-                );
-              },
-              splashColor: kHAutoBlue300,
-              child: Container(
-                padding: EdgeInsets.only(
-                    left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
-                child: Card(
+                  },
+                  color: kHAutoBlue300,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      Expanded(
-                        child: Hero(
-                          tag: hwList[index].hwName,
-                          child: Padding(
-                            padding: EdgeInsets.only(left: 15.0,top:10.0),
-                            child: Text(
-                              '${hwList[index].hwName}',
-                              textAlign: TextAlign.left,
-                              style: Theme.of(context).textTheme.headline,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: 40.0,
-                      ),
-                      Row(
-                        children: <Widget>[
-                          SizedBox(
-                            width: 40.0,
-                            child: FlatButton(
-                              onPressed: () async {
-                                if (_isIOS(context)) {
-                                  Map hwDetails = new Map();
-                                  hwDetails = hwList[index].toMap();
-                                  hwDetails['isModifying'] = true;
-                                  final result = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => GetHardwareDetails(
-                                            room: widget.room,
-                                            hwList: hwList,
-                                            hwDetails: hwDetails,
-                                          ),
-                                    ),
-                                  );
-                                  print(result.toString());
-                                  if (result != null && !result['error']) {
-                                    setState(() {
-                                      _isLoading = true;
-                                    });
-                                    _renameHardware(
-                                        hwList[index],
-                                        result['hwName'],
-                                        result['hwSeries'],
-                                        result['hwIP']);
-                                  }
-                                } else {
-                                  await _showHardwareReNameDialog(
-                                      hwList[index]);
-                                }
-                              },
-                              child: Icon(Icons.edit),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 20.0,
-                          ),
-                          SizedBox(
-                            width: 40.0,
-                            child: FlatButton(
-                              onPressed: () async {
-                                await _deleteHardware(hwList[index]);
-                              },
-                              child: Icon(Icons.delete),
-                            ),
-                          ),
-                        ],
-                      ),
+                      Icon(Icons.add),
+                      Text('Add Hardware'),
                     ],
                   ),
                 ),
+              ));
+            }
+            return Center(
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DeviceScreen(
+                            home: widget.home,
+                            room: widget.room,
+                            hardware: hwList[index],
+                          ),
+                    ),
+                  );
+                },
+                splashColor: kHAutoBlue300,
+                child: Container(
+                  padding: EdgeInsets.only(
+                      left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
+                  child: Card(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          child: Hero(
+                            tag: hwList[index].hwName,
+                            child: Padding(
+                              padding: EdgeInsets.only(left: 15.0, top: 10.0),
+                              child: Text(
+                                '${hwList[index].hwName}',
+                                textAlign: TextAlign.left,
+                                style: Theme.of(context).textTheme.headline,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 40.0,
+                        ),
+                        Row(
+                          children: <Widget>[
+                            SizedBox(
+                              width: 40.0,
+                              child: FlatButton(
+                                onPressed: () async {
+                                  if (_isIOS(context)) {
+                                    Map hwDetails = new Map();
+                                    hwDetails = hwList[index].toMap();
+                                    hwDetails['isModifying'] = true;
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            GetHardwareDetails(
+                                              room: widget.room,
+                                              hwList: hwList,
+                                              hwDetails: hwDetails,
+                                            ),
+                                      ),
+                                    );
+                                    print(result.toString());
+                                    if (result != null && !result['error']) {
+                                      setState(() {
+                                        _isLoading = true;
+                                      });
+                                      _renameHardware(
+                                          hwList[index],
+                                          result['hwName'],
+                                          result['hwSeries'],
+                                          result['hwIP']);
+                                    }
+                                  } else {
+                                    await _showHardwareReNameDialog(
+                                        hwList[index]);
+                                  }
+                                },
+                                child: Icon(Icons.edit),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 20.0,
+                            ),
+                            SizedBox(
+                              width: 40.0,
+                              child: FlatButton(
+                                onPressed: () async {
+                                  await _deleteHardware(hwList[index]);
+                                },
+                                child: Icon(Icons.delete),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
-          );
-        }),
+            );
+          },
+        ),
+      );
+    }
+
+    Widget createListViewIOS(BuildContext context, List<Hardware> hwList) {
+      var len = 0;
+      if (hwList != null) {
+        len = hwList.length;
+      }
+      return new SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          childAspectRatio: 1.0,
+          crossAxisCount: 2,
+        ),
+        delegate: new SliverChildBuilderDelegate(
+          (BuildContext context, int index) {
+            if (index == len) {
+              return Center(
+                  child: SizedBox(
+                width: 150.0,
+                height: 150.0,
+                child: RaisedButton(
+                  shape: new RoundedRectangleBorder(
+                      borderRadius: new BorderRadius.circular(30.0)),
+                  onPressed: () async {
+                    if (_isIOS(context)) {
+                      Map hwDetails = new Map();
+                      hwDetails['isModifying'] = false;
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => GetHardwareDetails(
+                                room: widget.room,
+                                hwList: hwList,
+                                hwDetails: hwDetails,
+                              ),
+                        ),
+                      );
+                      print(result.toString());
+                      if (result != null && !result['error']) {
+                        setState(() {
+                          _isLoading = true;
+                        });
+                        _createHardware(result['hwName'], result['hwSeries'],
+                            result['hwIP'], widget.room);
+                      }
+                    } else {
+                      await _showHardwareNameDialog();
+                    }
+                  },
+                  color: kHAutoBlue300,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(Icons.add),
+                      Text('Add Hardware'),
+                    ],
+                  ),
+                ),
+              ));
+            }
+            return Center(
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DeviceScreen(
+                            home: widget.home,
+                            room: widget.room,
+                            hardware: hwList[index],
+                          ),
+                    ),
+                  );
+                },
+                splashColor: kHAutoBlue300,
+                child: Container(
+                  padding: EdgeInsets.only(
+                      left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
+                  child: Card(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          child: Hero(
+                            tag: hwList[index].hwName,
+                            child: Padding(
+                              padding: EdgeInsets.only(left: 15.0, top: 10.0),
+                              child: Text(
+                                '${hwList[index].hwName}',
+                                textAlign: TextAlign.left,
+                                style: Theme.of(context).textTheme.headline,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 40.0,
+                        ),
+                        Row(
+                          children: <Widget>[
+                            SizedBox(
+                              width: 40.0,
+                              child: FlatButton(
+                                onPressed: () async {
+                                  if (_isIOS(context)) {
+                                    Map hwDetails = new Map();
+                                    hwDetails = hwList[index].toMap();
+                                    hwDetails['isModifying'] = true;
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            GetHardwareDetails(
+                                              room: widget.room,
+                                              hwList: hwList,
+                                              hwDetails: hwDetails,
+                                            ),
+                                      ),
+                                    );
+                                    print(result.toString());
+                                    if (result != null && !result['error']) {
+                                      setState(() {
+                                        _isLoading = true;
+                                      });
+                                      _renameHardware(
+                                          hwList[index],
+                                          result['hwName'],
+                                          result['hwSeries'],
+                                          result['hwIP']);
+                                    }
+                                  } else {
+                                    await _showHardwareReNameDialog(
+                                        hwList[index]);
+                                  }
+                                },
+                                child: Icon(Icons.edit),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 20.0,
+                            ),
+                            SizedBox(
+                              width: 40.0,
+                              child: FlatButton(
+                                onPressed: () async {
+                                  await _deleteHardware(hwList[index]);
+                                },
+                                child: Icon(Icons.delete),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+          childCount: len + 1,
+        ),
       );
     }
 
@@ -641,11 +806,22 @@ class HardwareScreenState extends State<HardwareScreen>
             ),
       body: _isLoading
           ? ShowProgress()
-          : RefreshIndicator(
-              key: hwRefreshIndicatorKey,
-              child: createListView(context, hwList),
-              onRefresh: getHardwareList,
-            ),
+          : _isIOS(context)
+              ? new CustomScrollView(
+                  slivers: <Widget>[
+                    new CupertinoSliverRefreshControl(
+                        onRefresh: getHardwareList),
+                    new SliverSafeArea(
+                      top: false,
+                      sliver: createListViewIOS(context, hwList),
+                    ),
+                  ],
+                )
+              : RefreshIndicator(
+                  key: hwRefreshIndicatorKey,
+                  child: createListView(context, hwList),
+                  onRefresh: getHardwareList,
+                ),
     );
   }
 }
