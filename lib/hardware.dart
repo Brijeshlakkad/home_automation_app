@@ -495,18 +495,18 @@ class HardwareScreenState extends State<HardwareScreen>
                 );
               },
               splashColor: kHAutoBlue300,
-              child: Card(
-                child: Container(
-                  padding: EdgeInsets.only(
-                      left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
+              child: Container(
+                padding: EdgeInsets.only(
+                    left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
+                child: Card(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Expanded(
                         child: Hero(
                           tag: hwList[index].hwName,
-                          child: SizedBox(
-                            width: 100.0,
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 15.0,top:10.0),
                             child: Text(
                               '${hwList[index].hwName}',
                               textAlign: TextAlign.left,

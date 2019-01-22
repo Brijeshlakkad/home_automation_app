@@ -427,17 +427,17 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                 );
               },
               splashColor: kHAutoBlue300,
-              child: Card(
-                child: Container(
-                  padding: EdgeInsets.only(left: 10.0, top: 20.0, bottom: 20.0),
+              child: Container(
+                padding: EdgeInsets.only(left: 10.0, top: 20.0, bottom: 20.0),
+                child: Card(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Expanded(
                         child: Hero(
                           tag: homeList[index].homeName,
-                          child: SizedBox(
-                            width: 100.0,
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 15.0,top:10.0),
                             child: Text(
                               '${homeList[index].homeName}',
                               textAlign: TextAlign.left,

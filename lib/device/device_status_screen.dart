@@ -239,6 +239,19 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
       key: showDvStatusScaffoldKey,
       appBar: _isIOS(context)
           ? CupertinoNavigationBar(
+              padding: EdgeInsetsDirectional.only(start: 0.0, top: 0.0),
+              leading: Material(
+                color: kHAutoBlue100,
+                child: new IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios,
+                    color: kHAutoBlue900,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
               backgroundColor: kHAutoBlue100,
               middle: Center(
                 child: Row(
@@ -266,6 +279,16 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
               trailing: GetLogOut(),
             )
           : AppBar(
+              leading: new IconButton(
+                tooltip: "back",
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: kHAutoBlue900,
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
               title: Center(
                 child: Row(
                   children: <Widget>[

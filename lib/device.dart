@@ -281,20 +281,22 @@ class DeviceScreenState extends State<DeviceScreen>
           }
           return Center(
             child: InkWell(
-              onTap: () {
-                Navigator.push(
+              onTap: () async {
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) =>
                         DeviceStatusScreen(device: dvList[index]),
                   ),
                 );
+                print("f");
+                dvRefreshIndicatorKey.currentState.show();
               },
               splashColor: kHAutoBlue300,
-              child: Card(
-                child: Container(
-                  padding: EdgeInsets.only(
-                      left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
+              child: Container(
+                padding: EdgeInsets.only(
+                    left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
+                child: Card(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
@@ -302,17 +304,22 @@ class DeviceScreenState extends State<DeviceScreen>
                         child: ListTile(
                           title: Hero(
                             tag: dvList[index].dvName,
-                            child: SizedBox(
-                              width: 100.0,
-                              child: Text(
-                                '${dvList[index].dvName}',
-                                textAlign: TextAlign.left,
-                                style: Theme.of(context).textTheme.headline,
-                              ),
+                            child: Text(
+                              '${dvList[index].dvName}',
+                              textAlign: TextAlign.left,
+                              style: Theme.of(context).textTheme.headline,
                             ),
                           ),
                           subtitle:
                               Text("${getDeviceCategory(dvList[index].dvImg)}"),
+                          trailing: new Container(
+                            width: 10.0,
+                            height: 10.0,
+                            decoration: new BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: dvList[index].dvStatus == 1? Colors.green :Colors.red,
+                            ),
+                          ),
                         ),
                       ),
                       SizedBox(
