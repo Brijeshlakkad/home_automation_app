@@ -6,6 +6,7 @@ import 'login_screen_presenter.dart';
 import 'dart:ui';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/internet_access.dart';
+import 'package:home_automation/show_progress.dart';
 class LoginScreen extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
@@ -17,6 +18,7 @@ class LoginScreenState extends State<LoginScreen>
     implements LoginScreenContract, AuthStateListener {
   BuildContext _ctx;
   bool _obscureText = true;
+  bool _isLoadingValue = false;
   bool _isLoading = false;
   final formKey = new GlobalKey<FormState>();
   final scaffoldKey = new GlobalKey<ScaffoldState>();
@@ -29,6 +31,13 @@ class LoginScreenState extends State<LoginScreen>
     var authStateProvider = new AuthStateProvider();
     authStateProvider.subscribe(this);
   }
+  @override
+  void initState() {
+    setState(() {
+      _isLoading=true;
+    });
+    super.initState();
+  }
 
   void _submit() async {
     CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
@@ -36,7 +45,7 @@ class LoginScreenState extends State<LoginScreen>
       final form = formKey.currentState;
       setState(() => _showError = false);
       if (form.validate()) {
-        setState(() => _isLoading = true);
+        setState(() => _isLoadingValue = true);
         form.save();
         await _presenter.doLogin(_email, _password);
       } else {
@@ -59,6 +68,9 @@ class LoginScreenState extends State<LoginScreen>
     if (state == AuthState.LOGGED_IN){
       Navigator.of(_ctx).pushNamed("/home");
     }
+    setState(() {
+      _isLoading=false;
+    });
   }
 
   @override
@@ -158,17 +170,17 @@ class LoginScreenState extends State<LoginScreen>
           padding: EdgeInsets.only(top: 30.0, bottom: 10.0),
           child: _showError
               ? Container(
-                  child: Text(
-                    "Email id or Password is wrong",
-                    style: TextStyle(
-                      color: Colors.red,
-                    ),
-                  ),
-                )
+            child: Text(
+              "Email id or Password is wrong",
+              style: TextStyle(
+                color: Colors.red,
+              ),
+            ),
+          )
               : Container(),
         ),
         Center(
-          child: _isLoading ? new CircularProgressIndicator() : loginBtn,
+          child: _isLoadingValue ? new ShowProgress() : loginBtn,
         ),
         Padding(
           padding: EdgeInsets.only(top: 10.0),
@@ -189,14 +201,14 @@ class LoginScreenState extends State<LoginScreen>
     );
 
     return new Scaffold(
-      appBar: null,
-      key: scaffoldKey,
-      body: new Center(
-        child: Container(
-          padding: EdgeInsets.all(30.0),
-          child: loginForm,
-        ),
-      )
+        appBar: null,
+        key: scaffoldKey,
+        body: new Center(
+          child: Container(
+            padding: EdgeInsets.all(30.0),
+            child: _isLoading ? ShowProgress() : loginForm,
+          ),
+        )
     );
   }
 
@@ -205,7 +217,7 @@ class LoginScreenState extends State<LoginScreen>
     print("x");
     _showSnackBar(errorTxt);
     setState(() {
-      _isLoading = false;
+      _isLoadingValue = false;
       _showError = true;
     });
   }
@@ -213,7 +225,7 @@ class LoginScreenState extends State<LoginScreen>
   @override
   void onLoginSuccess(User user) async {
     _showSnackBar(user.toString());
-    setState(() => _isLoading = false);
+    setState(() => _isLoadingValue = false);
     var db = new DatabaseHelper();
     await db.saveUser(user);
     final form = formKey.currentState;
