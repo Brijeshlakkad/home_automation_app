@@ -15,7 +15,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class LoginScreenState extends State<LoginScreen>
-    implements LoginScreenContract, AuthStateListener {
+    implements LoginScreenContract, AuthStateListener{
   BuildContext _ctx;
   bool _obscureText = true;
   bool _isLoadingValue = false;
@@ -26,6 +26,7 @@ class LoginScreenState extends State<LoginScreen>
   bool _autoValidate = false;
   LoginScreenPresenter _presenter;
   bool _showError = false;
+
   LoginScreenState() {
     _presenter = new LoginScreenPresenter(this);
     var authStateProvider = new AuthStateProvider();
@@ -33,9 +34,6 @@ class LoginScreenState extends State<LoginScreen>
   }
   @override
   void initState() {
-    setState(() {
-      _isLoading=true;
-    });
     super.initState();
   }
 
@@ -68,9 +66,6 @@ class LoginScreenState extends State<LoginScreen>
     if (state == AuthState.LOGGED_IN){
       Navigator.of(_ctx).pushNamed("/home");
     }
-    setState(() {
-      _isLoading=false;
-    });
   }
 
   @override
