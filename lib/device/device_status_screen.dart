@@ -97,25 +97,63 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
 
   Widget build(BuildContext context) {
     Widget showDeviceSlider(BuildContext context, Device device) {
-      return Container(
-        child: Slider(
-          value: vSlide,
-          min: 0.0,
-          max: 5.0,
-          divisions: 5,
-          onChanged: (val) async {
-            setState(() {
-              vSlide = val;
-              _isLoadingValue = true;
-            });
-            await _presenter.api
-                .changeDeviceSlider(device.deviceSlider, val.toInt());
-            setState(() {
-              _isLoadingValue = false;
-            });
-          },
-        ),
-      );
+      return device.dvImg == "ac.png"
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Container(
+                  padding: EdgeInsets.all(10.0),
+                  child: Text("$vSlide"),
+                ),
+                Container(
+                  child: Slider(
+                    value: vSlide,
+                    min: 0.0,
+                    max: 5.0,
+                    divisions: 5,
+                    onChanged: (val) async {
+                      setState(() {
+                        vSlide = val;
+                        _isLoadingValue = true;
+                      });
+                      await _presenter.api
+                          .changeDeviceSlider(device.deviceSlider, val.toInt());
+                      setState(() {
+                        _isLoadingValue = false;
+                      });
+                    },
+                  ),
+                )
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Container(
+                  padding: EdgeInsets.all(10.0),
+                  child: Text("$vSlide"),
+                ),
+                Container(
+                  child: Slider(
+                    value: vSlide,
+                    min: 0.0,
+                    max: 5.0,
+                    divisions: 5,
+                    onChanged: (val) async {
+                      setState(() {
+                        vSlide = val;
+                        _isLoadingValue = true;
+                      });
+                      await _presenter.api
+                          .changeDeviceSlider(device.deviceSlider, val.toInt());
+                      setState(() {
+                        _isLoadingValue = false;
+                      });
+                    },
+                  ),
+                ),
+              ],
+            );
     }
 
     Widget createDeviceView(BuildContext context, Device device) {
@@ -162,25 +200,63 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
     }
 
     Widget showIOSDeviceSlider(BuildContext context, Device device) {
-      return Container(
-        child: CupertinoSlider(
-          value: vSlide,
-          min: 0.0,
-          max: 5.0,
-          divisions: 5,
-          onChanged: (val) async {
-            setState(() {
-              vSlide = val;
-              _isLoadingValue = true;
-            });
-            await _presenter.api
-                .changeDeviceSlider(device.deviceSlider, val.toInt());
-            setState(() {
-              _isLoadingValue = false;
-            });
-          },
-        ),
-      );
+      return device.dvImg == "ac.png"
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Container(
+                  padding: EdgeInsets.all(10.0),
+                  child: Text("$vSlide"),
+                ),
+                Container(
+                  child: CupertinoSlider(
+                    value: vSlide,
+                    min: 0.0,
+                    max: 30.0,
+                    divisions: 30,
+                    onChanged: (val) async {
+                      setState(() {
+                        vSlide = val;
+                        _isLoadingValue = true;
+                      });
+                      await _presenter.api
+                          .changeDeviceSlider(device.deviceSlider, val.toInt());
+                      setState(() {
+                        _isLoadingValue = false;
+                      });
+                    },
+                  ),
+                )
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Container(
+                  padding: EdgeInsets.all(10.0),
+                  child: Text("$vSlide"),
+                ),
+                Container(
+                  child: CupertinoSlider(
+                    value: vSlide,
+                    min: 0.0,
+                    max: 5.0,
+                    divisions: 5,
+                    onChanged: (val) async {
+                      setState(() {
+                        vSlide = val;
+                        _isLoadingValue = true;
+                      });
+                      await _presenter.api
+                          .changeDeviceSlider(device.deviceSlider, val.toInt());
+                      setState(() {
+                        _isLoadingValue = false;
+                      });
+                    },
+                  ),
+                ),
+              ],
+            );
     }
 
     Widget createIOSDeviceView(BuildContext context, Device device) {
