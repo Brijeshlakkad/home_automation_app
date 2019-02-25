@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:home_automation/data/database_helper.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/models/room_data.dart';
@@ -11,6 +10,7 @@ import 'package:home_automation/device/get_device_details.dart';
 import 'package:home_automation/device/device_status_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:home_automation/internet_access.dart';
+import 'package:home_automation/utils/show_dialog.dart';
 
 class DeviceScreen extends StatefulWidget {
   final Home home;
@@ -26,11 +26,13 @@ class DeviceScreen extends StatefulWidget {
 class DeviceScreenState extends State<DeviceScreen>
     implements DeviceScreenContract {
   final showDvScaffoldKey = new GlobalKey<ScaffoldState>();
-  bool _isLoading = false;
+  bool _isLoading = true;
   var dvRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
   List<Device> dvList = new List<Device>();
   List<DeviceImg> dvImgList = new List<DeviceImg>();
   bool internetAccess = false;
+  ShowDialog _showDialog;
+
   void _showSnackBar(String text) {
     showDvScaffoldKey.currentState.removeCurrentSnackBar();
     showDvScaffoldKey.currentState
@@ -39,9 +41,7 @@ class DeviceScreenState extends State<DeviceScreen>
 
   @override
   void initState() {
-    setState(() {
-      _isLoading = true;
-    });
+    _showDialog = new ShowDialog();
     getDeviceList();
     super.initState();
   }
@@ -54,26 +54,20 @@ class DeviceScreenState extends State<DeviceScreen>
     });
   }
 
-  var db = new DatabaseHelper();
-
   Future getDeviceList() async {
     await getInternetAccessObject();
     if (internetAccess) {
       dvList = await _presenter.api.getAllDevice(widget.hardware);
       if (dvList != null) {
-        setState(() {
-          dvList = dvList.toList();
-        });
-        onSuccessGetAllDevice(dvList);
+        dvList = dvList.toList();
+      } else {
+        dvList = new List<Device>();
       }
       getDeviceImgList();
-    } else {
-      setState(() {
-        dvList = new List<Device>();
-        _isLoading = false;
-      });
-      _showSnackBar("Please check internet connection");
     }
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Future getDeviceImgList() async {
@@ -82,6 +76,8 @@ class DeviceScreenState extends State<DeviceScreen>
       setState(() {
         dvImgList = dvImgList.toList();
       });
+    } else {
+      dvImgList = new List<DeviceImg>();
     }
   }
 
@@ -96,16 +92,6 @@ class DeviceScreenState extends State<DeviceScreen>
 //    var db = new DatabaseHelper();
 //    await db.saveDevice(dv);
     getDeviceList();
-  }
-
-  @override
-  void onSuccessGetAllDevice(List<Device> dvList) async {
-    if (dvList != null) {
-      _showSnackBar("Got ${dvList.length}");
-      setState(() => _isLoading = false);
-//      var db = new DatabaseHelper();
-//      await db.saveAllDevice(dvList);
-    }
   }
 
   @override
@@ -128,8 +114,7 @@ class DeviceScreenState extends State<DeviceScreen>
 
   @override
   void onError(String errorTxt) {
-    print("x");
-    _showSnackBar(errorTxt);
+    //_showSnackBar(errorTxt);
     setState(() => _isLoading = false);
   }
 
@@ -160,8 +145,9 @@ class DeviceScreenState extends State<DeviceScreen>
     }
 
     // to show dialogue to ensure of deleting operation
-    bool status = false;
-    _showConfirmDialog() async {
+
+    Future<bool> _showConfirmDialog() async {
+      bool status = false;
       _isIOS(context)
           ? await showDialog<String>(
               context: context,
@@ -211,15 +197,26 @@ class DeviceScreenState extends State<DeviceScreen>
                     ],
                   ),
             );
+      return status;
     }
 
     _deleteDevice(Device dv) async {
-      await _showConfirmDialog();
-      if (status) {
-        setState(() {
-          _isLoading = true;
-        });
-        await _presenter.doDeleteDevice(dv);
+      await getInternetAccessObject();
+      if (internetAccess) {
+        bool status = await _showConfirmDialog();
+        if (status) {
+          setState(() {
+            _isLoading = true;
+          });
+          await _presenter.doDeleteDevice(dv);
+        }
+      } else {
+        this._showDialog.showDialogCustom(
+            context,
+            "Internet Connection Problem",
+            "Please check your internet connection",
+            fontSize: 17.0,
+            boxHeight: 58.0);
       }
     }
 
@@ -241,26 +238,36 @@ class DeviceScreenState extends State<DeviceScreen>
                 shape: new RoundedRectangleBorder(
                     borderRadius: new BorderRadius.circular(30.0)),
                 onPressed: () async {
-                  Map dvDetails = new Map();
-                  dvDetails['isModifying'] = false;
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => GetDeviceDetails(
-                            hardware: widget.hardware,
-                            deviceList: dvList,
-                            dvDetails: dvDetails,
-                            imgList: dvImgList,
-                          ),
-                    ),
-                  );
-                  print(result.toString());
-                  if (result != null && !result['error']) {
-                    setState(() {
-                      _isLoading = true;
-                    });
-                    _createDevice(result['dvName'], result['dvPort'],
-                        result['dvImg'], widget.hardware);
+                  await getInternetAccessObject();
+                  if (internetAccess) {
+                    Map dvDetails = new Map();
+                    dvDetails['isModifying'] = false;
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => GetDeviceDetails(
+                              hardware: widget.hardware,
+                              deviceList: dvList,
+                              dvDetails: dvDetails,
+                              imgList: dvImgList,
+                            ),
+                      ),
+                    );
+                    print(result.toString());
+                    if (result != null && !result['error']) {
+                      setState(() {
+                        _isLoading = true;
+                      });
+                      _createDevice(result['dvName'], result['dvPort'],
+                          result['dvImg'], widget.hardware);
+                    }
+                  } else {
+                    this._showDialog.showDialogCustom(
+                        context,
+                        "Internet Connection Problem",
+                        "Please check your internet connection",
+                        fontSize: 17.0,
+                        boxHeight: 58.0);
                   }
                 },
                 color: kHAutoBlue300,
@@ -278,14 +285,24 @@ class DeviceScreenState extends State<DeviceScreen>
           return Center(
             child: InkWell(
               onTap: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        DeviceStatusScreen(device: dvList[index]),
-                  ),
-                );
-                getDeviceList();
+                await getInternetAccessObject();
+                if (internetAccess) {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          DeviceStatusScreen(device: dvList[index]),
+                    ),
+                  );
+                  getDeviceList();
+                } else {
+                  this._showDialog.showDialogCustom(
+                      context,
+                      "Internet Connection Problem",
+                      "Please check your internet connection",
+                      fontSize: 17.0,
+                      boxHeight: 58.0);
+                }
               },
               splashColor: kHAutoBlue300,
               child: Container(
@@ -328,27 +345,40 @@ class DeviceScreenState extends State<DeviceScreen>
                             width: 40.0,
                             child: FlatButton(
                               onPressed: () async {
-                                Map dvDetails = new Map();
-                                dvDetails = dvList[index].toMap();
-                                dvDetails['isModifying'] = true;
-                                final result = await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => GetDeviceDetails(
-                                          hardware: widget.hardware,
-                                          deviceList: dvList,
-                                          dvDetails: dvDetails,
-                                          imgList: dvImgList,
-                                        ),
-                                  ),
-                                );
-                                print(result.toString());
-                                if (result != null && !result['error']) {
-                                  setState(() {
-                                    _isLoading = true;
-                                  });
-                                  _renameDevice(dvList[index], result['dvName'],
-                                      result['dvImg'], result['dvPort']);
+                                await getInternetAccessObject();
+                                if (internetAccess) {
+                                  Map dvDetails = new Map();
+                                  dvDetails = dvList[index].toMap();
+                                  dvDetails['isModifying'] = true;
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => GetDeviceDetails(
+                                            hardware: widget.hardware,
+                                            deviceList: dvList,
+                                            dvDetails: dvDetails,
+                                            imgList: dvImgList,
+                                          ),
+                                    ),
+                                  );
+                                  print(result.toString());
+                                  if (result != null && !result['error']) {
+                                    setState(() {
+                                      _isLoading = true;
+                                    });
+                                    _renameDevice(
+                                        dvList[index],
+                                        result['dvName'],
+                                        result['dvImg'],
+                                        result['dvPort']);
+                                  }
+                                } else {
+                                  this._showDialog.showDialogCustom(
+                                      context,
+                                      "Internet Connection Problem",
+                                      "Please check your internet connection",
+                                      fontSize: 17.0,
+                                      boxHeight: 58.0);
                                 }
                               },
                               child: Icon(Icons.edit),
@@ -399,26 +429,36 @@ class DeviceScreenState extends State<DeviceScreen>
                   shape: new RoundedRectangleBorder(
                       borderRadius: new BorderRadius.circular(30.0)),
                   onPressed: () async {
-                    Map dvDetails = new Map();
-                    dvDetails['isModifying'] = false;
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => GetDeviceDetails(
-                              hardware: widget.hardware,
-                              deviceList: dvList,
-                              dvDetails: dvDetails,
-                              imgList: dvImgList,
-                            ),
-                      ),
-                    );
-                    print(result.toString());
-                    if (result != null && !result['error']) {
-                      setState(() {
-                        _isLoading = true;
-                      });
-                      _createDevice(result['dvName'], result['dvPort'],
-                          result['dvImg'], widget.hardware);
+                    await getInternetAccessObject();
+                    if (internetAccess) {
+                      Map dvDetails = new Map();
+                      dvDetails['isModifying'] = false;
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => GetDeviceDetails(
+                                hardware: widget.hardware,
+                                deviceList: dvList,
+                                dvDetails: dvDetails,
+                                imgList: dvImgList,
+                              ),
+                        ),
+                      );
+                      print(result.toString());
+                      if (result != null && !result['error']) {
+                        setState(() {
+                          _isLoading = true;
+                        });
+                        _createDevice(result['dvName'], result['dvPort'],
+                            result['dvImg'], widget.hardware);
+                      }
+                    } else {
+                      this._showDialog.showDialogCustom(
+                          context,
+                          "Internet Connection Problem",
+                          "Please check your internet connection",
+                          fontSize: 17.0,
+                          boxHeight: 58.0);
                     }
                   },
                   color: kHAutoBlue300,
@@ -436,14 +476,24 @@ class DeviceScreenState extends State<DeviceScreen>
             return Center(
               child: InkWell(
                 onTap: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          DeviceStatusScreen(device: dvList[index]),
-                    ),
-                  );
-                  getDeviceList();
+                  await getInternetAccessObject();
+                  if (internetAccess) {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            DeviceStatusScreen(device: dvList[index]),
+                      ),
+                    );
+                    getDeviceList();
+                  } else {
+                    this._showDialog.showDialogCustom(
+                        context,
+                        "Internet Connection Problem",
+                        "Please check your internet connection",
+                        fontSize: 17.0,
+                        boxHeight: 58.0);
+                  }
                 },
                 splashColor: kHAutoBlue300,
                 child: Container(
@@ -486,30 +536,40 @@ class DeviceScreenState extends State<DeviceScreen>
                               width: 40.0,
                               child: FlatButton(
                                 onPressed: () async {
-                                  Map dvDetails = new Map();
-                                  dvDetails = dvList[index].toMap();
-                                  dvDetails['isModifying'] = true;
-                                  final result = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => GetDeviceDetails(
-                                            hardware: widget.hardware,
-                                            deviceList: dvList,
-                                            dvDetails: dvDetails,
-                                            imgList: dvImgList,
-                                          ),
-                                    ),
-                                  );
-                                  print(result.toString());
-                                  if (result != null && !result['error']) {
-                                    setState(() {
-                                      _isLoading = true;
-                                    });
-                                    _renameDevice(
-                                        dvList[index],
-                                        result['dvName'],
-                                        result['dvImg'],
-                                        result['dvPort']);
+                                  await getInternetAccessObject();
+                                  if (internetAccess) {
+                                    Map dvDetails = new Map();
+                                    dvDetails = dvList[index].toMap();
+                                    dvDetails['isModifying'] = true;
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => GetDeviceDetails(
+                                              hardware: widget.hardware,
+                                              deviceList: dvList,
+                                              dvDetails: dvDetails,
+                                              imgList: dvImgList,
+                                            ),
+                                      ),
+                                    );
+                                    print(result.toString());
+                                    if (result != null && !result['error']) {
+                                      setState(() {
+                                        _isLoading = true;
+                                      });
+                                      _renameDevice(
+                                          dvList[index],
+                                          result['dvName'],
+                                          result['dvImg'],
+                                          result['dvPort']);
+                                    }
+                                  } else {
+                                    this._showDialog.showDialogCustom(
+                                        context,
+                                        "Internet Connection Problem",
+                                        "Please check your internet connection",
+                                        fontSize: 17.0,
+                                        boxHeight: 58.0);
                                   }
                                 },
                                 child: Icon(Icons.edit),
@@ -538,6 +598,37 @@ class DeviceScreenState extends State<DeviceScreen>
           },
           childCount: len + 1,
         ),
+      );
+    }
+
+    Widget showInternetStatusIOS(BuildContext context) {
+      return new SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          childAspectRatio: 1.0,
+          crossAxisCount: 1,
+        ),
+        delegate:
+            new SliverChildBuilderDelegate((BuildContext context, int index) {
+          return Container(
+            child: Center(
+              child: Text("Please check your internet connection"),
+            ),
+          );
+        }, childCount: 1),
+      );
+    }
+
+    Widget showInternetStatus(BuildContext context) {
+      return new GridView.count(
+        crossAxisCount: 1,
+        // Generate 100 Widgets that display their index in the List
+        children: List.generate(1, (index) {
+          return Container(
+            child: Center(
+              child: Text("Please check your internet connection"),
+            ),
+          );
+        }),
       );
     }
 
@@ -601,21 +692,37 @@ class DeviceScreenState extends State<DeviceScreen>
             ),
       body: _isLoading
           ? ShowProgress()
-          : _isIOS(context)
-              ? new CustomScrollView(
-                  slivers: <Widget>[
-                    new CupertinoSliverRefreshControl(onRefresh: getDeviceList),
-                    new SliverSafeArea(
-                      top: false,
-                      sliver: createListViewIOS(context, dvList),
+          : internetAccess
+              ? _isIOS(context)
+                  ? new CustomScrollView(
+                      slivers: <Widget>[
+                        new CupertinoSliverRefreshControl(
+                            onRefresh: getDeviceList),
+                        new SliverSafeArea(
+                          top: false,
+                          sliver: createListViewIOS(context, dvList),
+                        ),
+                      ],
+                    )
+                  : RefreshIndicator(
+                      key: dvRefreshIndicatorKey,
+                      child: createListView(context, dvList),
+                      onRefresh: getDeviceList,
+                    )
+              : _isIOS(context)
+                  ? new CustomScrollView(
+                      slivers: <Widget>[
+                        new CupertinoSliverRefreshControl(
+                            onRefresh: getDeviceList),
+                        new SliverSafeArea(
+                            top: false, sliver: showInternetStatusIOS(context)),
+                      ],
+                    )
+                  : RefreshIndicator(
+                      key: dvRefreshIndicatorKey,
+                      child: showInternetStatus(context),
+                      onRefresh: getDeviceList,
                     ),
-                  ],
-                )
-              : RefreshIndicator(
-                  key: dvRefreshIndicatorKey,
-                  child: createListView(context, dvList),
-                  onRefresh: getDeviceList,
-                ),
     );
   }
 }

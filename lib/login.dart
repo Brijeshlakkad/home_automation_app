@@ -67,11 +67,10 @@ class LoginScreenState extends State<LoginScreen>
     if (state == AuthState.LOGGED_IN) {
       Navigator.push(context,
           MaterialPageRoute(builder: (context) => HomeScreen(user: user)));
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
     }
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override

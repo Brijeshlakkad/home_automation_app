@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:home_automation/data/database_helper.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/models/room_data.dart';
@@ -8,6 +7,7 @@ import 'package:home_automation/logout.dart';
 import 'package:home_automation/hardware.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:home_automation/internet_access.dart';
+import 'package:home_automation/utils/show_dialog.dart';
 
 class HomeObject extends StatefulWidget {
   final Home home;
@@ -39,7 +39,7 @@ class ShowRoomsOfHome extends StatefulWidget {
 class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     implements RoomScreenContract {
   final showRoomScaffoldKey = new GlobalKey<ScaffoldState>();
-  bool _isLoading = false;
+  bool _isLoading = true;
   var roomNameFormKey = new GlobalKey<FormState>();
   var roomReNameFormKey = new GlobalKey<FormState>();
   bool _autoValidateRoomName = false;
@@ -48,7 +48,8 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
   var roomRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
   List<Room> roomList = new List<Room>();
   bool internetAccess = false;
-  var db = new DatabaseHelper();
+  ShowDialog _showDialog;
+
   void _showSnackBar(String text) {
     showRoomScaffoldKey.currentState.removeCurrentSnackBar();
     showRoomScaffoldKey.currentState
@@ -57,18 +58,16 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
 
   @override
   void initState() {
-    setState(() {
-      _isLoading = true;
-    });
+    _showDialog = new ShowDialog();
     getRoomList();
     super.initState();
   }
 
   Future getInternetAccessObject() async {
     CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
-    bool internetAccessDummy = await checkInternetAccess.check();
+    bool internetAccess = await checkInternetAccess.check();
     setState(() {
-      internetAccess = internetAccessDummy;
+      this.internetAccess = internetAccess;
     });
   }
 
@@ -78,18 +77,14 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
       roomRefreshIndicatorKey.currentState?.show();
       roomList = await _presenter.api.getAllRoom(widget.home);
       if (roomList != null) {
-        setState(() {
           roomList = roomList.toList();
-        });
-        onSuccessGetAllRoom(roomList);
+      } else {
+          roomList = new List<Room>();
       }
-    } else {
-      setState(() {
-        roomList = new List<Room>();
-        _isLoading = false;
-      });
-      _showSnackBar("Please check internet connection");
     }
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   RoomScreenPresenter _presenter;
@@ -103,16 +98,6 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
 //    var db = new DatabaseHelper();
 //    await db.saveRoom(room);
     getRoomList();
-  }
-
-  @override
-  void onSuccessGetAllRoom(List<Room> roomList) async {
-    if (roomList != null) {
-      _showSnackBar("Got ${roomList.length}");
-      setState(() => _isLoading = false);
-//      var db = new DatabaseHelper();
-//      await db.saveAllRoom(roomList);
-    }
   }
 
   @override
@@ -135,8 +120,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
 
   @override
   void onError(String errorTxt) {
-    print("x");
-    _showSnackBar(errorTxt);
+    //_showSnackBar(errorTxt);
     setState(() => _isLoading = false);
   }
 
@@ -196,16 +180,27 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
                     content: CupertinoTextField(
                       autofocus: true,
                       clearButtonMode: OverlayVisibilityMode.editing,
-                      onSubmitted: (val) {
-                        if (roomValidator(val, null) == null) {
-                          Navigator.pop(context);
-                          setState(() {
-                            _isLoading = true;
-                          });
-                          _createRoom(val, widget.home);
+                      onSubmitted: (val) async {
+                        await getInternetAccessObject();
+                        if (internetAccess) {
+                          if (roomValidator(val, null) == null) {
+                            Navigator.pop(context);
+                            setState(() {
+                              _isLoading = true;
+                            });
+                            _createRoom(val, widget.home);
+                          } else {
+                            Navigator.pop(context);
+                            _showSnackBar("${roomValidator(val, null)}");
+                          }
                         } else {
                           Navigator.pop(context);
-                          _showSnackBar("${roomValidator(val, null)}");
+                          this._showDialog.showDialogCustom(
+                              context,
+                              "Internet Connection Problem",
+                              "Please check your internet connection",
+                              fontSize: 17.0,
+                              boxHeight: 58.0);
                         }
                       },
                     ),
@@ -240,8 +235,10 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
                             Navigator.pop(context);
                           }),
                       new FlatButton(
-                          child: const Text('CREATE'),
-                          onPressed: () {
+                        child: const Text('CREATE'),
+                        onPressed: () async {
+                          await getInternetAccessObject();
+                          if (internetAccess) {
                             var form = roomNameFormKey.currentState;
                             if (form.validate()) {
                               form.save();
@@ -256,7 +253,17 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
                                 _autoValidateRoomName = true;
                               });
                             }
-                          })
+                          } else {
+                            Navigator.pop(context);
+                            this._showDialog.showDialogCustom(
+                                context,
+                                "Internet Connection Problem",
+                                "Please check your internet connection",
+                                fontSize: 17.0,
+                                boxHeight: 58.0);
+                          }
+                        },
+                      ),
                     ],
                   ),
             );
@@ -271,21 +278,32 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
                     content: CupertinoTextField(
                       autofocus: true,
                       clearButtonMode: OverlayVisibilityMode.editing,
-                      onSubmitted: (val) {
-                        if (val != room.roomName) {
-                          if (roomValidator(val, room.roomName) == null) {
-                            Navigator.pop(context);
-                            setState(() {
-                              _isLoading = true;
-                            });
-                            _renameRoom(room, val);
+                      onSubmitted: (val) async {
+                        await getInternetAccessObject();
+                        if (internetAccess) {
+                          if (val != room.roomName) {
+                            if (roomValidator(val, room.roomName) == null) {
+                              Navigator.pop(context);
+                              setState(() {
+                                _isLoading = true;
+                              });
+                              _renameRoom(room, val);
+                            } else {
+                              Navigator.pop(context);
+                              _showSnackBar(
+                                  "${roomValidator(val, room.roomName)}");
+                            }
                           } else {
                             Navigator.pop(context);
-                            _showSnackBar(
-                                "${roomValidator(val, room.roomName)}");
                           }
                         } else {
                           Navigator.pop(context);
+                          this._showDialog.showDialogCustom(
+                              context,
+                              "Internet Connection Problem",
+                              "Please check your internet connection",
+                              fontSize: 17.0,
+                              boxHeight: 58.0);
                         }
                       },
                     ),
@@ -322,8 +340,10 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
                             Navigator.pop(context);
                           }),
                       new FlatButton(
-                          child: const Text('RENAME'),
-                          onPressed: () {
+                        child: const Text('RENAME'),
+                        onPressed: () async {
+                          await getInternetAccessObject();
+                          if (internetAccess) {
                             var form = roomReNameFormKey.currentState;
                             if (form.validate()) {
                               form.save();
@@ -338,15 +358,26 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
                                 _autoValidateRoomReName = true;
                               });
                             }
-                          })
+                          } else {
+                            Navigator.pop(context);
+                            this._showDialog.showDialogCustom(
+                                context,
+                                "Internet Connection Problem",
+                                "Please check your internet connection",
+                                fontSize: 17.0,
+                                boxHeight: 58.0);
+                          }
+                        },
+                      ),
                     ],
                   ),
             );
     }
 
     // to show dialogue to ensure of deleting operation
-    bool status = false;
-    _showConfirmDialog() async {
+
+    Future<bool> _showConfirmDialog() async {
+      bool status = false;
       _isIOS(context)
           ? await showDialog<String>(
               context: context,
@@ -396,15 +427,26 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
                     ],
                   ),
             );
+      return status;
     }
 
     _deleteRoom(Room room) async {
-      await _showConfirmDialog();
-      if (status) {
-        setState(() {
-          _isLoading = true;
-        });
-        await _presenter.doDeleteRoom(room);
+      await getInternetAccessObject();
+      if (internetAccess) {
+        bool status = await _showConfirmDialog();
+        if (status) {
+          setState(() {
+            _isLoading = true;
+          });
+          await _presenter.doDeleteRoom(room);
+        }
+      } else {
+        this._showDialog.showDialogCustom(
+            context,
+            "Internet Connection Problem",
+            "Please check your internet connection",
+            fontSize: 17.0,
+            boxHeight: 58.0);
       }
     }
 
@@ -442,13 +484,23 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
           }
           return Center(
             child: InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => HardwareScreen(
-                          home: widget.home, room: roomList[index])),
-                );
+              onTap: () async {
+                await getInternetAccessObject();
+                if (internetAccess) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => HardwareScreen(
+                            home: widget.home, room: roomList[index])),
+                  );
+                } else {
+                  this._showDialog.showDialogCustom(
+                      context,
+                      "Internet Connection Problem",
+                      "Please check your internet connection",
+                      fontSize: 17.0,
+                      boxHeight: 58.0);
+                }
               },
               splashColor: kHAutoBlue300,
               child: Container(
@@ -546,13 +598,23 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
             }
             return Center(
               child: InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => HardwareScreen(
-                            home: widget.home, room: roomList[index])),
-                  );
+                onTap: () async {
+                  await getInternetAccessObject();
+                  if (internetAccess) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => HardwareScreen(
+                              home: widget.home, room: roomList[index])),
+                    );
+                  } else {
+                    this._showDialog.showDialogCustom(
+                        context,
+                        "Internet Connection Problem",
+                        "Please check your internet connection",
+                        fontSize: 17.0,
+                        boxHeight: 58.0);
+                  }
                 },
                 splashColor: kHAutoBlue300,
                 child: Container(
@@ -612,6 +674,37 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
           },
           childCount: len + 1,
         ),
+      );
+    }
+
+    Widget showInternetStatusIOS(BuildContext context) {
+      return new SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          childAspectRatio: 1.0,
+          crossAxisCount: 1,
+        ),
+        delegate:
+            new SliverChildBuilderDelegate((BuildContext context, int index) {
+          return Container(
+            child: Center(
+              child: Text("Please check your internet connection"),
+            ),
+          );
+        }, childCount: 1),
+      );
+    }
+
+    Widget showInternetStatus(BuildContext context) {
+      return new GridView.count(
+        crossAxisCount: 1,
+        // Generate 100 Widgets that display their index in the List
+        children: List.generate(1, (index) {
+          return Container(
+            child: Center(
+              child: Text("Please check your internet connection"),
+            ),
+          );
+        }),
       );
     }
 
@@ -675,21 +768,37 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
             ),
       body: _isLoading
           ? ShowProgress()
-          : _isIOS(context)
-              ? new CustomScrollView(
-                  slivers: <Widget>[
-                    new CupertinoSliverRefreshControl(onRefresh: getRoomList),
-                    new SliverSafeArea(
-                      top: false,
-                      sliver: createListViewIOS(context, roomList),
+          : internetAccess
+              ? _isIOS(context)
+                  ? new CustomScrollView(
+                      slivers: <Widget>[
+                        new CupertinoSliverRefreshControl(
+                            onRefresh: getRoomList),
+                        new SliverSafeArea(
+                          top: false,
+                          sliver: createListViewIOS(context, roomList),
+                        ),
+                      ],
+                    )
+                  : RefreshIndicator(
+                      key: roomRefreshIndicatorKey,
+                      child: createListView(context, roomList),
+                      onRefresh: getRoomList,
+                    )
+              : _isIOS(context)
+                  ? new CustomScrollView(
+                      slivers: <Widget>[
+                        new CupertinoSliverRefreshControl(
+                            onRefresh: getRoomList),
+                        new SliverSafeArea(
+                            top: false, sliver: showInternetStatusIOS(context)),
+                      ],
+                    )
+                  : RefreshIndicator(
+                      key: roomRefreshIndicatorKey,
+                      child: showInternetStatus(context),
+                      onRefresh: getRoomList,
                     ),
-                  ],
-                )
-              : RefreshIndicator(
-                  key: roomRefreshIndicatorKey,
-                  child: createListView(context, roomList),
-                  onRefresh: getRoomList,
-                ),
     );
   }
 }

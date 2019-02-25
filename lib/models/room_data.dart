@@ -107,7 +107,6 @@ abstract class RoomScreenContract {
   void onSuccessDelete(Room room);
   void onError(String errorTxt);
   void onSuccessRename(Room room);
-  void onSuccessGetAllRoom(List<Room> roomList);
 }
 
 class RoomScreenPresenter {
@@ -145,13 +144,4 @@ class RoomScreenPresenter {
     }
   }
 
-  doGetAllRoom(Home home) async {
-    try {
-      List<Room> r = await api.getAllRoom(home);
-      _view.onSuccessGetAllRoom(r);
-    } on Exception catch (error) {
-      _view.onError(error.toString());
-      print('Error');
-    }
-  }
 }

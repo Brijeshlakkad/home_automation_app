@@ -128,7 +128,6 @@ abstract class HardwareScreenContract {
   void onSuccessDelete(Hardware hw);
   void onError(String errorTxt);
   void onSuccessRename(Hardware hw);
-  void onSuccessGetAllHardware(List<Hardware> hwList);
 }
 
 class HardwareScreenPresenter {
@@ -162,16 +161,6 @@ class HardwareScreenPresenter {
     try {
       var r = await api.rename(hw, hwName, hwSeries, hwIP);
       _view.onSuccessRename(r);
-    } on Exception catch (error) {
-      _view.onError(error.toString());
-      print('Error');
-    }
-  }
-
-  doGetAllHardware(Room room) async {
-    try {
-      List<Hardware> hwList = await api.getAllHardware(room);
-      _view.onSuccessGetAllHardware(hwList);
     } on Exception catch (error) {
       _view.onError(error.toString());
       print('Error');

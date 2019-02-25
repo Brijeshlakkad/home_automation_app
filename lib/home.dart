@@ -40,7 +40,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   @override
   void initState() {
     _showDialog = new ShowDialog();
-    getInternetAccessObject();
+    getHomeList();
     super.initState();
   }
 
@@ -52,23 +52,23 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   Future getInternetAccessObject() async {
     CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
     bool internetAccess = await checkInternetAccess.check();
-    if (internetAccess) {
-      await getHomeList();
-    }
     setState(() {
       this.internetAccess = internetAccess;
     });
   }
 
   Future getHomeList() async {
-    homeRefreshIndicatorKey.currentState?.show();
-    homeList = await _presenter.api.getAllHome();
-    if (homeList != null) {
-      setState(() {
+    await getInternetAccessObject();
+    if (internetAccess) {
+      homeRefreshIndicatorKey.currentState?.show();
+      homeList = await _presenter.api.getAllHome();
+      if (homeList != null) {
         homeList = homeList.toList();
-      });
-      onSuccessGetAllHome(homeList);
+      } else {
+        homeList = new List<Home>();
+      }
     }
+    setState(() => _isLoading = false);
   }
 
   @override
@@ -77,16 +77,6 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     setState(() => _isLoading = false);
 //    var db = new DatabaseHelper();
 //    await db.saveHome(home);
-  }
-
-  @override
-  void onSuccessGetAllHome(List<Home> homeList) async {
-    if (homeList != null) {
-      _showSnackBar("Got ${homeList.length}");
-      setState(() => _isLoading = false);
-//      var db = new DatabaseHelper();
-//      await db.saveAllHome(homeList);
-    }
   }
 
   void onSuccessDelete(Home home) async {
@@ -107,8 +97,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
 
   @override
   void onError(String errorTxt) {
-    print("x");
-    _showSnackBar(errorTxt);
+    //_showSnackBar(errorTxt);
     setState(() => _isLoading = false);
   }
 
@@ -168,16 +157,27 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                     content: CupertinoTextField(
                       autofocus: true,
                       clearButtonMode: OverlayVisibilityMode.editing,
-                      onSubmitted: (val) {
-                        if (homeValidator(val, null) == null) {
-                          Navigator.pop(context);
-                          setState(() {
-                            _isLoading = true;
-                          });
-                          _createHome(val);
+                      onSubmitted: (val) async {
+                        await getInternetAccessObject();
+                        if (internetAccess) {
+                          if (homeValidator(val, null) == null) {
+                            Navigator.pop(context);
+                            setState(() {
+                              _isLoading = true;
+                            });
+                            _createHome(val);
+                          } else {
+                            Navigator.pop(context);
+                            _showSnackBar("${homeValidator(val, null)}");
+                          }
                         } else {
                           Navigator.pop(context);
-                          _showSnackBar("${homeValidator(val, null)}");
+                          this._showDialog.showDialogCustom(
+                              context,
+                              "Internet Connection Problem",
+                              "Please check your internet connection",
+                              fontSize: 17.0,
+                              boxHeight: 58.0);
                         }
                       },
                     ),
@@ -212,8 +212,10 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                             Navigator.pop(context);
                           }),
                       new FlatButton(
-                          child: const Text('CREATE'),
-                          onPressed: () {
+                        child: const Text('CREATE'),
+                        onPressed: () async {
+                          await getInternetAccessObject();
+                          if (internetAccess) {
                             var form = homeNameFormKey.currentState;
                             if (form.validate()) {
                               form.save();
@@ -228,7 +230,17 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                                 _autoValidateHomeName = true;
                               });
                             }
-                          })
+                          } else {
+                            Navigator.pop(context);
+                            this._showDialog.showDialogCustom(
+                                context,
+                                "Internet Connection Problem",
+                                "Please check your internet connection",
+                                fontSize: 17.0,
+                                boxHeight: 58.0);
+                          }
+                        },
+                      )
                     ],
                   ),
             );
@@ -244,6 +256,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                       autofocus: true,
                       clearButtonMode: OverlayVisibilityMode.editing,
                       onSubmitted: (val) async {
+                        await getInternetAccessObject();
                         if (internetAccess) {
                           if (val != home.homeName) {
                             if (homeValidator(val, home.homeName) == null) {
@@ -261,6 +274,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                             Navigator.pop(context);
                           }
                         } else {
+                          Navigator.pop(context);
                           this._showDialog.showDialogCustom(
                               context,
                               "Internet Connection Problem",
@@ -304,31 +318,43 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                       ),
                       new FlatButton(
                         child: const Text('RENAME'),
-                        onPressed: () {
-                          var form = homeReNameFormKey.currentState;
-                          if (form.validate()) {
-                            form.save();
-                            Navigator.pop(context);
-                            setState(() {
-                              _isLoading = true;
-                              _autoValidateHomeReName = false;
-                            });
-                            _renameHome(home, _homeName);
+                        onPressed: () async {
+                          await getInternetAccessObject();
+                          if (internetAccess) {
+                            var form = homeReNameFormKey.currentState;
+                            if (form.validate()) {
+                              form.save();
+                              Navigator.pop(context);
+                              setState(() {
+                                _isLoading = true;
+                                _autoValidateHomeReName = false;
+                              });
+                              _renameHome(home, _homeName);
+                            } else {
+                              setState(() {
+                                _autoValidateHomeReName = true;
+                              });
+                            }
                           } else {
-                            setState(() {
-                              _autoValidateHomeReName = true;
-                            });
+                            Navigator.pop(context);
+                            this._showDialog.showDialogCustom(
+                                context,
+                                "Internet Connection Problem",
+                                "Please check your internet connection",
+                                fontSize: 17.0,
+                                boxHeight: 58.0);
                           }
                         },
-                      )
+                      ),
                     ],
                   ),
             );
     }
 
     // to show dialogue to ensure of deleting operation
-    bool status = false;
-    _showConfirmDialog() async {
+
+    Future<bool> _showConfirmDialog() async {
+      bool status = false;
       _isIOS(context)
           ? await showDialog<String>(
               context: context,
@@ -351,7 +377,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                           Navigator.pop(context);
                           status = true;
                         },
-                      )
+                      ),
                     ],
                   ),
             )
@@ -370,23 +396,35 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                             status = false;
                           }),
                       new FlatButton(
-                          child: const Text('OK'),
-                          onPressed: () {
-                            Navigator.pop(context);
-                            status = true;
-                          })
+                        child: const Text('OK'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          status = true;
+                        },
+                      )
                     ],
                   ),
             );
+      return status;
     }
 
     _deleteHome(Home home) async {
-      await _showConfirmDialog();
-      if (status) {
-        setState(() {
-          _isLoading = true;
-        });
-        await _presenter.doDeleteHome(home);
+      await getInternetAccessObject();
+      if (internetAccess) {
+        bool status = await _showConfirmDialog();
+        if (status) {
+          setState(() {
+            _isLoading = true;
+          });
+          await _presenter.doDeleteHome(home);
+        }
+      } else {
+        this._showDialog.showDialogCustom(
+            context,
+            "Internet Connection Problem",
+            "Please check your internet connection",
+            fontSize: 17.0,
+            boxHeight: 58.0);
       }
     }
 
@@ -398,94 +436,109 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       return new GridView.count(
         crossAxisCount: 2,
         // Generate 100 Widgets that display their index in the List
-        children: List.generate(len + 1, (index) {
-          if (index == len) {
-            return Center(
+        children: List.generate(
+          len + 1,
+          (index) {
+            if (index == len) {
+              return Center(
                 child: SizedBox(
-              width: 150.0,
-              height: 150.0,
-              child: RaisedButton(
-                shape: new RoundedRectangleBorder(
-                    borderRadius: new BorderRadius.circular(30.0)),
-                onPressed: () async {
-                  await _showHomeNameDialog();
-                },
-                color: kHAutoBlue300,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(Icons.add),
-                    Text('Add Home'),
-                  ],
+                  width: 150.0,
+                  height: 150.0,
+                  child: RaisedButton(
+                    shape: new RoundedRectangleBorder(
+                        borderRadius: new BorderRadius.circular(30.0)),
+                    onPressed: () async {
+                      await _showHomeNameDialog();
+                    },
+                    color: kHAutoBlue300,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(Icons.add),
+                        Text('Add Home'),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ));
-          }
-          return Center(
-            child: InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => HomeObject(home: homeList[index])),
-                );
-              },
-              splashColor: kHAutoBlue300,
-              child: Container(
-                padding: EdgeInsets.only(left: 10.0, top: 20.0, bottom: 20.0),
-                child: Card(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Expanded(
-                        child: Hero(
-                          tag: homeList[index].homeName,
-                          child: Padding(
-                            padding: EdgeInsets.only(left: 15.0, top: 10.0),
-                            child: Text(
-                              '${homeList[index].homeName}',
-                              textAlign: TextAlign.left,
-                              style: Theme.of(context).textTheme.headline,
+              );
+            }
+            return Center(
+              child: InkWell(
+                onTap: () async {
+                  await getInternetAccessObject();
+                  if (internetAccess) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              HomeObject(home: homeList[index])),
+                    );
+                  } else {
+                    this._showDialog.showDialogCustom(
+                        context,
+                        "Internet Connection Problem",
+                        "Please check your internet connection",
+                        fontSize: 17.0,
+                        boxHeight: 58.0);
+                  }
+                },
+                splashColor: kHAutoBlue300,
+                child: Container(
+                  padding: EdgeInsets.only(left: 10.0, top: 20.0, bottom: 20.0),
+                  child: Card(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          child: Hero(
+                            tag: homeList[index].homeName,
+                            child: Padding(
+                              padding: EdgeInsets.only(left: 15.0, top: 10.0),
+                              child: Text(
+                                '${homeList[index].homeName}',
+                                textAlign: TextAlign.left,
+                                style: Theme.of(context).textTheme.headline,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      SizedBox(
-                        height: 40.0,
-                      ),
-                      Row(
-                        children: <Widget>[
-                          SizedBox(
-                            width: 40.0,
-                            child: FlatButton(
-                              onPressed: () async {
-                                await _showHomeReNameDialog(homeList[index]);
-                              },
-                              child: Icon(Icons.edit),
+                        SizedBox(
+                          height: 40.0,
+                        ),
+                        Row(
+                          children: <Widget>[
+                            SizedBox(
+                              width: 40.0,
+                              child: FlatButton(
+                                onPressed: () async {
+                                  await _showHomeReNameDialog(homeList[index]);
+                                },
+                                child: Icon(Icons.edit),
+                              ),
                             ),
-                          ),
-                          SizedBox(
-                            width: 20.0,
-                          ),
-                          SizedBox(
-                            width: 40.0,
-                            child: FlatButton(
-                              onPressed: () async {
-                                await _deleteHome(homeList[index]);
-                              },
-                              child: Icon(Icons.delete),
+                            SizedBox(
+                              width: 20.0,
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            SizedBox(
+                              width: 40.0,
+                              child: FlatButton(
+                                onPressed: () async {
+                                  await _deleteHome(homeList[index]);
+                                },
+                                child: Icon(Icons.delete),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        }),
+            );
+          },
+        ),
       );
     }
 
@@ -503,36 +556,47 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
           (BuildContext context, int index) {
             if (index == len) {
               return Center(
-                  child: SizedBox(
-                width: 150.0,
-                height: 150.0,
-                child: RaisedButton(
-                  shape: new RoundedRectangleBorder(
-                      borderRadius: new BorderRadius.circular(30.0)),
-                  onPressed: () async {
-                    await _showHomeNameDialog();
-                  },
-                  color: kHAutoBlue300,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Icon(Icons.add),
-                      Text('Add Home'),
-                    ],
+                child: SizedBox(
+                  width: 150.0,
+                  height: 150.0,
+                  child: RaisedButton(
+                    shape: new RoundedRectangleBorder(
+                        borderRadius: new BorderRadius.circular(30.0)),
+                    onPressed: () async {
+                      await _showHomeNameDialog();
+                    },
+                    color: kHAutoBlue300,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(Icons.add),
+                        Text('Add Home'),
+                      ],
+                    ),
                   ),
                 ),
-              ));
+              );
             }
             return Center(
               child: InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            HomeObject(home: homeList[index])),
-                  );
+                onTap: () async {
+                  await getInternetAccessObject();
+                  if (internetAccess) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              HomeObject(home: homeList[index])),
+                    );
+                  } else {
+                    this._showDialog.showDialogCustom(
+                        context,
+                        "Internet Connection Problem",
+                        "Please check your internet connection",
+                        fontSize: 17.0,
+                        boxHeight: 58.0);
+                  }
                 },
                 splashColor: kHAutoBlue300,
                 child: Container(
@@ -689,7 +753,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                     ? new CustomScrollView(
                         slivers: <Widget>[
                           new CupertinoSliverRefreshControl(
-                              onRefresh: getInternetAccessObject),
+                              onRefresh: getHomeList),
                           new SliverSafeArea(
                               top: false,
                               sliver: showInternetStatusIOS(context)),
@@ -698,7 +762,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                     : RefreshIndicator(
                         key: homeRefreshIndicatorKey,
                         child: showInternetStatus(context),
-                        onRefresh: getInternetAccessObject,
+                        onRefresh: getHomeList,
                       ),
       ),
     );

@@ -101,7 +101,6 @@ abstract class HomeScreenContract {
   void onSuccessDelete(Home home);
   void onError(String errorTxt);
   void onSuccessRename(Home home);
-  void onSuccessGetAllHome(List<Home> homeList);
 }
 
 class HomeScreenPresenter {
@@ -133,15 +132,6 @@ class HomeScreenPresenter {
     try {
       var h = await api.rename(home, homeName);
       _view.onSuccessRename(h);
-    } on Exception catch (error) {
-      _view.onError(error.toString());
-      print('Error');
-    }
-  }
-  doGetAllHome() async {
-    try {
-      List<Home> h = await api.getAllHome();
-      _view.onSuccessGetAllHome(h);
     } on Exception catch (error) {
       _view.onError(error.toString());
       print('Error');

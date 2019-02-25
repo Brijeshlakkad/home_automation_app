@@ -4,6 +4,8 @@ import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/logout.dart';
 import 'package:home_automation/models/device_data.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:home_automation/internet_access.dart';
+import 'package:home_automation/utils/show_dialog.dart';
 
 class DeviceStatusScreen extends StatefulWidget {
   final Device device;
@@ -23,11 +25,12 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
   Device device;
   double vSlide = 0.0;
   DeviceStatusScreenPresenter _presenter;
+  bool internetAccess = false;
+  ShowDialog _showDialog;
+
   @override
   initState() {
-    setState(() {
-      _isLoading = true;
-    });
+    _showDialog = new ShowDialog();
     getDeviceStatus();
     super.initState();
   }
@@ -50,8 +53,7 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
 
   @override
   void onError(String errorTxt) {
-    print("x");
-    _showSnackBar(errorTxt);
+    //_showSnackBar(errorTxt);
     setState(() => _isLoading = false);
   }
 
@@ -64,30 +66,36 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
+  Future getInternetAccessObject() async {
+    CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
+    bool internetAccessDummy = await checkInternetAccess.check();
+    setState(() {
+      internetAccess = internetAccessDummy;
+    });
+  }
+
   DeviceStatusScreenState() {
     _presenter = new DeviceStatusScreenPresenter(this);
   }
 
   Future getDeviceStatus() async {
-    Device device2 = await _presenter.api.getDevice(widget.device);
-    if (device2 != null) {
-      setState(() {
-        device = device2;
-      });
-      if (device2.deviceSlider != null) {
-        setState(() {
-          vSlide = device2.deviceSlider.value.toDouble();
-        });
-      }
-    } else {
-      setState(() {
+    await getInternetAccessObject();
+    if (internetAccess) {
+      Device device = await _presenter.api.getDevice(widget.device);
+      if (device != null) {
+        this.device = device;
+        if (device.deviceSlider != null) {
+          this.vSlide = device.deviceSlider.value.toDouble();
+        } else {
+          vSlide = 0.0;
+        }
+      } else {
         device = widget.device;
-        vSlide = widget.device.deviceSlider.value.toDouble();
-      });
-      if (widget.device.deviceSlider != null) {
-        setState(() {
+        if (widget.device.deviceSlider != null) {
           vSlide = widget.device.deviceSlider.value.toDouble();
-        });
+        } else {
+          vSlide = 0.0;
+        }
       }
     }
     setState(() {
@@ -112,15 +120,25 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                     max: 5.0,
                     divisions: 5,
                     onChanged: (val) async {
-                      setState(() {
-                        vSlide = val;
-                        _isLoadingValue = true;
-                      });
-                      await _presenter.api
-                          .changeDeviceSlider(device.deviceSlider, val.toInt());
-                      setState(() {
-                        _isLoadingValue = false;
-                      });
+                      await getInternetAccessObject();
+                      if (internetAccess) {
+                        setState(() {
+                          vSlide = val;
+                          _isLoadingValue = true;
+                        });
+                        await _presenter.api.changeDeviceSlider(
+                            device.deviceSlider, val.toInt());
+                        setState(() {
+                          _isLoadingValue = false;
+                        });
+                      } else {
+                        this._showDialog.showDialogCustom(
+                            context,
+                            "Internet Connection Problem",
+                            "Please check your internet connection",
+                            fontSize: 17.0,
+                            boxHeight: 58.0);
+                      }
                     },
                   ),
                 )
@@ -140,15 +158,25 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                     max: 5.0,
                     divisions: 5,
                     onChanged: (val) async {
-                      setState(() {
-                        vSlide = val;
-                        _isLoadingValue = true;
-                      });
-                      await _presenter.api
-                          .changeDeviceSlider(device.deviceSlider, val.toInt());
-                      setState(() {
-                        _isLoadingValue = false;
-                      });
+                      await getInternetAccessObject();
+                      if (internetAccess) {
+                        setState(() {
+                          vSlide = val;
+                          _isLoadingValue = true;
+                        });
+                        await _presenter.api.changeDeviceSlider(
+                            device.deviceSlider, val.toInt());
+                        setState(() {
+                          _isLoadingValue = false;
+                        });
+                      } else {
+                        this._showDialog.showDialogCustom(
+                            context,
+                            "Internet Connection Problem",
+                            "Please check your internet connection",
+                            fontSize: 17.0,
+                            boxHeight: 58.0);
+                      }
                     },
                   ),
                 ),
@@ -166,20 +194,26 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                 child: device.dvStatus == 1
                     ? RaisedButton(
                         color: kHAutoBlue300,
-                        onPressed: () {
-                          setState(() {
-                            _isLoading = true;
-                          });
-                          _presenter.doChangeDeviceStatus(device, 0);
+                        onPressed: () async {
+                          await getInternetAccessObject();
+                          if (internetAccess) {
+                            setState(() {
+                              _isLoading = true;
+                            });
+                            _presenter.doChangeDeviceStatus(device, 0);
+                          }
                         },
                         child: Text("ON"),
                       )
                     : RaisedButton(
-                        onPressed: () {
-                          setState(() {
-                            _isLoading = true;
-                          });
-                          _presenter.doChangeDeviceStatus(device, 1);
+                        onPressed: () async {
+                          await getInternetAccessObject();
+                          if (internetAccess) {
+                            setState(() {
+                              _isLoading = true;
+                            });
+                            _presenter.doChangeDeviceStatus(device, 1);
+                          }
                         },
                         child: Text("OFF"),
                       ),
@@ -215,15 +249,25 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                     max: 30.0,
                     divisions: 30,
                     onChanged: (val) async {
-                      setState(() {
-                        vSlide = val;
-                        _isLoadingValue = true;
-                      });
-                      await _presenter.api
-                          .changeDeviceSlider(device.deviceSlider, val.toInt());
-                      setState(() {
-                        _isLoadingValue = false;
-                      });
+                      await getInternetAccessObject();
+                      if (internetAccess) {
+                        setState(() {
+                          vSlide = val;
+                          _isLoadingValue = true;
+                        });
+                        await _presenter.api.changeDeviceSlider(
+                            device.deviceSlider, val.toInt());
+                        setState(() {
+                          _isLoadingValue = false;
+                        });
+                      } else {
+                        this._showDialog.showDialogCustom(
+                            context,
+                            "Internet Connection Problem",
+                            "Please check your internet connection",
+                            fontSize: 17.0,
+                            boxHeight: 58.0);
+                      }
                     },
                   ),
                 )
@@ -243,15 +287,25 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                     max: 5.0,
                     divisions: 5,
                     onChanged: (val) async {
-                      setState(() {
-                        vSlide = val;
-                        _isLoadingValue = true;
-                      });
-                      await _presenter.api
-                          .changeDeviceSlider(device.deviceSlider, val.toInt());
-                      setState(() {
-                        _isLoadingValue = false;
-                      });
+                      await getInternetAccessObject();
+                      if (internetAccess) {
+                        setState(() {
+                          vSlide = val;
+                          _isLoadingValue = true;
+                        });
+                        await _presenter.api.changeDeviceSlider(
+                            device.deviceSlider, val.toInt());
+                        setState(() {
+                          _isLoadingValue = false;
+                        });
+                      } else {
+                        this._showDialog.showDialogCustom(
+                            context,
+                            "Internet Connection Problem",
+                            "Please check your internet connection",
+                            fontSize: 17.0,
+                            boxHeight: 58.0);
+                      }
                     },
                   ),
                 ),
@@ -266,24 +320,30 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
             title: Text('${device.dvName}'),
             trailing: CupertinoSwitch(
               value: device.dvStatus == 1 ? true : false,
-              onChanged: (bool value) {
-                setState(() {
-                  _isLoading = true;
-                });
-                device.dvStatus == 1
-                    ? _presenter.doChangeDeviceStatus(device, 0)
-                    : _presenter.doChangeDeviceStatus(device, 1);
+              onChanged: (bool value) async {
+                await getInternetAccessObject();
+                if (internetAccess) {
+                  setState(() {
+                    _isLoading = true;
+                  });
+                  device.dvStatus == 1
+                      ? _presenter.doChangeDeviceStatus(device, 0)
+                      : _presenter.doChangeDeviceStatus(device, 1);
+                }
               },
             ),
-            onTap: () {
-              setState(() {
+            onTap: () async {
+              await getInternetAccessObject();
+              if (internetAccess) {
                 setState(() {
-                  _isLoading = true;
+                  setState(() {
+                    _isLoading = true;
+                  });
+                  device.dvStatus == 1
+                      ? _presenter.doChangeDeviceStatus(device, 0)
+                      : _presenter.doChangeDeviceStatus(device, 1);
                 });
-                device.dvStatus == 1
-                    ? _presenter.doChangeDeviceStatus(device, 0)
-                    : _presenter.doChangeDeviceStatus(device, 1);
-              });
+              }
             },
           ),
         ),
@@ -312,6 +372,37 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
         return device.dvName;
       }
       return widget.device.dvName;
+    }
+
+    Widget showInternetStatusIOS(BuildContext context) {
+      return new SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          childAspectRatio: 1.0,
+          crossAxisCount: 1,
+        ),
+        delegate:
+            new SliverChildBuilderDelegate((BuildContext context, int index) {
+          return Container(
+            child: Center(
+              child: Text("Please check your internet connection"),
+            ),
+          );
+        }, childCount: 1),
+      );
+    }
+
+    Widget showInternetStatus(BuildContext context) {
+      return new GridView.count(
+        crossAxisCount: 1,
+        // Generate 100 Widgets that display their index in the List
+        children: List.generate(1, (index) {
+          return Container(
+            child: Center(
+              child: Text("Please check your internet connection"),
+            ),
+          );
+        }),
+      );
     }
 
     return Scaffold(
@@ -384,21 +475,36 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
             ),
       body: _isLoading
           ? ShowProgress()
-          : _isIOS(context)
-              ? new CustomScrollView(
-                  slivers: <Widget>[
-                    new CupertinoSliverRefreshControl(
-                        onRefresh: getDeviceStatus),
-                    new SliverSafeArea(
-                        top: false,
-                        sliver: createIOSDeviceView(context, device)),
-                  ],
-                )
-              : RefreshIndicator(
-                  key: dvStatusRefreshIndicatorKey,
-                  child: createDeviceView(context, device),
-                  onRefresh: getDeviceStatus,
-                ),
+          : internetAccess
+              ? _isIOS(context)
+                  ? new CustomScrollView(
+                      slivers: <Widget>[
+                        new CupertinoSliverRefreshControl(
+                            onRefresh: getDeviceStatus),
+                        new SliverSafeArea(
+                            top: false,
+                            sliver: createIOSDeviceView(context, device)),
+                      ],
+                    )
+                  : RefreshIndicator(
+                      key: dvStatusRefreshIndicatorKey,
+                      child: createDeviceView(context, device),
+                      onRefresh: getDeviceStatus,
+                    )
+              : _isIOS(context)
+                  ? new CustomScrollView(
+                      slivers: <Widget>[
+                        new CupertinoSliverRefreshControl(
+                            onRefresh: getDeviceStatus),
+                        new SliverSafeArea(
+                            top: false, sliver: showInternetStatusIOS(context)),
+                      ],
+                    )
+                  : RefreshIndicator(
+                      key: dvStatusRefreshIndicatorKey,
+                      child: showInternetStatus(context),
+                      onRefresh: getDeviceStatus,
+                    ),
     );
   }
 }

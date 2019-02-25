@@ -264,7 +264,6 @@ abstract class DeviceScreenContract {
   void onSuccessDelete(Device dv);
   void onError(String errorTxt);
   void onSuccessRename(Device dv);
-  void onSuccessGetAllDevice(List<Device> dvList);
 }
 
 class DeviceScreenPresenter {
@@ -297,16 +296,6 @@ class DeviceScreenPresenter {
     try {
       var d = await api.rename(dv, dvName, dvPort, dvImg);
       _view.onSuccessRename(d);
-    } on Exception catch (error) {
-      _view.onError(error.toString());
-      print('Error');
-    }
-  }
-
-  doGetAllDevice(Hardware hw) async {
-    try {
-      List<Device> dvList = await api.getAllDevice(hw);
-      _view.onSuccessGetAllDevice(dvList);
     } on Exception catch (error) {
       _view.onError(error.toString());
       print('Error');

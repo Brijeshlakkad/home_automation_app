@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:home_automation/models/device_data.dart';
+import 'package:home_automation/internet_access.dart';
+import 'package:home_automation/utils/show_dialog.dart';
 
 class GetDeviceDetails extends StatefulWidget {
   final hardware;
@@ -22,6 +24,9 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
   Map deviceDetails = new Map();
   List<Device> dvList = new List<Device>();
   String _dvName, _dvPort, _dvImg;
+  bool internetAccess = false;
+  ShowDialog _showDialog;
+
   List<String> portList = <String>[
     '1',
     '2',
@@ -35,19 +40,29 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
     '0'
   ];
   @override
-  void initState(){
-    if(widget.dvDetails['isModifying']){
+  void initState() {
+    _showDialog = new ShowDialog();
+    if (widget.dvDetails['isModifying']) {
       setState(() {
         _dvName = widget.dvDetails['dvName'];
         _dvPort = widget.dvDetails['dvPort'];
         _dvImg = widget.dvDetails['dvImg'];
       });
-    }else{
+    } else {
       _dvPort = portList[0];
       _dvImg = widget.imgList[0].key;
     }
     super.initState();
   }
+
+  Future getInternetAccessObject() async {
+    CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
+    bool internetAccessDummy = await checkInternetAccess.check();
+    setState(() {
+      internetAccess = internetAccessDummy;
+    });
+  }
+
   List getListOfDeviceName() {
     List<Device> list = widget.deviceList;
     if (list != null) {
@@ -166,22 +181,32 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                               textScaleFactor: 1.0,
                               style: TextStyle(color: Colors.blue),
                             ),
-                            onPressed: () {
-                              var form = dvFormKey.currentState;
-                              if (form.validate()) {
-                                form.save();
-                                setState(() {
-                                  _autoValidateDv = false;
-                                });
-                                deviceDetails['error'] = false;
-                                deviceDetails['dvName'] = _dvName;
-                                deviceDetails['dvPort'] = _dvPort;
-                                deviceDetails['dvImg'] = _dvImg;
-                                Navigator.pop(context, deviceDetails);
+                            onPressed: () async {
+                              await getInternetAccessObject();
+                              if (internetAccess) {
+                                var form = dvFormKey.currentState;
+                                if (form.validate()) {
+                                  form.save();
+                                  setState(() {
+                                    _autoValidateDv = false;
+                                  });
+                                  deviceDetails['error'] = false;
+                                  deviceDetails['dvName'] = _dvName;
+                                  deviceDetails['dvPort'] = _dvPort;
+                                  deviceDetails['dvImg'] = _dvImg;
+                                  Navigator.pop(context, deviceDetails);
+                                } else {
+                                  setState(() {
+                                    _autoValidateDv = true;
+                                  });
+                                }
                               } else {
-                                setState(() {
-                                  _autoValidateDv = true;
-                                });
+                                this._showDialog.showDialogCustom(
+                                    context,
+                                    "Internet Connection Problem",
+                                    "Please check your internet connection",
+                                    fontSize: 17.0,
+                                    boxHeight: 58.0);
                               }
                             },
                           ),
@@ -281,29 +306,39 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                               textScaleFactor: 1.0,
                               style: TextStyle(color: Colors.blue),
                             ),
-                            onPressed: () {
-                              var form = dvFormKey.currentState;
-                              if (form.validate()) {
-                                form.save();
-                                if (_dvName != widget.dvDetails['dvName'] ||
-                                    _dvPort != widget.dvDetails['dvPort'] ||
-                                    _dvImg != widget.dvDetails['dvImg']) {
-                                  setState(() {
-                                    _autoValidateDvRe = false;
-                                  });
-                                  deviceDetails['error'] = false;
-                                  deviceDetails['dvName'] = _dvName;
-                                  deviceDetails['dvPort'] = _dvPort;
-                                  deviceDetails['dvImg'] = _dvImg;
-                                  Navigator.pop(context, deviceDetails);
+                            onPressed: () async {
+                              await getInternetAccessObject();
+                              if (internetAccess) {
+                                var form = dvFormKey.currentState;
+                                if (form.validate()) {
+                                  form.save();
+                                  if (_dvName != widget.dvDetails['dvName'] ||
+                                      _dvPort != widget.dvDetails['dvPort'] ||
+                                      _dvImg != widget.dvDetails['dvImg']) {
+                                    setState(() {
+                                      _autoValidateDvRe = false;
+                                    });
+                                    deviceDetails['error'] = false;
+                                    deviceDetails['dvName'] = _dvName;
+                                    deviceDetails['dvPort'] = _dvPort;
+                                    deviceDetails['dvImg'] = _dvImg;
+                                    Navigator.pop(context, deviceDetails);
+                                  } else {
+                                    deviceDetails['error'] = true;
+                                    Navigator.pop(context, deviceDetails);
+                                  }
                                 } else {
-                                  deviceDetails['error'] = true;
-                                  Navigator.pop(context, deviceDetails);
+                                  setState(() {
+                                    _autoValidateDvRe = true;
+                                  });
                                 }
                               } else {
-                                setState(() {
-                                  _autoValidateDvRe = true;
-                                });
+                                this._showDialog.showDialogCustom(
+                                    context,
+                                    "Internet Connection Problem",
+                                    "Please check your internet connection",
+                                    fontSize: 17.0,
+                                    boxHeight: 58.0);
                               }
                             },
                           ),

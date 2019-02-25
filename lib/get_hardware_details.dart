@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:home_automation/models/hardware_data.dart';
+import 'package:home_automation/internet_access.dart';
+import 'package:home_automation/utils/show_dialog.dart';
 
 class GetHardwareDetails extends StatefulWidget {
   final room;
   final List<Hardware> hwList;
   final Map hwDetails;
-  GetHardwareDetails(
-      {this.room, this.hwList, this.hwDetails});
+  GetHardwareDetails({this.room, this.hwList, this.hwDetails});
   @override
   GetHardwareDetailsState createState() {
     return new GetHardwareDetailsState();
@@ -18,6 +19,8 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
   var dvReFormKey = new GlobalKey<FormState>();
   bool _autoValidateDv = false;
   bool _autoValidateDvRe = false;
+  bool internetAccess = false;
+  ShowDialog _showDialog;
   Map hwDetails = new Map();
   String _hwName, _hwSeries, _hwIP;
   List<String> portList = <String>[
@@ -33,8 +36,9 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
     '0'
   ];
   @override
-  void initState(){
-    if(widget.hwDetails['isModifying']){
+  void initState() {
+    _showDialog = new ShowDialog();
+    if (widget.hwDetails['isModifying']) {
       setState(() {
         _hwName = widget.hwDetails['hwName'];
         _hwSeries = widget.hwDetails['hwSeries'];
@@ -43,6 +47,15 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
     }
     super.initState();
   }
+
+  Future getInternetAccessObject() async {
+    CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
+    bool internetAccessDummy = await checkInternetAccess.check();
+    setState(() {
+      internetAccess = internetAccessDummy;
+    });
+  }
+
   List getListOfHardwareName() {
     List<Hardware> list = widget.hwList;
     if (list != null) {
@@ -151,22 +164,32 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
                               textScaleFactor: 1.0,
                               style: TextStyle(color: Colors.blue),
                             ),
-                            onPressed: () {
-                              var form = hwFormKey.currentState;
-                              if (form.validate()) {
-                                form.save();
-                                setState(() {
-                                  _autoValidateDv = false;
-                                });
-                                hwDetails['error'] = false;
-                                hwDetails['hwName'] = _hwName;
-                                hwDetails['hwSeries'] = _hwSeries;
-                                hwDetails['hwIP'] = _hwIP;
-                                Navigator.pop(context, hwDetails);
+                            onPressed: () async {
+                              await getInternetAccessObject();
+                              if (internetAccess) {
+                                var form = hwFormKey.currentState;
+                                if (form.validate()) {
+                                  form.save();
+                                  setState(() {
+                                    _autoValidateDv = false;
+                                  });
+                                  hwDetails['error'] = false;
+                                  hwDetails['hwName'] = _hwName;
+                                  hwDetails['hwSeries'] = _hwSeries;
+                                  hwDetails['hwIP'] = _hwIP;
+                                  Navigator.pop(context, hwDetails);
+                                } else {
+                                  setState(() {
+                                    _autoValidateDv = true;
+                                  });
+                                }
                               } else {
-                                setState(() {
-                                  _autoValidateDv = true;
-                                });
+                                this._showDialog.showDialogCustom(
+                                    context,
+                                    "Internet Connection Problem",
+                                    "Please check your internet connection",
+                                    fontSize: 17.0,
+                                    boxHeight: 58.0);
                               }
                             },
                           ),
@@ -242,29 +265,40 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
                               textScaleFactor: 1.0,
                               style: TextStyle(color: Colors.blue),
                             ),
-                            onPressed: () {
-                              var form = hwFormKey.currentState;
-                              if (form.validate()) {
-                                form.save();
-                                if (_hwName != widget.hwDetails['hwName'] ||
-                                    _hwSeries != widget.hwDetails['hwSeries'] ||
-                                    _hwIP != widget.hwDetails['hwIP']) {
-                                  setState(() {
-                                    _autoValidateDv = false;
-                                  });
-                                  hwDetails['error'] = false;
-                                  hwDetails['hwName'] = _hwName;
-                                  hwDetails['hwSeries'] = _hwSeries;
-                                  hwDetails['hwIP'] = _hwIP;
-                                  Navigator.pop(context, hwDetails);
+                            onPressed: () async {
+                              await getInternetAccessObject();
+                              if (internetAccess) {
+                                var form = hwFormKey.currentState;
+                                if (form.validate()) {
+                                  form.save();
+                                  if (_hwName != widget.hwDetails['hwName'] ||
+                                      _hwSeries !=
+                                          widget.hwDetails['hwSeries'] ||
+                                      _hwIP != widget.hwDetails['hwIP']) {
+                                    setState(() {
+                                      _autoValidateDv = false;
+                                    });
+                                    hwDetails['error'] = false;
+                                    hwDetails['hwName'] = _hwName;
+                                    hwDetails['hwSeries'] = _hwSeries;
+                                    hwDetails['hwIP'] = _hwIP;
+                                    Navigator.pop(context, hwDetails);
+                                  } else {
+                                    hwDetails['error'] = true;
+                                    Navigator.pop(context, hwDetails);
+                                  }
                                 } else {
-                                  hwDetails['error'] = true;
-                                  Navigator.pop(context, hwDetails);
+                                  setState(() {
+                                    _autoValidateDvRe = true;
+                                  });
                                 }
                               } else {
-                                setState(() {
-                                  _autoValidateDvRe = true;
-                                });
+                                this._showDialog.showDialogCustom(
+                                    context,
+                                    "Internet Connection Problem",
+                                    "Please check your internet connection",
+                                    fontSize: 17.0,
+                                    boxHeight: 58.0);
                               }
                             },
                           ),
