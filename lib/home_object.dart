@@ -100,8 +100,8 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
   void onSuccess(Room room) async {
     _showSnackBar("Created ${room.toString()} home");
     setState(() => _isLoading = false);
-    var db = new DatabaseHelper();
-    await db.saveRoom(room);
+//    var db = new DatabaseHelper();
+//    await db.saveRoom(room);
     getRoomList();
   }
 
@@ -110,8 +110,8 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     if (roomList != null) {
       _showSnackBar("Got ${roomList.length}");
       setState(() => _isLoading = false);
-      var db = new DatabaseHelper();
-      await db.saveAllRoom(roomList);
+//      var db = new DatabaseHelper();
+//      await db.saveAllRoom(roomList);
     }
   }
 
@@ -119,8 +119,8 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
   void onSuccessDelete(Room room) async {
     _showSnackBar("Deleted ${room.roomName} room");
     setState(() => _isLoading = false);
-    var db = new DatabaseHelper();
-    await db.deleteRoom(room);
+//    var db = new DatabaseHelper();
+//    await db.deleteRoom(room);
     getRoomList();
   }
 
@@ -128,8 +128,8 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
   void onSuccessRename(Room room) async {
     _showSnackBar(room.toString());
     setState(() => _isLoading = false);
-    var db = new DatabaseHelper();
-    await db.renameRoom(room);
+//    var db = new DatabaseHelper();
+//    await db.renameRoom(room);
     getRoomList();
   }
 

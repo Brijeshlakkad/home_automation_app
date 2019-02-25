@@ -93,8 +93,8 @@ class DeviceScreenState extends State<DeviceScreen>
   void onSuccess(Device dv) async {
     _showSnackBar("Created ${dv.toString()} device");
     setState(() => _isLoading = false);
-    var db = new DatabaseHelper();
-    await db.saveDevice(dv);
+//    var db = new DatabaseHelper();
+//    await db.saveDevice(dv);
     getDeviceList();
   }
 
@@ -103,8 +103,8 @@ class DeviceScreenState extends State<DeviceScreen>
     if (dvList != null) {
       _showSnackBar("Got ${dvList.length}");
       setState(() => _isLoading = false);
-      var db = new DatabaseHelper();
-      await db.saveAllDevice(dvList);
+//      var db = new DatabaseHelper();
+//      await db.saveAllDevice(dvList);
     }
   }
 
@@ -112,8 +112,8 @@ class DeviceScreenState extends State<DeviceScreen>
   void onSuccessDelete(Device dv) async {
     _showSnackBar(dv.toString());
     setState(() => _isLoading = false);
-    var db = new DatabaseHelper();
-    await db.deleteDevice(dv);
+//    var db = new DatabaseHelper();
+//    await db.deleteDevice(dv);
     getDeviceList();
   }
 
@@ -121,8 +121,8 @@ class DeviceScreenState extends State<DeviceScreen>
   void onSuccessRename(Device dv) async {
     _showSnackBar(dv.toString());
     setState(() => _isLoading = false);
-    var db = new DatabaseHelper();
-    await db.renameDevice(dv);
+//    var db = new DatabaseHelper();
+//    await db.renameDevice(dv);
     getDeviceList();
   }
 

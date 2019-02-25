@@ -80,8 +80,8 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   void onSuccess(Home home) async {
     _showSnackBar("Created ${home.toString()} home");
     setState(() => _isLoading = false);
-    var db = new DatabaseHelper();
-    await db.saveHome(home);
+//    var db = new DatabaseHelper();
+//    await db.saveHome(home);
   }
 
   @override
@@ -89,24 +89,24 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     if (homeList != null) {
       _showSnackBar("Got ${homeList.length}");
       setState(() => _isLoading = false);
-      var db = new DatabaseHelper();
-      await db.saveAllHome(homeList);
+//      var db = new DatabaseHelper();
+//      await db.saveAllHome(homeList);
     }
   }
 
   void onSuccessDelete(Home home) async {
     _showSnackBar("Deleted ${home.homeName} home");
     setState(() => _isLoading = false);
-    var db = new DatabaseHelper();
-    await db.deleteHome(home);
+//    var db = new DatabaseHelper();
+//    await db.deleteHome(home);
     getHomeList();
   }
 
   void onSuccessRename(Home home) async {
     _showSnackBar(home.toString());
     setState(() => _isLoading = false);
-    var db = new DatabaseHelper();
-    await db.renameHome(home);
+//    var db = new DatabaseHelper();
+//    await db.renameHome(home);
     getHomeList();
   }
 

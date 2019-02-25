@@ -86,8 +86,8 @@ class HardwareScreenState extends State<HardwareScreen>
   void onSuccess(Hardware hw) async {
     _showSnackBar("Created ${hw.toString()} hardware");
     setState(() => _isLoading = false);
-    var db = new DatabaseHelper();
-    await db.saveHardware(hw);
+//    var db = new DatabaseHelper();
+//    await db.saveHardware(hw);
     getHardwareList();
   }
 
@@ -96,8 +96,8 @@ class HardwareScreenState extends State<HardwareScreen>
     if (hwList != null) {
       _showSnackBar("Got ${hwList.length}");
       setState(() => _isLoading = false);
-      var db = new DatabaseHelper();
-      await db.saveAllHardware(hwList);
+//      var db = new DatabaseHelper();
+//      await db.saveAllHardware(hwList);
     }
   }
 
@@ -105,8 +105,8 @@ class HardwareScreenState extends State<HardwareScreen>
   void onSuccessDelete(Hardware hw) async {
     _showSnackBar("Hardware ${hw.hwName} deleted");
     setState(() => _isLoading = false);
-    var db = new DatabaseHelper();
-    await db.deleteHardware(hw);
+//    var db = new DatabaseHelper();
+//    await db.deleteHardware(hw);
     getHardwareList();
   }
 
@@ -114,8 +114,8 @@ class HardwareScreenState extends State<HardwareScreen>
   void onSuccessRename(Hardware hw) async {
     _showSnackBar(hw.toString());
     setState(() => _isLoading = false);
-    var db = new DatabaseHelper();
-    await db.renameHardware(hw);
+//    var db = new DatabaseHelper();
+//    await db.renameHardware(hw);
     getHardwareList();
   }
 
