@@ -18,10 +18,9 @@ class LoginScreen extends StatefulWidget {
 
 class LoginScreenState extends State<LoginScreen>
     implements LoginScreenContract, AuthStateListener {
-  BuildContext _ctx;
   bool _obscureText = true;
   bool _isLoadingValue = false;
-  bool _isLoading = false;
+  bool _isLoading = true;
   final formKey = new GlobalKey<FormState>();
   final scaffoldKey = new GlobalKey<ScaffoldState>();
   String _password, _email;
@@ -66,7 +65,12 @@ class LoginScreenState extends State<LoginScreen>
   @override
   onAuthStateChanged(AuthState state, User user) {
     if (state == AuthState.LOGGED_IN) {
-      Navigator.push(context, MaterialPageRoute(builder: (context)=>HomeScreen(user:user)));
+      Navigator.push(context,
+          MaterialPageRoute(builder: (context) => HomeScreen(user: user)));
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -95,7 +99,6 @@ class LoginScreenState extends State<LoginScreen>
       });
     }
 
-    _ctx = context;
     var loginBtn = new Container(
       padding: EdgeInsets.only(top: 16.0),
       width: 400.0,
@@ -226,6 +229,6 @@ class LoginScreenState extends State<LoginScreen>
     final form = formKey.currentState;
     form.reset();
     var authStateProvider = new AuthStateProvider();
-    authStateProvider.notify(AuthState.LOGGED_IN,user);
+    authStateProvider.notify(AuthState.LOGGED_IN, user);
   }
 }

@@ -47,6 +47,7 @@ class DatabaseHelper {
     await this.deleteUsers();
     var dbClient = await db;
     int res = await dbClient.insert("User", user.toMap());
+    print("$res");
     return res;
   }
 
@@ -70,7 +71,7 @@ class DatabaseHelper {
   Future<bool> isLoggedIn() async {
     var dbClient = await db;
     var res = await dbClient.query("User");
-    return res.length > 0 ? true : false;
+    return res.length == 1 ? true : false;
   }
 
   Future<String> getUser() async {
@@ -87,7 +88,6 @@ class DatabaseHelper {
     var dbClient = await db;
     var res = await dbClient.rawQuery("SELECT * FROM User");
     if (res.length == 1) {
-      print("${res.toString()}");
       return User.map(res.first);
     } else {
       this.deleteUsers();

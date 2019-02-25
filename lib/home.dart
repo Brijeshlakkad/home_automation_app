@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:home_automation/data/database_helper.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/home_object.dart';
@@ -8,6 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/internet_access.dart';
 import 'package:home_automation/models/user_data.dart';
+import 'package:home_automation/utils/show_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   final User user;
@@ -22,15 +22,15 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   final scaffoldKey = new GlobalKey<ScaffoldState>();
   var homeNameFormKey = new GlobalKey<FormState>();
   var homeReNameFormKey = new GlobalKey<FormState>();
-  bool _isLoading = false;
+  bool _isLoading = true;
   bool flag = false;
   bool _autoValidateHomeName = false;
   bool _autoValidateHomeReName = false;
   var homeRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
   List<Home> homeList = new List<Home>();
-  var db = new DatabaseHelper();
   String _homeName;
   bool internetAccess = false;
+  ShowDialog _showDialog;
   void _showSnackBar(String text) {
     scaffoldKey.currentState.removeCurrentSnackBar();
     scaffoldKey.currentState
@@ -39,10 +39,8 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
 
   @override
   void initState() {
-    setState(() {
-      _isLoading = true;
-    });
-    getHomeList();
+    _showDialog = new ShowDialog();
+    getInternetAccessObject();
     super.initState();
   }
 
@@ -53,29 +51,23 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
 
   Future getInternetAccessObject() async {
     CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
-    bool internetAccessDummy = await checkInternetAccess.check();
+    bool internetAccess = await checkInternetAccess.check();
+    if (internetAccess) {
+      await getHomeList();
+    }
     setState(() {
-      internetAccess = internetAccessDummy;
+      this.internetAccess = internetAccess;
     });
   }
 
   Future getHomeList() async {
-    await getInternetAccessObject();
-    if (internetAccess) {
-      homeRefreshIndicatorKey.currentState?.show();
-      homeList = await _presenter.api.getAllHome();
-      if (homeList != null) {
-        setState(() {
-          homeList = homeList.toList();
-        });
-        onSuccessGetAllHome(homeList);
-      }
-    } else {
+    homeRefreshIndicatorKey.currentState?.show();
+    homeList = await _presenter.api.getAllHome();
+    if (homeList != null) {
       setState(() {
-        homeList = new List<Home>();
-        _isLoading = false;
+        homeList = homeList.toList();
       });
-      _showSnackBar("Please check internet connection");
+      onSuccessGetAllHome(homeList);
     }
   }
 
@@ -251,21 +243,30 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                     content: CupertinoTextField(
                       autofocus: true,
                       clearButtonMode: OverlayVisibilityMode.editing,
-                      onSubmitted: (val) {
-                        if (val != home.homeName) {
-                          if (homeValidator(val, home.homeName) == null) {
-                            Navigator.pop(context);
-                            setState(() {
-                              _isLoading = true;
-                            });
-                            _renameHome(home, val);
+                      onSubmitted: (val) async {
+                        if (internetAccess) {
+                          if (val != home.homeName) {
+                            if (homeValidator(val, home.homeName) == null) {
+                              Navigator.pop(context);
+                              setState(() {
+                                _isLoading = true;
+                              });
+                              _renameHome(home, val);
+                            } else {
+                              Navigator.pop(context);
+                              _showSnackBar(
+                                  "${homeValidator(val, home.homeName)}");
+                            }
                           } else {
                             Navigator.pop(context);
-                            _showSnackBar(
-                                "${homeValidator(val, home.homeName)}");
                           }
                         } else {
-                          Navigator.pop(context);
+                          this._showDialog.showDialogCustom(
+                              context,
+                              "Internet Connection Problem",
+                              "Please check your internet connection",
+                              fontSize: 17.0,
+                              boxHeight: 58.0);
                         }
                       },
                     ),
@@ -594,6 +595,37 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       );
     }
 
+    Widget showInternetStatusIOS(BuildContext context) {
+      return new SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          childAspectRatio: 1.0,
+          crossAxisCount: 1,
+        ),
+        delegate:
+            new SliverChildBuilderDelegate((BuildContext context, int index) {
+          return Container(
+            child: Center(
+              child: Text("Please check your internet connection"),
+            ),
+          );
+        }, childCount: 1),
+      );
+    }
+
+    Widget showInternetStatus(BuildContext context) {
+      return new GridView.count(
+        crossAxisCount: 1,
+        // Generate 100 Widgets that display their index in the List
+        children: List.generate(1, (index) {
+          return Container(
+            child: Center(
+              child: Text("Please check your internet connection"),
+            ),
+          );
+        }),
+      );
+    }
+
     Future<bool> _backButtonPressed() {
       return showDialog<bool>(
         context: context,
@@ -636,21 +668,38 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
               ),
         body: _isLoading
             ? ShowProgress()
-            : _isIOS(context)
-                ? new CustomScrollView(
-                    slivers: <Widget>[
-                      new CupertinoSliverRefreshControl(onRefresh: getHomeList),
-                      new SliverSafeArea(
-                        top: false,
-                        sliver: createListViewIOS(context, homeList),
+            : internetAccess
+                ? _isIOS(context)
+                    ? new CustomScrollView(
+                        slivers: <Widget>[
+                          new CupertinoSliverRefreshControl(
+                              onRefresh: getHomeList),
+                          new SliverSafeArea(
+                            top: false,
+                            sliver: createListViewIOS(context, homeList),
+                          ),
+                        ],
+                      )
+                    : RefreshIndicator(
+                        key: homeRefreshIndicatorKey,
+                        child: createListView(context, homeList),
+                        onRefresh: getHomeList,
+                      )
+                : _isIOS(context)
+                    ? new CustomScrollView(
+                        slivers: <Widget>[
+                          new CupertinoSliverRefreshControl(
+                              onRefresh: getInternetAccessObject),
+                          new SliverSafeArea(
+                              top: false,
+                              sliver: showInternetStatusIOS(context)),
+                        ],
+                      )
+                    : RefreshIndicator(
+                        key: homeRefreshIndicatorKey,
+                        child: showInternetStatus(context),
+                        onRefresh: getInternetAccessObject,
                       ),
-                    ],
-                  )
-                : RefreshIndicator(
-                    key: homeRefreshIndicatorKey,
-                    child: createListView(context, homeList),
-                    onRefresh: getHomeList,
-                  ),
       ),
     );
   }

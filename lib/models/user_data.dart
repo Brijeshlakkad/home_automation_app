@@ -24,7 +24,7 @@ import 'package:home_automation/utils/network_util.dart';
 class User {
   int _id;
   String _email, _password, _name, _city, _address, _mobile;
-  User(this_id,this._email, this._password, this._name, this._city, this._mobile,
+  User(this._id,this._email, this._password, this._name, this._city, this._mobile,
       this._address);
 
   User.map(dynamic obj) {
@@ -68,7 +68,7 @@ class RequestUser {
   static final finalURL = baseURL + "/user_actions.php";
   static final db = new DatabaseHelper();
   Future<User> getUserDetails(String user) async {
-    return _netUtil.post(finalURL, body: {"email": user, "action": "0"}).then(
+    return _netUtil.post(finalURL, body: {"email": user, "action": "1"}).then(
         (dynamic res) {
       print(res.toString());
       if (res["error"]) throw new Exception(res["errorMessage"]);
