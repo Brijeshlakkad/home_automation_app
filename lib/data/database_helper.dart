@@ -1,12 +1,7 @@
 import 'dart:async';
 import 'dart:io' as io;
-
 import 'package:path/path.dart';
-import 'package:home_automation/models/user.dart';
-import 'package:home_automation/models/home_data.dart';
-import 'package:home_automation/models/room_data.dart';
-import 'package:home_automation/models/hardware_data.dart';
-import 'package:home_automation/models/device_data.dart';
+import 'package:home_automation/models/user_data.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -34,7 +29,7 @@ class DatabaseHelper {
   void _onCreate(Database db, int version) async {
     // When creating the db, create the table
     await db.execute(
-        "CREATE TABLE User(id INTEGER PRIMARY KEY, email TEXT, password TEXT)");
+        "CREATE TABLE User(id INTEGER PRIMARY KEY, email TEXT, password TEXT, name Text, city Text, mobile Text, address Text)");
 //    await db.execute(
 //        "CREATE TABLE Home(id INTEGER PRIMARY KEY, email TEXT, homeName TEXT)");
 //    await db.execute(
@@ -49,6 +44,7 @@ class DatabaseHelper {
   }
 
   Future<int> saveUser(User user) async {
+    await this.deleteUsers();
     var dbClient = await db;
     int res = await dbClient.insert("User", user.toMap());
     return res;
@@ -83,6 +79,18 @@ class DatabaseHelper {
     if (res.length > 0) {
       return res.first['email'].toString();
     } else {
+      return null;
+    }
+  }
+
+  Future<User> getUserDetails() async {
+    var dbClient = await db;
+    var res = await dbClient.rawQuery("SELECT * FROM User");
+    if (res.length == 1) {
+      print("${res.toString()}");
+      return User.map(res.first);
+    } else {
+      this.deleteUsers();
       return null;
     }
   }

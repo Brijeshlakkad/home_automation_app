@@ -1,5 +1,5 @@
 import 'package:home_automation/models/rest_ds.dart';
-import 'package:home_automation/models/user.dart';
+import 'package:home_automation/models/user_data.dart';
 abstract class LoginScreenContract {
   void onLoginSuccess(User user);
   void onLoginError(String errorTxt);

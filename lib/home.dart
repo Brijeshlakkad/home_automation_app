@@ -7,8 +7,11 @@ import 'package:home_automation/logout.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/internet_access.dart';
+import 'package:home_automation/models/user_data.dart';
 
 class HomeScreen extends StatefulWidget {
+  final User user;
+  HomeScreen({this.user});
   @override
   HomeScreenState createState() {
     return new HomeScreenState();
@@ -532,7 +535,8 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                 },
                 splashColor: kHAutoBlue300,
                 child: Container(
-                  padding: EdgeInsets.only(left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
+                  padding: EdgeInsets.only(
+                      left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
                   child: Card(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

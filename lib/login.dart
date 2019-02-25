@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:home_automation/data/database_helper.dart';
 import 'package:home_automation/auth.dart';
-import 'package:home_automation/models/user.dart';
+import 'package:home_automation/models/user_data.dart';
 import 'login_screen_presenter.dart';
 import 'dart:ui';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/internet_access.dart';
 import 'package:home_automation/show_progress.dart';
+import 'package:home_automation/home.dart';
+
 class LoginScreen extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
@@ -15,7 +17,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class LoginScreenState extends State<LoginScreen>
-    implements LoginScreenContract, AuthStateListener{
+    implements LoginScreenContract, AuthStateListener {
   BuildContext _ctx;
   bool _obscureText = true;
   bool _isLoadingValue = false;
@@ -39,7 +41,7 @@ class LoginScreenState extends State<LoginScreen>
 
   void _submit() async {
     CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
-    if(await checkInternetAccess.check()){
+    if (await checkInternetAccess.check()) {
       final form = formKey.currentState;
       setState(() => _showError = false);
       if (form.validate()) {
@@ -51,7 +53,7 @@ class LoginScreenState extends State<LoginScreen>
           _autoValidate = true;
         });
       }
-    }else{
+    } else {
       _showSnackBar("Please check internet connection");
     }
   }
@@ -62,9 +64,9 @@ class LoginScreenState extends State<LoginScreen>
   }
 
   @override
-  onAuthStateChanged(AuthState state) {
-    if (state == AuthState.LOGGED_IN){
-      Navigator.of(_ctx).pushNamed("/home");
+  onAuthStateChanged(AuthState state, User user) {
+    if (state == AuthState.LOGGED_IN) {
+      Navigator.push(context, MaterialPageRoute(builder: (context)=>HomeScreen(user:user)));
     }
   }
 
@@ -165,13 +167,13 @@ class LoginScreenState extends State<LoginScreen>
           padding: EdgeInsets.only(top: 30.0, bottom: 10.0),
           child: _showError
               ? Container(
-            child: Text(
-              "Email id or Password is wrong",
-              style: TextStyle(
-                color: Colors.red,
-              ),
-            ),
-          )
+                  child: Text(
+                    "Email id or Password is wrong",
+                    style: TextStyle(
+                      color: Colors.red,
+                    ),
+                  ),
+                )
               : Container(),
         ),
         Center(
@@ -180,7 +182,7 @@ class LoginScreenState extends State<LoginScreen>
         Padding(
           padding: EdgeInsets.only(top: 10.0),
           child: FlatButton(
-            onPressed: (){
+            onPressed: () {
               Navigator.of(context).pushNamed('/signup');
             },
             child: Text(
@@ -203,13 +205,11 @@ class LoginScreenState extends State<LoginScreen>
             padding: EdgeInsets.all(30.0),
             child: _isLoading ? ShowProgress() : loginForm,
           ),
-        )
-    );
+        ));
   }
 
   @override
   void onLoginError(String errorTxt) {
-    print("x");
     _showSnackBar(errorTxt);
     setState(() {
       _isLoadingValue = false;
@@ -226,6 +226,6 @@ class LoginScreenState extends State<LoginScreen>
     final form = formKey.currentState;
     form.reset();
     var authStateProvider = new AuthStateProvider();
-    authStateProvider.notify(AuthState.LOGGED_IN);
+    authStateProvider.notify(AuthState.LOGGED_IN,user);
   }
 }

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:home_automation/utils/network_util.dart';
-import 'package:home_automation/models/user.dart';
+import 'package:home_automation/models/user_data.dart';
 
 class RestDatasource {
   NetworkUtil _netUtil = new NetworkUtil();
