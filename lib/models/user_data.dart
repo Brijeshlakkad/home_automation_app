@@ -42,7 +42,7 @@ class User {
   String get name => _name;
   String get city => _city;
   String get mobile => _mobile;
-  String get type => _address;
+  String get address => _address;
 
   Map<String, dynamic> toMap() {
     var map = new Map<String, dynamic>();

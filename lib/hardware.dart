@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/models/room_data.dart';
-import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/logout.dart';
 import 'package:home_automation/models/hardware_data.dart';
 import 'package:home_automation/device.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:home_automation/get_hardware_details.dart';
 import 'package:home_automation/internet_access.dart';
+import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/utils/show_dialog.dart';
+import 'package:home_automation/utils/delete_confirmation.dart';
+import 'package:home_automation/utils/check_platform.dart';
 
 class HardwareScreen extends StatefulWidget {
   final Home home;
@@ -23,17 +25,20 @@ class HardwareScreen extends StatefulWidget {
 
 class HardwareScreenState extends State<HardwareScreen>
     implements HardwareScreenContract {
-  final showHwScaffoldKey = new GlobalKey<ScaffoldState>();
   bool _isLoading = true;
+  bool internetAccess = false;
+  ShowDialog _showDialog;
+  CheckPlatform _checkPlatform;
+  DeleteConfirmation _deleteConfirmation;
+
+  String _hwName, _hwSeries, _hwIP;
+  List<Hardware> hwList = new List<Hardware>();
   var hwFormKey = new GlobalKey<FormState>();
   var hwReFormKey = new GlobalKey<FormState>();
   bool _autoValidateHw = false;
   bool _autoValidateHwRe = false;
+  final showHwScaffoldKey = new GlobalKey<ScaffoldState>();
   var hwRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
-  List<Hardware> hwList = new List<Hardware>();
-  String _hwName, _hwSeries, _hwIP;
-  bool internetAccess = false;
-  ShowDialog _showDialog;
 
   void _showSnackBar(String text) {
     showHwScaffoldKey.currentState.removeCurrentSnackBar();
@@ -41,9 +46,16 @@ class HardwareScreenState extends State<HardwareScreen>
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
+  HardwareScreenPresenter _presenter;
+  HardwareScreenState() {
+    _presenter = new HardwareScreenPresenter(this);
+  }
+
   @override
   void initState() {
     _showDialog = new ShowDialog();
+    _deleteConfirmation = new DeleteConfirmation();
+    _checkPlatform = new CheckPlatform(context: context);
     getHardwareList();
     super.initState();
   }
@@ -72,10 +84,6 @@ class HardwareScreenState extends State<HardwareScreen>
     });
   }
 
-  HardwareScreenPresenter _presenter;
-  HardwareScreenState() {
-    _presenter = new HardwareScreenPresenter(this);
-  }
   @override
   void onSuccess(Hardware hw) async {
     _showSnackBar("Created ${hw.toString()} hardware");
@@ -107,10 +115,6 @@ class HardwareScreenState extends State<HardwareScreen>
   void onError(String errorTxt) {
     //_showSnackBar(errorTxt);
     setState(() => _isLoading = false);
-  }
-
-  bool _isIOS(BuildContext context) {
-    return Theme.of(context).platform == TargetPlatform.iOS ? true : false;
   }
 
   @override
@@ -367,65 +371,11 @@ class HardwareScreenState extends State<HardwareScreen>
       );
     }
 
-    // to show dialogue to ensure of deleting operation
-    Future<bool> _showConfirmDialog() async {
-      bool status = false;
-      _isIOS(context)
-          ? await showDialog<String>(
-              context: context,
-              builder: (BuildContext context) => CupertinoAlertDialog(
-                    title: Text('Are you sure?'),
-                    actions: <Widget>[
-                      new CupertinoDialogAction(
-                        child: const Text('CANCEL'),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          status = false;
-                        },
-                      ),
-                      new CupertinoDialogAction(
-                        child: const Text(
-                          'OK',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          status = true;
-                        },
-                      )
-                    ],
-                  ),
-            )
-          : await showDialog<String>(
-              context: context,
-              builder: (BuildContext context) => new AlertDialog(
-                    contentPadding: const EdgeInsets.all(16.0),
-                    content: new Container(
-                      child: Text('Are you sure?'),
-                    ),
-                    actions: <Widget>[
-                      new FlatButton(
-                          child: const Text('CANCEL'),
-                          onPressed: () {
-                            Navigator.pop(context);
-                            status = false;
-                          }),
-                      new FlatButton(
-                          child: const Text('OK'),
-                          onPressed: () {
-                            Navigator.pop(context);
-                            status = true;
-                          })
-                    ],
-                  ),
-            );
-      return status;
-    }
-
     _deleteHardware(Hardware hw) async {
       await getInternetAccessObject();
       if (internetAccess) {
-        bool status = await _showConfirmDialog();
+        bool status = await _deleteConfirmation.showConfirmDialog(
+            context, _checkPlatform.isIOS());
         if (status) {
           setState(() {
             _isLoading = true;
@@ -775,7 +725,7 @@ class HardwareScreenState extends State<HardwareScreen>
 
     return Scaffold(
       key: showHwScaffoldKey,
-      appBar: _isIOS(context)
+      appBar: _checkPlatform.isIOS()
           ? CupertinoNavigationBar(
               backgroundColor: kHAutoBlue100,
               middle: Center(
@@ -834,7 +784,7 @@ class HardwareScreenState extends State<HardwareScreen>
       body: _isLoading
           ? ShowProgress()
           : internetAccess
-              ? _isIOS(context)
+              ? _checkPlatform.isIOS()
                   ? new CustomScrollView(
                       slivers: <Widget>[
                         new CupertinoSliverRefreshControl(
@@ -850,7 +800,7 @@ class HardwareScreenState extends State<HardwareScreen>
                       child: createListView(context, hwList),
                       onRefresh: getHardwareList,
                     )
-              : _isIOS(context)
+              : _checkPlatform.isIOS()
                   ? new CustomScrollView(
                       slivers: <Widget>[
                         new CupertinoSliverRefreshControl(

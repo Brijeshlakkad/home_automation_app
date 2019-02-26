@@ -15,14 +15,16 @@ class GetHardwareDetails extends StatefulWidget {
 }
 
 class GetHardwareDetailsState extends State<GetHardwareDetails> {
+  bool internetAccess = false;
+  ShowDialog _showDialog;
+
+  String _hwName, _hwSeries, _hwIP;
+  Map hwDetails = new Map();
   var hwFormKey = new GlobalKey<FormState>();
   var dvReFormKey = new GlobalKey<FormState>();
   bool _autoValidateDv = false;
   bool _autoValidateDvRe = false;
-  bool internetAccess = false;
-  ShowDialog _showDialog;
-  Map hwDetails = new Map();
-  String _hwName, _hwSeries, _hwIP;
+
   List<String> portList = <String>[
     '1',
     '2',

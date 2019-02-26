@@ -17,15 +17,16 @@ class GetDeviceDetails extends StatefulWidget {
 }
 
 class GetDeviceDetailsState extends State<GetDeviceDetails> {
+  bool internetAccess = false;
+  ShowDialog _showDialog;
+
+  String _dvName, _dvPort, _dvImg;
+  Map deviceDetails = new Map();
+  List<Device> dvList = new List<Device>();
   var dvFormKey = new GlobalKey<FormState>();
   var dvReFormKey = new GlobalKey<FormState>();
   bool _autoValidateDv = false;
   bool _autoValidateDvRe = false;
-  Map deviceDetails = new Map();
-  List<Device> dvList = new List<Device>();
-  String _dvName, _dvPort, _dvImg;
-  bool internetAccess = false;
-  ShowDialog _showDialog;
 
   List<String> portList = <String>[
     '1',
@@ -39,6 +40,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
     '9',
     '0'
   ];
+
   @override
   void initState() {
     _showDialog = new ShowDialog();

@@ -1,54 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/models/room_data.dart';
-import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/logout.dart';
 import 'package:home_automation/hardware.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:home_automation/internet_access.dart';
+import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/utils/show_dialog.dart';
+import 'package:home_automation/utils/delete_confirmation.dart';
+import 'package:home_automation/utils/check_platform.dart';
 
-class HomeObject extends StatefulWidget {
+class RoomScreen extends StatefulWidget {
   final Home home;
-  const HomeObject({this.home});
+  const RoomScreen({this.home});
   @override
-  HomeObjectState createState() {
-    return new HomeObjectState();
+  RoomScreenState createState() {
+    return new RoomScreenState();
   }
 }
 
-class HomeObjectState extends State<HomeObject> {
-  @override
-  Widget build(BuildContext context) {
-    return ShowRoomsOfHome(
-      home: widget.home,
-    );
-  }
-}
-
-class ShowRoomsOfHome extends StatefulWidget {
-  final Home home;
-  const ShowRoomsOfHome({this.home});
-  @override
-  ShowRoomsOfHomeState createState() {
-    return new ShowRoomsOfHomeState();
-  }
-}
-
-class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
-    implements RoomScreenContract {
-  final showRoomScaffoldKey = new GlobalKey<ScaffoldState>();
+class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
   bool _isLoading = true;
+  bool internetAccess = false;
+  ShowDialog _showDialog;
+  CheckPlatform _checkPlatform;
+  DeleteConfirmation _deleteConfirmation;
+
+  List<Room> roomList = new List<Room>();
+  String _roomName;
   var roomNameFormKey = new GlobalKey<FormState>();
   var roomReNameFormKey = new GlobalKey<FormState>();
   bool _autoValidateRoomName = false;
   bool _autoValidateRoomReName = false;
-  String _roomName;
+
+  final showRoomScaffoldKey = new GlobalKey<ScaffoldState>();
   var roomRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
-  List<Room> roomList = new List<Room>();
-  bool internetAccess = false;
-  ShowDialog _showDialog;
 
   void _showSnackBar(String text) {
     showRoomScaffoldKey.currentState.removeCurrentSnackBar();
@@ -56,9 +43,16 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
+  RoomScreenPresenter _presenter;
+  RoomScreenState() {
+    _presenter = new RoomScreenPresenter(this);
+  }
+
   @override
   void initState() {
     _showDialog = new ShowDialog();
+    _deleteConfirmation = new DeleteConfirmation();
+    _checkPlatform = new CheckPlatform(context: context);
     getRoomList();
     super.initState();
   }
@@ -77,9 +71,9 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
       roomRefreshIndicatorKey.currentState?.show();
       roomList = await _presenter.api.getAllRoom(widget.home);
       if (roomList != null) {
-          roomList = roomList.toList();
+        roomList = roomList.toList();
       } else {
-          roomList = new List<Room>();
+        roomList = new List<Room>();
       }
     }
     setState(() {
@@ -87,10 +81,6 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     });
   }
 
-  RoomScreenPresenter _presenter;
-  ShowRoomsOfHomeState() {
-    _presenter = new RoomScreenPresenter(this);
-  }
   @override
   void onSuccess(Room room) async {
     _showSnackBar("Created ${room.toString()} home");
@@ -122,10 +112,6 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
   void onError(String errorTxt) {
     //_showSnackBar(errorTxt);
     setState(() => _isLoading = false);
-  }
-
-  bool _isIOS(BuildContext context) {
-    return Theme.of(context).platform == TargetPlatform.iOS ? true : false;
   }
 
   @override
@@ -172,7 +158,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     }
 
     _showRoomNameDialog() async {
-      _isIOS(context)
+      _checkPlatform.isIOS()
           ? await showDialog<String>(
               context: context,
               builder: (BuildContext context) => CupertinoAlertDialog(
@@ -270,7 +256,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
     }
 
     _showRoomReNameDialog(Room room) async {
-      _isIOS(context)
+      _checkPlatform.isIOS()
           ? await showDialog<String>(
               context: context,
               builder: (BuildContext context) => CupertinoAlertDialog(
@@ -374,66 +360,11 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
             );
     }
 
-    // to show dialogue to ensure of deleting operation
-
-    Future<bool> _showConfirmDialog() async {
-      bool status = false;
-      _isIOS(context)
-          ? await showDialog<String>(
-              context: context,
-              builder: (BuildContext context) => CupertinoAlertDialog(
-                    title: Text('Are you sure?'),
-                    actions: <Widget>[
-                      new CupertinoDialogAction(
-                        child: const Text('CANCEL'),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          status = false;
-                        },
-                      ),
-                      new CupertinoDialogAction(
-                        child: const Text(
-                          'OK',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          status = true;
-                        },
-                      )
-                    ],
-                  ),
-            )
-          : await showDialog<String>(
-              context: context,
-              builder: (BuildContext context) => new AlertDialog(
-                    contentPadding: const EdgeInsets.all(16.0),
-                    content: new Container(
-                      child: Text('Are you sure?'),
-                    ),
-                    actions: <Widget>[
-                      new FlatButton(
-                          child: const Text('CANCEL'),
-                          onPressed: () {
-                            Navigator.pop(context);
-                            status = false;
-                          }),
-                      new FlatButton(
-                          child: const Text('OK'),
-                          onPressed: () {
-                            Navigator.pop(context);
-                            status = true;
-                          })
-                    ],
-                  ),
-            );
-      return status;
-    }
-
     _deleteRoom(Room room) async {
       await getInternetAccessObject();
       if (internetAccess) {
-        bool status = await _showConfirmDialog();
+        bool status = await _deleteConfirmation.showConfirmDialog(
+            context, _checkPlatform.isIOS());
         if (status) {
           setState(() {
             _isLoading = true;
@@ -710,7 +641,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
 
     return new Scaffold(
       key: showRoomScaffoldKey,
-      appBar: _isIOS(context)
+      appBar: _checkPlatform.isIOS()
           ? CupertinoNavigationBar(
               backgroundColor: kHAutoBlue100,
               middle: Center(
@@ -769,7 +700,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
       body: _isLoading
           ? ShowProgress()
           : internetAccess
-              ? _isIOS(context)
+              ? _checkPlatform.isIOS()
                   ? new CustomScrollView(
                       slivers: <Widget>[
                         new CupertinoSliverRefreshControl(
@@ -785,7 +716,7 @@ class ShowRoomsOfHomeState extends State<ShowRoomsOfHome>
                       child: createListView(context, roomList),
                       onRefresh: getRoomList,
                     )
-              : _isIOS(context)
+              : _checkPlatform.isIOS()
                   ? new CustomScrollView(
                       slivers: <Widget>[
                         new CupertinoSliverRefreshControl(

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:home_automation/colors.dart';
-import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/logout.dart';
 import 'package:home_automation/models/device_data.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:home_automation/internet_access.dart';
+import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/utils/show_dialog.dart';
+import 'package:home_automation/utils/check_platform.dart';
 
 class DeviceStatusScreen extends StatefulWidget {
   final Device device;
@@ -18,19 +19,26 @@ class DeviceStatusScreen extends StatefulWidget {
 
 class DeviceStatusScreenState extends State<DeviceStatusScreen>
     implements DeviceStatusScreenContract {
-  var showDvStatusScaffoldKey = new GlobalKey<ScaffoldState>();
-  var dvStatusRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
   bool _isLoading = true;
   bool _isLoadingValue = false;
-  Device device;
-  double vSlide = 0.0;
-  DeviceStatusScreenPresenter _presenter;
   bool internetAccess = false;
   ShowDialog _showDialog;
+  CheckPlatform _checkPlatform;
+
+  Device device;
+  double vSlide = 0.0;
+  var showDvStatusScaffoldKey = new GlobalKey<ScaffoldState>();
+  var dvStatusRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
+
+  DeviceStatusScreenPresenter _presenter;
+  DeviceStatusScreenState() {
+    _presenter = new DeviceStatusScreenPresenter(this);
+  }
 
   @override
   initState() {
     _showDialog = new ShowDialog();
+    _checkPlatform = new CheckPlatform(context: context);
     getDeviceStatus();
     super.initState();
   }
@@ -57,14 +65,6 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
     setState(() => _isLoading = false);
   }
 
-  bool _isIOS(BuildContext context) {
-    return Theme.of(context).platform == TargetPlatform.iOS ? true : false;
-  }
-
-  void _showSnackBar(String text) {
-    showDvStatusScaffoldKey.currentState
-        .showSnackBar(new SnackBar(content: new Text(text)));
-  }
 
   Future getInternetAccessObject() async {
     CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
@@ -72,10 +72,6 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
     setState(() {
       internetAccess = internetAccessDummy;
     });
-  }
-
-  DeviceStatusScreenState() {
-    _presenter = new DeviceStatusScreenPresenter(this);
   }
 
   Future getDeviceStatus() async {
@@ -407,7 +403,7 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
 
     return Scaffold(
       key: showDvStatusScaffoldKey,
-      appBar: _isIOS(context)
+      appBar: _checkPlatform.isIOS()
           ? CupertinoNavigationBar(
               backgroundColor: kHAutoBlue100,
               middle: Center(
@@ -476,7 +472,7 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
       body: _isLoading
           ? ShowProgress()
           : internetAccess
-              ? _isIOS(context)
+              ? _checkPlatform.isIOS()
                   ? new CustomScrollView(
                       slivers: <Widget>[
                         new CupertinoSliverRefreshControl(
@@ -491,7 +487,7 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                       child: createDeviceView(context, device),
                       onRefresh: getDeviceStatus,
                     )
-              : _isIOS(context)
+              : _checkPlatform.isIOS()
                   ? new CustomScrollView(
                       slivers: <Widget>[
                         new CupertinoSliverRefreshControl(

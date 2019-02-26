@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/models/room_data.dart';
-import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/logout.dart';
 import 'package:home_automation/models/hardware_data.dart';
 import 'package:home_automation/models/device_data.dart';
 import 'package:home_automation/device/get_device_details.dart';
 import 'package:home_automation/device/device_status_screen.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:home_automation/internet_access.dart';
+import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/utils/show_dialog.dart';
+import 'package:home_automation/utils/delete_confirmation.dart';
+import 'package:home_automation/utils/check_platform.dart';
 
 class DeviceScreen extends StatefulWidget {
   final Home home;
@@ -25,13 +27,17 @@ class DeviceScreen extends StatefulWidget {
 
 class DeviceScreenState extends State<DeviceScreen>
     implements DeviceScreenContract {
-  final showDvScaffoldKey = new GlobalKey<ScaffoldState>();
   bool _isLoading = true;
-  var dvRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
-  List<Device> dvList = new List<Device>();
-  List<DeviceImg> dvImgList = new List<DeviceImg>();
   bool internetAccess = false;
   ShowDialog _showDialog;
+  CheckPlatform _checkPlatform;
+  DeleteConfirmation _deleteConfirmation;
+
+  List<Device> dvList = new List<Device>();
+  List<DeviceImg> dvImgList = new List<DeviceImg>();
+
+  final showDvScaffoldKey = new GlobalKey<ScaffoldState>();
+  var dvRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
 
   void _showSnackBar(String text) {
     showDvScaffoldKey.currentState.removeCurrentSnackBar();
@@ -39,9 +45,16 @@ class DeviceScreenState extends State<DeviceScreen>
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
+  DeviceScreenPresenter _presenter;
+  DeviceScreenState() {
+    _presenter = new DeviceScreenPresenter(this);
+  }
+
   @override
   void initState() {
     _showDialog = new ShowDialog();
+    _deleteConfirmation = new DeleteConfirmation();
+    _checkPlatform = new CheckPlatform(context: context);
     getDeviceList();
     super.initState();
   }
@@ -80,11 +93,6 @@ class DeviceScreenState extends State<DeviceScreen>
       dvImgList = new List<DeviceImg>();
     }
   }
-
-  DeviceScreenPresenter _presenter;
-  DeviceScreenState() {
-    _presenter = new DeviceScreenPresenter(this);
-  }
   @override
   void onSuccess(Device dv) async {
     _showSnackBar("Created ${dv.toString()} device");
@@ -118,10 +126,6 @@ class DeviceScreenState extends State<DeviceScreen>
     setState(() => _isLoading = false);
   }
 
-  bool _isIOS(BuildContext context) {
-    return Theme.of(context).platform == TargetPlatform.iOS ? true : false;
-  }
-
   String getDeviceCategory(String key) {
     var value;
     for (int i = 0; i < dvImgList.length; i++) {
@@ -144,66 +148,11 @@ class DeviceScreenState extends State<DeviceScreen>
       await _presenter.doRenameDevice(dv, dvName, dvPort, dvImg);
     }
 
-    // to show dialogue to ensure of deleting operation
-
-    Future<bool> _showConfirmDialog() async {
-      bool status = false;
-      _isIOS(context)
-          ? await showDialog<String>(
-              context: context,
-              builder: (BuildContext context) => CupertinoAlertDialog(
-                    title: Text('Are you sure?'),
-                    actions: <Widget>[
-                      new CupertinoDialogAction(
-                        child: const Text('CANCEL'),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          status = false;
-                        },
-                      ),
-                      new CupertinoDialogAction(
-                        child: const Text(
-                          'OK',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          status = true;
-                        },
-                      )
-                    ],
-                  ),
-            )
-          : await showDialog<String>(
-              context: context,
-              builder: (BuildContext context) => new AlertDialog(
-                    contentPadding: const EdgeInsets.all(16.0),
-                    content: new Container(
-                      child: Text('Are you sure?'),
-                    ),
-                    actions: <Widget>[
-                      new FlatButton(
-                          child: const Text('CANCEL'),
-                          onPressed: () {
-                            Navigator.pop(context);
-                            status = false;
-                          }),
-                      new FlatButton(
-                          child: const Text('OK'),
-                          onPressed: () {
-                            Navigator.pop(context);
-                            status = true;
-                          })
-                    ],
-                  ),
-            );
-      return status;
-    }
-
     _deleteDevice(Device dv) async {
       await getInternetAccessObject();
       if (internetAccess) {
-        bool status = await _showConfirmDialog();
+        bool status = await _deleteConfirmation.showConfirmDialog(
+            context, _checkPlatform.isIOS());
         if (status) {
           setState(() {
             _isLoading = true;
@@ -634,7 +583,7 @@ class DeviceScreenState extends State<DeviceScreen>
 
     return Scaffold(
       key: showDvScaffoldKey,
-      appBar: _isIOS(context)
+      appBar: _checkPlatform.isIOS()
           ? CupertinoNavigationBar(
               backgroundColor: kHAutoBlue100,
               middle: Center(
@@ -693,7 +642,7 @@ class DeviceScreenState extends State<DeviceScreen>
       body: _isLoading
           ? ShowProgress()
           : internetAccess
-              ? _isIOS(context)
+              ? _checkPlatform.isIOS()
                   ? new CustomScrollView(
                       slivers: <Widget>[
                         new CupertinoSliverRefreshControl(
@@ -709,7 +658,7 @@ class DeviceScreenState extends State<DeviceScreen>
                       child: createListView(context, dvList),
                       onRefresh: getDeviceList,
                     )
-              : _isIOS(context)
+              : _checkPlatform.isIOS()
                   ? new CustomScrollView(
                       slivers: <Widget>[
                         new CupertinoSliverRefreshControl(

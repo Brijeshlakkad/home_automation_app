@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:home_automation/models/user_data.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/room.dart';
-import 'package:home_automation/logout.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:home_automation/show_progress.dart';
+import 'package:home_automation/show_user.dart';
 import 'package:home_automation/internet_access.dart';
-import 'package:home_automation/models/user_data.dart';
+import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/utils/show_dialog.dart';
+import 'package:home_automation/utils/delete_confirmation.dart';
+import 'package:home_automation/utils/check_platform.dart';
 
 class HomeScreen extends StatefulWidget {
   final User user;
@@ -19,34 +21,40 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
-  final scaffoldKey = new GlobalKey<ScaffoldState>();
-  var homeNameFormKey = new GlobalKey<FormState>();
-  var homeReNameFormKey = new GlobalKey<FormState>();
   bool _isLoading = true;
-  bool flag = false;
-  bool _autoValidateHomeName = false;
-  bool _autoValidateHomeReName = false;
-  var homeRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
-  List<Home> homeList = new List<Home>();
-  String _homeName;
   bool internetAccess = false;
   ShowDialog _showDialog;
+  CheckPlatform _checkPlatform;
+  DeleteConfirmation _deleteConfirmation;
+
+  String _homeName;
+  List<Home> homeList = new List<Home>();
+  var homeNameFormKey = new GlobalKey<FormState>();
+  var homeReNameFormKey = new GlobalKey<FormState>();
+  bool _autoValidateHomeName = false;
+  bool _autoValidateHomeReName = false;
+
+  final scaffoldKey = new GlobalKey<ScaffoldState>();
+  var homeRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
+
   void _showSnackBar(String text) {
     scaffoldKey.currentState.removeCurrentSnackBar();
     scaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
-  @override
-  void initState() {
-    _showDialog = new ShowDialog();
-    getHomeList();
-    super.initState();
-  }
-
   HomeScreenPresenter _presenter;
   HomeScreenState() {
     _presenter = new HomeScreenPresenter(this);
+  }
+
+  @override
+  void initState() {
+    _showDialog = new ShowDialog();
+    _deleteConfirmation = new DeleteConfirmation();
+    _checkPlatform = new CheckPlatform(context: context);
+    getHomeList();
+    super.initState();
   }
 
   Future getInternetAccessObject() async {
@@ -101,10 +109,6 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     setState(() => _isLoading = false);
   }
 
-  bool _isIOS(BuildContext context) {
-    return Theme.of(context).platform == TargetPlatform.iOS ? true : false;
-  }
-
   @override
   Widget build(BuildContext context) {
     _createHome(String homeName) async {
@@ -149,7 +153,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     }
 
     _showHomeNameDialog() async {
-      _isIOS(context)
+      _checkPlatform.isIOS()
           ? await showDialog<String>(
               context: context,
               builder: (BuildContext context) => CupertinoAlertDialog(
@@ -247,7 +251,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     }
 
     _showHomeReNameDialog(Home home) async {
-      _isIOS(context)
+      _checkPlatform.isIOS()
           ? await showDialog<String>(
               context: context,
               builder: (BuildContext context) => CupertinoAlertDialog(
@@ -353,65 +357,11 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
 
     // to show dialogue to ensure of deleting operation
 
-    Future<bool> _showConfirmDialog() async {
-      bool status = false;
-      _isIOS(context)
-          ? await showDialog<String>(
-              context: context,
-              builder: (BuildContext context) => CupertinoAlertDialog(
-                    title: Text('Are you sure?'),
-                    actions: <Widget>[
-                      new CupertinoDialogAction(
-                        child: const Text('CANCEL'),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          status = false;
-                        },
-                      ),
-                      new CupertinoDialogAction(
-                        child: const Text(
-                          'OK',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          status = true;
-                        },
-                      ),
-                    ],
-                  ),
-            )
-          : await showDialog<String>(
-              context: context,
-              builder: (BuildContext context) => new AlertDialog(
-                    contentPadding: const EdgeInsets.all(16.0),
-                    content: new Container(
-                      child: Text('Are you sure?'),
-                    ),
-                    actions: <Widget>[
-                      new FlatButton(
-                          child: const Text('CANCEL'),
-                          onPressed: () {
-                            Navigator.pop(context);
-                            status = false;
-                          }),
-                      new FlatButton(
-                        child: const Text('OK'),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          status = true;
-                        },
-                      )
-                    ],
-                  ),
-            );
-      return status;
-    }
-
     _deleteHome(Home home) async {
       await getInternetAccessObject();
       if (internetAccess) {
-        bool status = await _showConfirmDialog();
+        bool status = await _deleteConfirmation.showConfirmDialog(
+            context, _checkPlatform.isIOS());
         if (status) {
           setState(() {
             _isLoading = true;
@@ -472,7 +422,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                       context,
                       MaterialPageRoute(
                           builder: (context) =>
-                              HomeObject(home: homeList[index])),
+                              RoomScreen(home: homeList[index])),
                     );
                   } else {
                     this._showDialog.showDialogCustom(
@@ -587,7 +537,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                       context,
                       MaterialPageRoute(
                           builder: (context) =>
-                              HomeObject(home: homeList[index])),
+                              RoomScreen(home: homeList[index])),
                     );
                   } else {
                     this._showDialog.showDialogCustom(
@@ -716,24 +666,21 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       onWillPop: () => new Future<bool>.value(false),
       child: new Scaffold(
         key: scaffoldKey,
-        appBar: _isIOS(context)
+        appBar: _checkPlatform.isIOS()
             ? CupertinoNavigationBar(
                 backgroundColor: kHAutoBlue100,
                 leading: Container(),
                 middle: new Text("Home Automation"),
-                trailing: GetLogOut(),
               )
             : new AppBar(
                 leading: Container(),
                 title: new Text("Home Automation"),
-                actions: <Widget>[
-                  GetLogOut(),
-                ],
+                actions: <Widget>[],
               ),
         body: _isLoading
             ? ShowProgress()
             : internetAccess
-                ? _isIOS(context)
+                ? _checkPlatform.isIOS()
                     ? new CustomScrollView(
                         slivers: <Widget>[
                           new CupertinoSliverRefreshControl(
@@ -749,7 +696,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                         child: createListView(context, homeList),
                         onRefresh: getHomeList,
                       )
-                : _isIOS(context)
+                : _checkPlatform.isIOS()
                     ? new CustomScrollView(
                         slivers: <Widget>[
                           new CupertinoSliverRefreshControl(
