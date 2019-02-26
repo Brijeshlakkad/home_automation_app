@@ -6,7 +6,7 @@ import 'package:home_automation/login_signup/login_screen_presenter.dart';
 import 'dart:ui';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/utils/internet_access.dart';
-import 'package:home_automation/show_progress.dart';
+import 'package:home_automation/utils/show_progress.dart';
 import 'package:home_automation/home.dart';
 
 class LoginScreen extends StatefulWidget {

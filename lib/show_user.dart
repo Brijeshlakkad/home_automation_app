@@ -3,7 +3,7 @@ import 'package:home_automation/models/user_data.dart';
 import 'package:home_automation/login_signup/logout.dart';
 import 'package:home_automation/utils/show_dialog.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:home_automation/show_progress.dart';
+import 'package:home_automation/utils/show_progress.dart';
 import 'package:home_automation/colors.dart';
 import 'package:flutter/services.dart';
 import 'package:home_automation/utils/internet_access.dart';

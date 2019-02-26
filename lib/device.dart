@@ -9,7 +9,7 @@ import 'package:home_automation/models/device_data.dart';
 import 'package:home_automation/device/get_device_details.dart';
 import 'package:home_automation/device/device_status_screen.dart';
 import 'package:home_automation/utils/internet_access.dart';
-import 'package:home_automation/show_progress.dart';
+import 'package:home_automation/utils/show_progress.dart';
 import 'package:home_automation/utils/show_dialog.dart';
 import 'package:home_automation/utils/delete_confirmation.dart';
 import 'package:home_automation/utils/check_platform.dart';

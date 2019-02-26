@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/user_data.dart';
-import 'package:home_automation/show_progress.dart';
+import 'package:home_automation/utils/show_progress.dart';
 import 'package:home_automation/utils/internet_access.dart';
 import 'package:home_automation/utils/show_dialog.dart';
 import 'package:flutter/services.dart';
