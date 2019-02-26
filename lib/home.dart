@@ -5,7 +5,7 @@ import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/room.dart';
 import 'package:home_automation/show_user.dart';
-import 'package:home_automation/internet_access.dart';
+import 'package:home_automation/utils/internet_access.dart';
 import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/utils/show_dialog.dart';
 import 'package:home_automation/utils/delete_confirmation.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:home_automation/models/device_data.dart';
-import 'package:home_automation/internet_access.dart';
+import 'package:home_automation/utils/internet_access.dart';
 import 'package:home_automation/utils/show_dialog.dart';
 
 class GetDeviceDetails extends StatefulWidget {

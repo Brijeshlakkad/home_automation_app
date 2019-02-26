@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:home_automation/home.dart';
 import 'package:home_automation/colors.dart';
-import 'package:home_automation/login.dart';
-import 'package:home_automation/signup.dart';
+import 'package:home_automation/login_signup/login.dart';
+import 'package:home_automation/login_signup/signup.dart';
 import 'package:home_automation/hardware.dart';
 class HomeAutomation extends StatefulWidget{
   HomeAutomationState createState() => HomeAutomationState();

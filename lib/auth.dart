@@ -1,5 +1,5 @@
 import 'package:home_automation/data/database_helper.dart';
-import 'package:home_automation/internet_access.dart';
+import 'package:home_automation/utils/internet_access.dart';
 import 'package:home_automation/models/user_data.dart';
 
 enum AuthState { LOGGED_IN, LOGGED_OUT }
