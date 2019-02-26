@@ -20,7 +20,7 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
     implements DeviceStatusScreenContract {
   var showDvStatusScaffoldKey = new GlobalKey<ScaffoldState>();
   var dvStatusRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
-  bool _isLoading = false;
+  bool _isLoading = true;
   bool _isLoadingValue = false;
   Device device;
   double vSlide = 0.0;
