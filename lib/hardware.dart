@@ -12,6 +12,7 @@ import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/utils/show_dialog.dart';
 import 'package:home_automation/utils/delete_confirmation.dart';
 import 'package:home_automation/utils/check_platform.dart';
+import 'package:home_automation/utils/show_internet_status.dart';
 
 class HardwareScreen extends StatefulWidget {
   final Home home;
@@ -30,6 +31,7 @@ class HardwareScreenState extends State<HardwareScreen>
   ShowDialog _showDialog;
   CheckPlatform _checkPlatform;
   DeleteConfirmation _deleteConfirmation;
+  ShowInternetStatus _showInternetStatus;
 
   String _hwName, _hwSeries, _hwIP;
   List<Hardware> hwList = new List<Hardware>();
@@ -56,6 +58,7 @@ class HardwareScreenState extends State<HardwareScreen>
     _showDialog = new ShowDialog();
     _deleteConfirmation = new DeleteConfirmation();
     _checkPlatform = new CheckPlatform(context: context);
+    _showInternetStatus = new ShowInternetStatus();
     getHardwareList();
     super.initState();
   }
@@ -88,8 +91,6 @@ class HardwareScreenState extends State<HardwareScreen>
   void onSuccess(Hardware hw) async {
     _showSnackBar("Created ${hw.toString()} hardware");
     setState(() => _isLoading = false);
-//    var db = new DatabaseHelper();
-//    await db.saveHardware(hw);
     getHardwareList();
   }
 
@@ -97,8 +98,6 @@ class HardwareScreenState extends State<HardwareScreen>
   void onSuccessDelete(Hardware hw) async {
     _showSnackBar("Hardware ${hw.hwName} deleted");
     setState(() => _isLoading = false);
-//    var db = new DatabaseHelper();
-//    await db.deleteHardware(hw);
     getHardwareList();
   }
 
@@ -106,14 +105,11 @@ class HardwareScreenState extends State<HardwareScreen>
   void onSuccessRename(Hardware hw) async {
     _showSnackBar(hw.toString());
     setState(() => _isLoading = false);
-//    var db = new DatabaseHelper();
-//    await db.renameHardware(hw);
     getHardwareList();
   }
 
   @override
   void onError(String errorTxt) {
-    //_showSnackBar(errorTxt);
     setState(() => _isLoading = false);
   }
 
@@ -392,6 +388,117 @@ class HardwareScreenState extends State<HardwareScreen>
       }
     }
 
+    Widget _getHardwareObject(List<Hardware> hwList, int index) {
+      return Center(
+        child: InkWell(
+          onTap: () async {
+            await getInternetAccessObject();
+            if (internetAccess) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DeviceScreen(
+                        home: widget.home,
+                        room: widget.room,
+                        hardware: hwList[index],
+                      ),
+                ),
+              );
+            } else {
+              this._showDialog.showDialogCustom(
+                  context,
+                  "Internet Connection Problem",
+                  "Please check your internet connection",
+                  fontSize: 17.0,
+                  boxHeight: 58.0);
+            }
+          },
+          splashColor: kHAutoBlue300,
+          child: Container(
+            padding: EdgeInsets.only(
+                left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
+            child: Card(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(
+                    child: Hero(
+                      tag: hwList[index].hwName,
+                      child: Padding(
+                        padding: EdgeInsets.only(left: 15.0, top: 10.0),
+                        child: Text(
+                          '${hwList[index].hwName}',
+                          textAlign: TextAlign.left,
+                          style: Theme.of(context).textTheme.headline,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 40.0,
+                  ),
+                  Row(
+                    children: <Widget>[
+                      SizedBox(
+                        width: 40.0,
+                        child: FlatButton(
+                          onPressed: () async {
+                            await getInternetAccessObject();
+                            if (internetAccess) {
+                              Map hwDetails = new Map();
+                              hwDetails = hwList[index].toMap();
+                              hwDetails['isModifying'] = true;
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => GetHardwareDetails(
+                                        room: widget.room,
+                                        hwList: hwList,
+                                        hwDetails: hwDetails,
+                                      ),
+                                ),
+                              );
+                              if (result != null && !result['error']) {
+                                setState(() {
+                                  _isLoading = true;
+                                });
+                                _renameHardware(hwList[index], result['hwName'],
+                                    result['hwSeries'], result['hwIP']);
+                              }
+                            } else {
+                              this._showDialog.showDialogCustom(
+                                  context,
+                                  "Internet Connection Problem",
+                                  "Please check your internet connection",
+                                  fontSize: 17.0,
+                                  boxHeight: 58.0);
+                            }
+                          },
+                          child: Icon(Icons.edit),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 20.0,
+                      ),
+                      SizedBox(
+                        width: 40.0,
+                        child: FlatButton(
+                          onPressed: () async {
+                            await _deleteHardware(hwList[index]);
+                          },
+                          child: Icon(Icons.delete),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     Widget createListView(BuildContext context, List<Hardware> hwList) {
       var len = 0;
       if (hwList != null) {
@@ -405,107 +512,29 @@ class HardwareScreenState extends State<HardwareScreen>
           (index) {
             if (index == len) {
               return Center(
-                  child: SizedBox(
-                width: 150.0,
-                height: 150.0,
-                child: RaisedButton(
-                  shape: new RoundedRectangleBorder(
-                      borderRadius: new BorderRadius.circular(30.0)),
-                  onPressed: () async {
-                    await _showHardwareNameDialog();
-                  },
-                  color: kHAutoBlue300,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Icon(Icons.add),
-                      Text('Add Hardware'),
-                    ],
-                  ),
-                ),
-              ));
-            }
-            return Center(
-              child: InkWell(
-                onTap: () async {
-                  await getInternetAccessObject();
-                  if (internetAccess) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DeviceScreen(
-                              home: widget.home,
-                              room: widget.room,
-                              hardware: hwList[index],
-                            ),
-                      ),
-                    );
-                  } else {
-                    this._showDialog.showDialogCustom(
-                        context,
-                        "Internet Connection Problem",
-                        "Please check your internet connection",
-                        fontSize: 17.0,
-                        boxHeight: 58.0);
-                  }
-                },
-                splashColor: kHAutoBlue300,
-                child: Container(
-                  padding: EdgeInsets.only(
-                      left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
-                  child: Card(
+                child: SizedBox(
+                  width: 150.0,
+                  height: 150.0,
+                  child: RaisedButton(
+                    shape: new RoundedRectangleBorder(
+                        borderRadius: new BorderRadius.circular(30.0)),
+                    onPressed: () async {
+                      await _showHardwareNameDialog();
+                    },
+                    color: kHAutoBlue300,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        Expanded(
-                          child: Hero(
-                            tag: hwList[index].hwName,
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 15.0, top: 10.0),
-                              child: Text(
-                                '${hwList[index].hwName}',
-                                textAlign: TextAlign.left,
-                                style: Theme.of(context).textTheme.headline,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          height: 40.0,
-                        ),
-                        Row(
-                          children: <Widget>[
-                            SizedBox(
-                              width: 40.0,
-                              child: FlatButton(
-                                onPressed: () async {
-                                  await _showHardwareReNameDialog(
-                                      hwList[index]);
-                                },
-                                child: Icon(Icons.edit),
-                              ),
-                            ),
-                            SizedBox(
-                              width: 20.0,
-                            ),
-                            SizedBox(
-                              width: 40.0,
-                              child: FlatButton(
-                                onPressed: () async {
-                                  await _deleteHardware(hwList[index]);
-                                },
-                                child: Icon(Icons.delete),
-                              ),
-                            ),
-                          ],
-                        ),
+                        Icon(Icons.add),
+                        Text('Add Hardware'),
                       ],
                     ),
                   ),
                 ),
-              ),
-            );
+              );
+            }
+            return _getHardwareObject(hwList, index);
           },
         ),
       );
@@ -574,152 +603,10 @@ class HardwareScreenState extends State<HardwareScreen>
                 ),
               ));
             }
-            return Center(
-              child: InkWell(
-                onTap: () async {
-                  await getInternetAccessObject();
-                  if (internetAccess) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DeviceScreen(
-                              home: widget.home,
-                              room: widget.room,
-                              hardware: hwList[index],
-                            ),
-                      ),
-                    );
-                  } else {
-                    this._showDialog.showDialogCustom(
-                        context,
-                        "Internet Connection Problem",
-                        "Please check your internet connection",
-                        fontSize: 17.0,
-                        boxHeight: 58.0);
-                  }
-                },
-                splashColor: kHAutoBlue300,
-                child: Container(
-                  padding: EdgeInsets.only(
-                      left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
-                  child: Card(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Expanded(
-                          child: Hero(
-                            tag: hwList[index].hwName,
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 15.0, top: 10.0),
-                              child: Text(
-                                '${hwList[index].hwName}',
-                                textAlign: TextAlign.left,
-                                style: Theme.of(context).textTheme.headline,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          height: 40.0,
-                        ),
-                        Row(
-                          children: <Widget>[
-                            SizedBox(
-                              width: 40.0,
-                              child: FlatButton(
-                                onPressed: () async {
-                                  await getInternetAccessObject();
-                                  if (internetAccess) {
-                                    Map hwDetails = new Map();
-                                    hwDetails = hwList[index].toMap();
-                                    hwDetails['isModifying'] = true;
-                                    final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            GetHardwareDetails(
-                                              room: widget.room,
-                                              hwList: hwList,
-                                              hwDetails: hwDetails,
-                                            ),
-                                      ),
-                                    );
-                                    if (result != null && !result['error']) {
-                                      setState(() {
-                                        _isLoading = true;
-                                      });
-                                      _renameHardware(
-                                          hwList[index],
-                                          result['hwName'],
-                                          result['hwSeries'],
-                                          result['hwIP']);
-                                    }
-                                  } else {
-                                    this._showDialog.showDialogCustom(
-                                        context,
-                                        "Internet Connection Problem",
-                                        "Please check your internet connection",
-                                        fontSize: 17.0,
-                                        boxHeight: 58.0);
-                                  }
-                                },
-                                child: Icon(Icons.edit),
-                              ),
-                            ),
-                            SizedBox(
-                              width: 20.0,
-                            ),
-                            SizedBox(
-                              width: 40.0,
-                              child: FlatButton(
-                                onPressed: () async {
-                                  await _deleteHardware(hwList[index]);
-                                },
-                                child: Icon(Icons.delete),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
+            return _getHardwareObject(hwList, index);
           },
           childCount: len + 1,
         ),
-      );
-    }
-
-    Widget showInternetStatusIOS(BuildContext context) {
-      return new SliverGrid(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          childAspectRatio: 1.0,
-          crossAxisCount: 1,
-        ),
-        delegate:
-            new SliverChildBuilderDelegate((BuildContext context, int index) {
-          return Container(
-            child: Center(
-              child: Text("Please check your internet connection"),
-            ),
-          );
-        }, childCount: 1),
-      );
-    }
-
-    Widget showInternetStatus(BuildContext context) {
-      return new GridView.count(
-        crossAxisCount: 1,
-        // Generate 100 Widgets that display their index in the List
-        children: List.generate(1, (index) {
-          return Container(
-            child: Center(
-              child: Text("Please check your internet connection"),
-            ),
-          );
-        }),
       );
     }
 
@@ -806,12 +693,18 @@ class HardwareScreenState extends State<HardwareScreen>
                         new CupertinoSliverRefreshControl(
                             onRefresh: getHardwareList),
                         new SliverSafeArea(
-                            top: false, sliver: showInternetStatusIOS(context)),
+                          top: false,
+                          sliver: _showInternetStatus.showInternetStatus(
+                            _checkPlatform.isIOS(),
+                          ),
+                        ),
                       ],
                     )
                   : RefreshIndicator(
                       key: hwRefreshIndicatorKey,
-                      child: showInternetStatus(context),
+                      child: _showInternetStatus.showInternetStatus(
+                        _checkPlatform.isIOS(),
+                      ),
                       onRefresh: getHardwareList,
                     ),
     );

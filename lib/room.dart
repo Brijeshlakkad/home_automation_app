@@ -10,6 +10,7 @@ import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/utils/show_dialog.dart';
 import 'package:home_automation/utils/delete_confirmation.dart';
 import 'package:home_automation/utils/check_platform.dart';
+import 'package:home_automation/utils/show_internet_status.dart';
 
 class RoomScreen extends StatefulWidget {
   final Home home;
@@ -26,6 +27,7 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
   ShowDialog _showDialog;
   CheckPlatform _checkPlatform;
   DeleteConfirmation _deleteConfirmation;
+  ShowInternetStatus _showInternetStatus;
 
   List<Room> roomList = new List<Room>();
   String _roomName;
@@ -53,6 +55,7 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
     _showDialog = new ShowDialog();
     _deleteConfirmation = new DeleteConfirmation();
     _checkPlatform = new CheckPlatform(context: context);
+    _showInternetStatus = new ShowInternetStatus();
     getRoomList();
     super.initState();
   }
@@ -85,8 +88,6 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
   void onSuccess(Room room) async {
     _showSnackBar("Created ${room.toString()} home");
     setState(() => _isLoading = false);
-//    var db = new DatabaseHelper();
-//    await db.saveRoom(room);
     getRoomList();
   }
 
@@ -94,8 +95,6 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
   void onSuccessDelete(Room room) async {
     _showSnackBar("Deleted ${room.roomName} room");
     setState(() => _isLoading = false);
-//    var db = new DatabaseHelper();
-//    await db.deleteRoom(room);
     getRoomList();
   }
 
@@ -103,14 +102,11 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
   void onSuccessRename(Room room) async {
     _showSnackBar(room.toString());
     setState(() => _isLoading = false);
-//    var db = new DatabaseHelper();
-//    await db.renameRoom(room);
     getRoomList();
   }
 
   @override
   void onError(String errorTxt) {
-    //_showSnackBar(errorTxt);
     setState(() => _isLoading = false);
   }
 
@@ -381,6 +377,107 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
       }
     }
 
+    Widget _getRoomObject(List<Room> roomList, int index, int len) {
+      if (index == len) {
+        return Center(
+            child: SizedBox(
+          width: 150.0,
+          height: 150.0,
+          child: RaisedButton(
+            shape: new RoundedRectangleBorder(
+                borderRadius: new BorderRadius.circular(30.0)),
+            onPressed: () async {
+              await _showRoomNameDialog();
+            },
+            color: kHAutoBlue300,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(Icons.add),
+                Text('Add Room'),
+              ],
+            ),
+          ),
+        ));
+      }
+      return Center(
+        child: InkWell(
+          onTap: () async {
+            await getInternetAccessObject();
+            if (internetAccess) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => HardwareScreen(
+                        home: widget.home, room: roomList[index])),
+              );
+            } else {
+              this._showDialog.showDialogCustom(
+                  context,
+                  "Internet Connection Problem",
+                  "Please check your internet connection",
+                  fontSize: 17.0,
+                  boxHeight: 58.0);
+            }
+          },
+          splashColor: kHAutoBlue300,
+          child: Container(
+            padding: EdgeInsets.only(
+                left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
+            child: Card(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(
+                    child: Hero(
+                      tag: roomList[index].roomName,
+                      child: Padding(
+                        padding: EdgeInsets.only(left: 15.0, top: 10.0),
+                        child: Text(
+                          '${roomList[index].roomName}',
+                          textAlign: TextAlign.left,
+                          style: Theme.of(context).textTheme.headline,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 40.0,
+                  ),
+                  Row(
+                    children: <Widget>[
+                      SizedBox(
+                        width: 40.0,
+                        child: FlatButton(
+                          onPressed: () async {
+                            await _showRoomReNameDialog(roomList[index]);
+                          },
+                          child: Icon(Icons.edit),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 20.0,
+                      ),
+                      SizedBox(
+                        width: 40.0,
+                        child: FlatButton(
+                          onPressed: () async {
+                            await _deleteRoom(roomList[index]);
+                          },
+                          child: Icon(Icons.delete),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     Widget createListView(BuildContext context, List<Room> roomList) {
       var len = 0;
       if (roomList != null) {
@@ -389,106 +486,12 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
       return new GridView.count(
         crossAxisCount: 2,
         // Generate 100 Widgets that display their index in the List
-        children: List.generate(len + 1, (index) {
-          if (index == len) {
-            return Center(
-                child: SizedBox(
-              width: 150.0,
-              height: 150.0,
-              child: RaisedButton(
-                shape: new RoundedRectangleBorder(
-                    borderRadius: new BorderRadius.circular(30.0)),
-                onPressed: () async {
-                  await _showRoomNameDialog();
-                },
-                color: kHAutoBlue300,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(Icons.add),
-                    Text('Add Room'),
-                  ],
-                ),
-              ),
-            ));
-          }
-          return Center(
-            child: InkWell(
-              onTap: () async {
-                await getInternetAccessObject();
-                if (internetAccess) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => HardwareScreen(
-                            home: widget.home, room: roomList[index])),
-                  );
-                } else {
-                  this._showDialog.showDialogCustom(
-                      context,
-                      "Internet Connection Problem",
-                      "Please check your internet connection",
-                      fontSize: 17.0,
-                      boxHeight: 58.0);
-                }
-              },
-              splashColor: kHAutoBlue300,
-              child: Container(
-                padding: EdgeInsets.only(
-                    left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
-                child: Card(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Expanded(
-                        child: Hero(
-                          tag: roomList[index].roomName,
-                          child: Padding(
-                            padding: EdgeInsets.only(left: 15.0, top: 10.0),
-                            child: Text(
-                              '${roomList[index].roomName}',
-                              textAlign: TextAlign.left,
-                              style: Theme.of(context).textTheme.headline,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: 40.0,
-                      ),
-                      Row(
-                        children: <Widget>[
-                          SizedBox(
-                            width: 40.0,
-                            child: FlatButton(
-                              onPressed: () async {
-                                await _showRoomReNameDialog(roomList[index]);
-                              },
-                              child: Icon(Icons.edit),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 20.0,
-                          ),
-                          SizedBox(
-                            width: 40.0,
-                            child: FlatButton(
-                              onPressed: () async {
-                                await _deleteRoom(roomList[index]);
-                              },
-                              child: Icon(Icons.delete),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        }),
+        children: List.generate(
+          len + 1,
+          (index) {
+            return _getRoomObject(roomList, index, len);
+          },
+        ),
       );
     }
 
@@ -504,138 +507,10 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
         ),
         delegate: new SliverChildBuilderDelegate(
           (BuildContext context, int index) {
-            if (index == len) {
-              return Center(
-                  child: SizedBox(
-                width: 150.0,
-                height: 150.0,
-                child: RaisedButton(
-                  shape: new RoundedRectangleBorder(
-                      borderRadius: new BorderRadius.circular(30.0)),
-                  onPressed: () async {
-                    await _showRoomNameDialog();
-                  },
-                  color: kHAutoBlue300,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Icon(Icons.add),
-                      Text('Add Room'),
-                    ],
-                  ),
-                ),
-              ));
-            }
-            return Center(
-              child: InkWell(
-                onTap: () async {
-                  await getInternetAccessObject();
-                  if (internetAccess) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => HardwareScreen(
-                              home: widget.home, room: roomList[index])),
-                    );
-                  } else {
-                    this._showDialog.showDialogCustom(
-                        context,
-                        "Internet Connection Problem",
-                        "Please check your internet connection",
-                        fontSize: 17.0,
-                        boxHeight: 58.0);
-                  }
-                },
-                splashColor: kHAutoBlue300,
-                child: Container(
-                  padding: EdgeInsets.only(
-                      left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
-                  child: Card(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Expanded(
-                          child: Hero(
-                            tag: roomList[index].roomName,
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 15.0, top: 10.0),
-                              child: Text(
-                                '${roomList[index].roomName}',
-                                textAlign: TextAlign.left,
-                                style: Theme.of(context).textTheme.headline,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          height: 40.0,
-                        ),
-                        Row(
-                          children: <Widget>[
-                            SizedBox(
-                              width: 40.0,
-                              child: FlatButton(
-                                onPressed: () async {
-                                  await _showRoomReNameDialog(roomList[index]);
-                                },
-                                child: Icon(Icons.edit),
-                              ),
-                            ),
-                            SizedBox(
-                              width: 20.0,
-                            ),
-                            SizedBox(
-                              width: 40.0,
-                              child: FlatButton(
-                                onPressed: () async {
-                                  await _deleteRoom(roomList[index]);
-                                },
-                                child: Icon(Icons.delete),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
+            return _getRoomObject(roomList, index, len);
           },
           childCount: len + 1,
         ),
-      );
-    }
-
-    Widget showInternetStatusIOS(BuildContext context) {
-      return new SliverGrid(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          childAspectRatio: 1.0,
-          crossAxisCount: 1,
-        ),
-        delegate:
-            new SliverChildBuilderDelegate((BuildContext context, int index) {
-          return Container(
-            child: Center(
-              child: Text("Please check your internet connection"),
-            ),
-          );
-        }, childCount: 1),
-      );
-    }
-
-    Widget showInternetStatus(BuildContext context) {
-      return new GridView.count(
-        crossAxisCount: 1,
-        // Generate 100 Widgets that display their index in the List
-        children: List.generate(1, (index) {
-          return Container(
-            child: Center(
-              child: Text("Please check your internet connection"),
-            ),
-          );
-        }),
       );
     }
 
@@ -722,12 +597,18 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
                         new CupertinoSliverRefreshControl(
                             onRefresh: getRoomList),
                         new SliverSafeArea(
-                            top: false, sliver: showInternetStatusIOS(context)),
+                          top: false,
+                          sliver: _showInternetStatus.showInternetStatus(
+                            _checkPlatform.isIOS(),
+                          ),
+                        ),
                       ],
                     )
                   : RefreshIndicator(
                       key: roomRefreshIndicatorKey,
-                      child: showInternetStatus(context),
+                      child: _showInternetStatus.showInternetStatus(
+                        _checkPlatform.isIOS(),
+                      ),
                       onRefresh: getRoomList,
                     ),
     );

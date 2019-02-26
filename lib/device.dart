@@ -13,6 +13,7 @@ import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/utils/show_dialog.dart';
 import 'package:home_automation/utils/delete_confirmation.dart';
 import 'package:home_automation/utils/check_platform.dart';
+import 'package:home_automation/utils/show_internet_status.dart';
 
 class DeviceScreen extends StatefulWidget {
   final Home home;
@@ -32,6 +33,7 @@ class DeviceScreenState extends State<DeviceScreen>
   ShowDialog _showDialog;
   CheckPlatform _checkPlatform;
   DeleteConfirmation _deleteConfirmation;
+  ShowInternetStatus _showInternetStatus;
 
   List<Device> dvList = new List<Device>();
   List<DeviceImg> dvImgList = new List<DeviceImg>();
@@ -55,6 +57,7 @@ class DeviceScreenState extends State<DeviceScreen>
     _showDialog = new ShowDialog();
     _deleteConfirmation = new DeleteConfirmation();
     _checkPlatform = new CheckPlatform(context: context);
+    _showInternetStatus = new ShowInternetStatus();
     getDeviceList();
     super.initState();
   }
@@ -93,12 +96,11 @@ class DeviceScreenState extends State<DeviceScreen>
       dvImgList = new List<DeviceImg>();
     }
   }
+
   @override
   void onSuccess(Device dv) async {
     _showSnackBar("Created ${dv.toString()} device");
     setState(() => _isLoading = false);
-//    var db = new DatabaseHelper();
-//    await db.saveDevice(dv);
     getDeviceList();
   }
 
@@ -106,8 +108,6 @@ class DeviceScreenState extends State<DeviceScreen>
   void onSuccessDelete(Device dv) async {
     _showSnackBar(dv.toString());
     setState(() => _isLoading = false);
-//    var db = new DatabaseHelper();
-//    await db.deleteDevice(dv);
     getDeviceList();
   }
 
@@ -115,14 +115,11 @@ class DeviceScreenState extends State<DeviceScreen>
   void onSuccessRename(Device dv) async {
     _showSnackBar(dv.toString());
     setState(() => _isLoading = false);
-//    var db = new DatabaseHelper();
-//    await db.renameDevice(dv);
     getDeviceList();
   }
 
   @override
   void onError(String errorTxt) {
-    //_showSnackBar(errorTxt);
     setState(() => _isLoading = false);
   }
 
@@ -169,6 +166,181 @@ class DeviceScreenState extends State<DeviceScreen>
       }
     }
 
+    Widget _getDeviceObject(List<Device> dvList, int index, int len) {
+      if (index == len) {
+        return Center(
+            child: SizedBox(
+          width: 150.0,
+          height: 150.0,
+          child: RaisedButton(
+            shape: new RoundedRectangleBorder(
+                borderRadius: new BorderRadius.circular(30.0)),
+            onPressed: () async {
+              await getInternetAccessObject();
+              if (internetAccess) {
+                Map dvDetails = new Map();
+                dvDetails['isModifying'] = false;
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GetDeviceDetails(
+                          hardware: widget.hardware,
+                          deviceList: dvList,
+                          dvDetails: dvDetails,
+                          imgList: dvImgList,
+                        ),
+                  ),
+                );
+                print(result.toString());
+                if (result != null && !result['error']) {
+                  setState(() {
+                    _isLoading = true;
+                  });
+                  _createDevice(result['dvName'], result['dvPort'],
+                      result['dvImg'], widget.hardware);
+                }
+              } else {
+                this._showDialog.showDialogCustom(
+                    context,
+                    "Internet Connection Problem",
+                    "Please check your internet connection",
+                    fontSize: 17.0,
+                    boxHeight: 58.0);
+              }
+            },
+            color: kHAutoBlue300,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(Icons.add),
+                Text('Add Device'),
+              ],
+            ),
+          ),
+        ));
+      }
+      return Center(
+        child: InkWell(
+          onTap: () async {
+            await getInternetAccessObject();
+            if (internetAccess) {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      DeviceStatusScreen(device: dvList[index]),
+                ),
+              );
+              getDeviceList();
+            } else {
+              this._showDialog.showDialogCustom(
+                  context,
+                  "Internet Connection Problem",
+                  "Please check your internet connection",
+                  fontSize: 17.0,
+                  boxHeight: 58.0);
+            }
+          },
+          splashColor: kHAutoBlue300,
+          child: Container(
+            padding: EdgeInsets.only(
+                left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
+            child: Card(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(
+                    child: ListTile(
+                      title: Hero(
+                        tag: dvList[index].dvName,
+                        child: Text(
+                          '${dvList[index].dvName}',
+                          textAlign: TextAlign.left,
+                          style: Theme.of(context).textTheme.headline,
+                        ),
+                      ),
+                      subtitle:
+                          Text("${getDeviceCategory(dvList[index].dvImg)}"),
+                      trailing: new Container(
+                        width: 10.0,
+                        height: 10.0,
+                        decoration: new BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: dvList[index].dvStatus == 1
+                              ? Colors.green
+                              : Colors.red,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 40.0,
+                  ),
+                  Row(
+                    children: <Widget>[
+                      SizedBox(
+                        width: 40.0,
+                        child: FlatButton(
+                          onPressed: () async {
+                            await getInternetAccessObject();
+                            if (internetAccess) {
+                              Map dvDetails = new Map();
+                              dvDetails = dvList[index].toMap();
+                              dvDetails['isModifying'] = true;
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => GetDeviceDetails(
+                                        hardware: widget.hardware,
+                                        deviceList: dvList,
+                                        dvDetails: dvDetails,
+                                        imgList: dvImgList,
+                                      ),
+                                ),
+                              );
+                              print(result.toString());
+                              if (result != null && !result['error']) {
+                                setState(() {
+                                  _isLoading = true;
+                                });
+                                _renameDevice(dvList[index], result['dvName'],
+                                    result['dvImg'], result['dvPort']);
+                              }
+                            } else {
+                              this._showDialog.showDialogCustom(
+                                  context,
+                                  "Internet Connection Problem",
+                                  "Please check your internet connection",
+                                  fontSize: 17.0,
+                                  boxHeight: 58.0);
+                            }
+                          },
+                          child: Icon(Icons.edit),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 20.0,
+                      ),
+                      SizedBox(
+                        width: 40.0,
+                        child: FlatButton(
+                          onPressed: () async {
+                            await _deleteDevice(dvList[index]);
+                          },
+                          child: Icon(Icons.delete),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     Widget createListView(BuildContext context, List<Device> dvList) {
       var len = 0;
       if (dvList != null) {
@@ -178,181 +350,7 @@ class DeviceScreenState extends State<DeviceScreen>
         crossAxisCount: 2,
         // Generate 100 Widgets that display their index in the List
         children: List.generate(len + 1, (index) {
-          if (index == len) {
-            return Center(
-                child: SizedBox(
-              width: 150.0,
-              height: 150.0,
-              child: RaisedButton(
-                shape: new RoundedRectangleBorder(
-                    borderRadius: new BorderRadius.circular(30.0)),
-                onPressed: () async {
-                  await getInternetAccessObject();
-                  if (internetAccess) {
-                    Map dvDetails = new Map();
-                    dvDetails['isModifying'] = false;
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => GetDeviceDetails(
-                              hardware: widget.hardware,
-                              deviceList: dvList,
-                              dvDetails: dvDetails,
-                              imgList: dvImgList,
-                            ),
-                      ),
-                    );
-                    print(result.toString());
-                    if (result != null && !result['error']) {
-                      setState(() {
-                        _isLoading = true;
-                      });
-                      _createDevice(result['dvName'], result['dvPort'],
-                          result['dvImg'], widget.hardware);
-                    }
-                  } else {
-                    this._showDialog.showDialogCustom(
-                        context,
-                        "Internet Connection Problem",
-                        "Please check your internet connection",
-                        fontSize: 17.0,
-                        boxHeight: 58.0);
-                  }
-                },
-                color: kHAutoBlue300,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(Icons.add),
-                    Text('Add Device'),
-                  ],
-                ),
-              ),
-            ));
-          }
-          return Center(
-            child: InkWell(
-              onTap: () async {
-                await getInternetAccessObject();
-                if (internetAccess) {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          DeviceStatusScreen(device: dvList[index]),
-                    ),
-                  );
-                  getDeviceList();
-                } else {
-                  this._showDialog.showDialogCustom(
-                      context,
-                      "Internet Connection Problem",
-                      "Please check your internet connection",
-                      fontSize: 17.0,
-                      boxHeight: 58.0);
-                }
-              },
-              splashColor: kHAutoBlue300,
-              child: Container(
-                padding: EdgeInsets.only(
-                    left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
-                child: Card(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Expanded(
-                        child: ListTile(
-                          title: Hero(
-                            tag: dvList[index].dvName,
-                            child: Text(
-                              '${dvList[index].dvName}',
-                              textAlign: TextAlign.left,
-                              style: Theme.of(context).textTheme.headline,
-                            ),
-                          ),
-                          subtitle:
-                              Text("${getDeviceCategory(dvList[index].dvImg)}"),
-                          trailing: new Container(
-                            width: 10.0,
-                            height: 10.0,
-                            decoration: new BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: dvList[index].dvStatus == 1
-                                  ? Colors.green
-                                  : Colors.red,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: 40.0,
-                      ),
-                      Row(
-                        children: <Widget>[
-                          SizedBox(
-                            width: 40.0,
-                            child: FlatButton(
-                              onPressed: () async {
-                                await getInternetAccessObject();
-                                if (internetAccess) {
-                                  Map dvDetails = new Map();
-                                  dvDetails = dvList[index].toMap();
-                                  dvDetails['isModifying'] = true;
-                                  final result = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => GetDeviceDetails(
-                                            hardware: widget.hardware,
-                                            deviceList: dvList,
-                                            dvDetails: dvDetails,
-                                            imgList: dvImgList,
-                                          ),
-                                    ),
-                                  );
-                                  print(result.toString());
-                                  if (result != null && !result['error']) {
-                                    setState(() {
-                                      _isLoading = true;
-                                    });
-                                    _renameDevice(
-                                        dvList[index],
-                                        result['dvName'],
-                                        result['dvImg'],
-                                        result['dvPort']);
-                                  }
-                                } else {
-                                  this._showDialog.showDialogCustom(
-                                      context,
-                                      "Internet Connection Problem",
-                                      "Please check your internet connection",
-                                      fontSize: 17.0,
-                                      boxHeight: 58.0);
-                                }
-                              },
-                              child: Icon(Icons.edit),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 20.0,
-                          ),
-                          SizedBox(
-                            width: 40.0,
-                            child: FlatButton(
-                              onPressed: () async {
-                                await _deleteDevice(dvList[index]);
-                              },
-                              child: Icon(Icons.delete),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
+          return _getDeviceObject(dvList, index, len);
         }),
       );
     }
@@ -369,215 +367,10 @@ class DeviceScreenState extends State<DeviceScreen>
         ),
         delegate: new SliverChildBuilderDelegate(
           (BuildContext context, int index) {
-            if (index == len) {
-              return Center(
-                  child: SizedBox(
-                width: 150.0,
-                height: 150.0,
-                child: RaisedButton(
-                  shape: new RoundedRectangleBorder(
-                      borderRadius: new BorderRadius.circular(30.0)),
-                  onPressed: () async {
-                    await getInternetAccessObject();
-                    if (internetAccess) {
-                      Map dvDetails = new Map();
-                      dvDetails['isModifying'] = false;
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => GetDeviceDetails(
-                                hardware: widget.hardware,
-                                deviceList: dvList,
-                                dvDetails: dvDetails,
-                                imgList: dvImgList,
-                              ),
-                        ),
-                      );
-                      print(result.toString());
-                      if (result != null && !result['error']) {
-                        setState(() {
-                          _isLoading = true;
-                        });
-                        _createDevice(result['dvName'], result['dvPort'],
-                            result['dvImg'], widget.hardware);
-                      }
-                    } else {
-                      this._showDialog.showDialogCustom(
-                          context,
-                          "Internet Connection Problem",
-                          "Please check your internet connection",
-                          fontSize: 17.0,
-                          boxHeight: 58.0);
-                    }
-                  },
-                  color: kHAutoBlue300,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Icon(Icons.add),
-                      Text('Add Device'),
-                    ],
-                  ),
-                ),
-              ));
-            }
-            return Center(
-              child: InkWell(
-                onTap: () async {
-                  await getInternetAccessObject();
-                  if (internetAccess) {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            DeviceStatusScreen(device: dvList[index]),
-                      ),
-                    );
-                    getDeviceList();
-                  } else {
-                    this._showDialog.showDialogCustom(
-                        context,
-                        "Internet Connection Problem",
-                        "Please check your internet connection",
-                        fontSize: 17.0,
-                        boxHeight: 58.0);
-                  }
-                },
-                splashColor: kHAutoBlue300,
-                child: Container(
-                  padding: EdgeInsets.only(
-                      left: 10.0, top: 20.0, bottom: 20.0, right: 10.0),
-                  child: Card(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Expanded(
-                          child: ListTile(
-                            title: Hero(
-                              tag: dvList[index].dvName,
-                              child: Text(
-                                '${dvList[index].dvName}',
-                                textAlign: TextAlign.left,
-                                style: Theme.of(context).textTheme.headline,
-                              ),
-                            ),
-                            subtitle: Text(
-                                "${getDeviceCategory(dvList[index].dvImg)}"),
-                            trailing: new Container(
-                              width: 10.0,
-                              height: 10.0,
-                              decoration: new BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: dvList[index].dvStatus == 1
-                                    ? Colors.green
-                                    : Colors.red,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          height: 40.0,
-                        ),
-                        Row(
-                          children: <Widget>[
-                            SizedBox(
-                              width: 40.0,
-                              child: FlatButton(
-                                onPressed: () async {
-                                  await getInternetAccessObject();
-                                  if (internetAccess) {
-                                    Map dvDetails = new Map();
-                                    dvDetails = dvList[index].toMap();
-                                    dvDetails['isModifying'] = true;
-                                    final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => GetDeviceDetails(
-                                              hardware: widget.hardware,
-                                              deviceList: dvList,
-                                              dvDetails: dvDetails,
-                                              imgList: dvImgList,
-                                            ),
-                                      ),
-                                    );
-                                    print(result.toString());
-                                    if (result != null && !result['error']) {
-                                      setState(() {
-                                        _isLoading = true;
-                                      });
-                                      _renameDevice(
-                                          dvList[index],
-                                          result['dvName'],
-                                          result['dvImg'],
-                                          result['dvPort']);
-                                    }
-                                  } else {
-                                    this._showDialog.showDialogCustom(
-                                        context,
-                                        "Internet Connection Problem",
-                                        "Please check your internet connection",
-                                        fontSize: 17.0,
-                                        boxHeight: 58.0);
-                                  }
-                                },
-                                child: Icon(Icons.edit),
-                              ),
-                            ),
-                            SizedBox(
-                              width: 20.0,
-                            ),
-                            SizedBox(
-                              width: 40.0,
-                              child: FlatButton(
-                                onPressed: () async {
-                                  await _deleteDevice(dvList[index]);
-                                },
-                                child: Icon(Icons.delete),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
+            return _getDeviceObject(dvList, index, len);
           },
           childCount: len + 1,
         ),
-      );
-    }
-
-    Widget showInternetStatusIOS(BuildContext context) {
-      return new SliverGrid(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          childAspectRatio: 1.0,
-          crossAxisCount: 1,
-        ),
-        delegate:
-            new SliverChildBuilderDelegate((BuildContext context, int index) {
-          return Container(
-            child: Center(
-              child: Text("Please check your internet connection"),
-            ),
-          );
-        }, childCount: 1),
-      );
-    }
-
-    Widget showInternetStatus(BuildContext context) {
-      return new GridView.count(
-        crossAxisCount: 1,
-        // Generate 100 Widgets that display their index in the List
-        children: List.generate(1, (index) {
-          return Container(
-            child: Center(
-              child: Text("Please check your internet connection"),
-            ),
-          );
-        }),
       );
     }
 
@@ -664,12 +457,18 @@ class DeviceScreenState extends State<DeviceScreen>
                         new CupertinoSliverRefreshControl(
                             onRefresh: getDeviceList),
                         new SliverSafeArea(
-                            top: false, sliver: showInternetStatusIOS(context)),
+                          top: false,
+                          sliver: _showInternetStatus.showInternetStatus(
+                            _checkPlatform.isIOS(),
+                          ),
+                        ),
                       ],
                     )
                   : RefreshIndicator(
                       key: dvRefreshIndicatorKey,
-                      child: showInternetStatus(context),
+                      child: _showInternetStatus.showInternetStatus(
+                        _checkPlatform.isIOS(),
+                      ),
                       onRefresh: getDeviceList,
                     ),
     );

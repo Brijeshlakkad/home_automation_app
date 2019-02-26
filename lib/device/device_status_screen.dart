@@ -7,6 +7,7 @@ import 'package:home_automation/internet_access.dart';
 import 'package:home_automation/show_progress.dart';
 import 'package:home_automation/utils/show_dialog.dart';
 import 'package:home_automation/utils/check_platform.dart';
+import 'package:home_automation/utils/show_internet_status.dart';
 
 class DeviceStatusScreen extends StatefulWidget {
   final Device device;
@@ -24,6 +25,7 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
   bool internetAccess = false;
   ShowDialog _showDialog;
   CheckPlatform _checkPlatform;
+  ShowInternetStatus _showInternetStatus;
 
   Device device;
   double vSlide = 0.0;
@@ -39,6 +41,7 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
   initState() {
     _showDialog = new ShowDialog();
     _checkPlatform = new CheckPlatform(context: context);
+    _showInternetStatus = new ShowInternetStatus();
     getDeviceStatus();
     super.initState();
   }
@@ -61,10 +64,8 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
 
   @override
   void onError(String errorTxt) {
-    //_showSnackBar(errorTxt);
     setState(() => _isLoading = false);
   }
-
 
   Future getInternetAccessObject() async {
     CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
@@ -370,37 +371,6 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
       return widget.device.dvName;
     }
 
-    Widget showInternetStatusIOS(BuildContext context) {
-      return new SliverGrid(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          childAspectRatio: 1.0,
-          crossAxisCount: 1,
-        ),
-        delegate:
-            new SliverChildBuilderDelegate((BuildContext context, int index) {
-          return Container(
-            child: Center(
-              child: Text("Please check your internet connection"),
-            ),
-          );
-        }, childCount: 1),
-      );
-    }
-
-    Widget showInternetStatus(BuildContext context) {
-      return new GridView.count(
-        crossAxisCount: 1,
-        // Generate 100 Widgets that display their index in the List
-        children: List.generate(1, (index) {
-          return Container(
-            child: Center(
-              child: Text("Please check your internet connection"),
-            ),
-          );
-        }),
-      );
-    }
-
     return Scaffold(
       key: showDvStatusScaffoldKey,
       appBar: _checkPlatform.isIOS()
@@ -493,12 +463,18 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                         new CupertinoSliverRefreshControl(
                             onRefresh: getDeviceStatus),
                         new SliverSafeArea(
-                            top: false, sliver: showInternetStatusIOS(context)),
+                          top: false,
+                          sliver: _showInternetStatus.showInternetStatus(
+                            _checkPlatform.isIOS(),
+                          ),
+                        )
                       ],
                     )
                   : RefreshIndicator(
                       key: dvStatusRefreshIndicatorKey,
-                      child: showInternetStatus(context),
+                      child: _showInternetStatus.showInternetStatus(
+                        _checkPlatform.isIOS(),
+                      ),
                       onRefresh: getDeviceStatus,
                     ),
     );
