@@ -100,27 +100,24 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
 
   @override
   void onSuccess(Room room) async {
-    _showSnackBar("Created ${room.toString()} home");
-    setState(() => _isLoading = false);
+    _showDialog.showDialogCustom(context, "Success", "$room Rome created");
     getRoomList();
   }
 
   @override
   void onSuccessDelete(Room room) async {
-    _showSnackBar("Deleted ${room.roomName} room");
-    setState(() => _isLoading = false);
+    _showDialog.showDialogCustom(context, "Success", "$room Rome deleted");
     getRoomList();
   }
 
   @override
   void onSuccessRename(Room room) async {
-    _showSnackBar(room.toString());
-    setState(() => _isLoading = false);
     getRoomList();
   }
 
   @override
   void onError(String errorTxt) {
+    _showDialog.showDialogCustom(context, "Error", errorTxt);
     setState(() => _isLoading = false);
   }
 
@@ -181,6 +178,7 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
                     content: CupertinoTextField(
                       autofocus: true,
                       clearButtonMode: OverlayVisibilityMode.editing,
+                      textCapitalization: TextCapitalization.words,
                       onSubmitted: (val) async {
                         await getInternetAccessObject();
                         if (internetAccess) {
@@ -221,6 +219,35 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
                               validator: (val) => roomValidator(val, null),
                               onSaved: (val) => _roomName = val,
                               autofocus: true,
+                              textCapitalization: TextCapitalization.words,
+                              textInputAction: TextInputAction.next,
+                              onFieldSubmitted: (val) async {
+                                await getInternetAccessObject();
+                                if (internetAccess) {
+                                  var form = roomNameFormKey.currentState;
+                                  if (form.validate()) {
+                                    form.save();
+                                    Navigator.pop(context);
+                                    setState(() {
+                                      _isLoading = true;
+                                      _autoValidateRoomName = false;
+                                    });
+                                    _createRoom(_roomName, widget.home);
+                                  } else {
+                                    setState(() {
+                                      _autoValidateRoomName = true;
+                                    });
+                                  }
+                                } else {
+                                  Navigator.pop(context);
+                                  this._showDialog.showDialogCustom(
+                                      context,
+                                      "Internet Connection Problem",
+                                      "Please check your internet connection",
+                                      fontSize: 17.0,
+                                      boxHeight: 58.0);
+                                }
+                              },
                               decoration: new InputDecoration(
                                 labelText: 'Room',
                               ),
@@ -279,6 +306,7 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
                     content: CupertinoTextField(
                       autofocus: true,
                       clearButtonMode: OverlayVisibilityMode.editing,
+                      textCapitalization: TextCapitalization.words,
                       onSubmitted: (val) async {
                         await getInternetAccessObject();
                         if (internetAccess) {
@@ -326,6 +354,35 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
                               initialValue: room.roomName,
                               onSaved: (val) => _roomName = val,
                               autofocus: true,
+                              textCapitalization: TextCapitalization.words,
+                              textInputAction: TextInputAction.next,
+                              onFieldSubmitted: (val) async {
+                                await getInternetAccessObject();
+                                if (internetAccess) {
+                                  var form = roomReNameFormKey.currentState;
+                                  if (form.validate()) {
+                                    form.save();
+                                    Navigator.pop(context);
+                                    setState(() {
+                                      _isLoading = true;
+                                      _autoValidateRoomReName = false;
+                                    });
+                                    _renameRoom(room, _roomName);
+                                  } else {
+                                    setState(() {
+                                      _autoValidateRoomReName = true;
+                                    });
+                                  }
+                                } else {
+                                  Navigator.pop(context);
+                                  this._showDialog.showDialogCustom(
+                                      context,
+                                      "Internet Connection Problem",
+                                      "Please check your internet connection",
+                                      fontSize: 17.0,
+                                      boxHeight: 58.0);
+                                }
+                              },
                               decoration: new InputDecoration(
                                 labelText: 'Room',
                               ),

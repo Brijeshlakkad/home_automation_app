@@ -25,6 +25,10 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
   bool _autoValidateDv = false;
   bool _autoValidateDvRe = false;
 
+  FocusNode _hwNameNode = new FocusNode();
+  FocusNode _hwSeriesNode = new FocusNode();
+  FocusNode _hwIPNode = new FocusNode();
+
   List<String> portList = <String>[
     '1',
     '2',
@@ -107,6 +111,12 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
     }
   }
 
+  void _fieldFocusChange(
+      BuildContext context, FocusNode current, FocusNode next) {
+    current.unfocus();
+    FocusScope.of(context).requestFocus(next);
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget createDevice() {
@@ -126,6 +136,12 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
                       validator: (val) => hardwareNameValidator(val, null),
                       onSaved: (val) => _hwName = val,
                       autofocus: true,
+                      focusNode: _hwNameNode,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      onFieldSubmitted: (val) {
+                        _fieldFocusChange(context, _hwNameNode, _hwSeriesNode);
+                      },
                       decoration: new InputDecoration(
                         labelText: 'Hardware Name',
                       ),
@@ -134,6 +150,12 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
                       validator: (val) => hardwareSeriesValidator(val),
                       onSaved: (val) => _hwSeries = val,
                       autofocus: true,
+                      focusNode: _hwSeriesNode,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      onFieldSubmitted: (val) {
+                        _fieldFocusChange(context, _hwSeriesNode, _hwIPNode);
+                      },
                       decoration: new InputDecoration(
                         labelText: 'Hardware Series',
                       ),
@@ -142,6 +164,37 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
                       validator: (val) => hardwareIPValidator(val),
                       onSaved: (val) => _hwIP = val,
                       autofocus: true,
+                      focusNode: _hwIPNode,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      onFieldSubmitted: (val) async {
+                        await getInternetAccessObject();
+                        if (internetAccess) {
+                          var form = hwFormKey.currentState;
+                          if (form.validate()) {
+                            form.save();
+                            setState(() {
+                              _autoValidateDv = false;
+                            });
+                            hwDetails['error'] = false;
+                            hwDetails['hwName'] = _hwName;
+                            hwDetails['hwSeries'] = _hwSeries;
+                            hwDetails['hwIP'] = _hwIP;
+                            Navigator.pop(context, hwDetails);
+                          } else {
+                            setState(() {
+                              _autoValidateDv = true;
+                            });
+                          }
+                        } else {
+                          this._showDialog.showDialogCustom(
+                              context,
+                              "Internet Connection Problem",
+                              "Please check your internet connection",
+                              fontSize: 17.0,
+                              boxHeight: 58.0);
+                        }
+                      },
                       decoration: new InputDecoration(
                         labelText: 'Hardware IP',
                       ),
@@ -224,6 +277,12 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
                       validator: (val) => hardwareNameValidator(val, _hwName),
                       onSaved: (val) => _hwName = val,
                       autofocus: true,
+                      focusNode: _hwNameNode,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      onFieldSubmitted: (val) {
+                        _fieldFocusChange(context, _hwNameNode, _hwSeriesNode);
+                      },
                       initialValue: _hwName,
                       decoration: new InputDecoration(
                         labelText: 'Hardware Name',
@@ -234,6 +293,12 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
                       onSaved: (val) => _hwSeries = val,
                       initialValue: _hwSeries,
                       autofocus: true,
+                      focusNode: _hwSeriesNode,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      onFieldSubmitted: (val) {
+                        _fieldFocusChange(context, _hwSeriesNode, _hwIPNode);
+                      },
                       decoration: new InputDecoration(
                         labelText: 'Hardware Series',
                       ),
@@ -243,6 +308,44 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
                       onSaved: (val) => _hwIP = val,
                       autofocus: true,
                       initialValue: _hwIP,
+                      focusNode: _hwIPNode,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      onFieldSubmitted: (val) async {
+                        await getInternetAccessObject();
+                        if (internetAccess) {
+                          var form = hwFormKey.currentState;
+                          if (form.validate()) {
+                            form.save();
+                            if (_hwName != widget.hwDetails['hwName'] ||
+                                _hwSeries != widget.hwDetails['hwSeries'] ||
+                                _hwIP != widget.hwDetails['hwIP']) {
+                              setState(() {
+                                _autoValidateDv = false;
+                              });
+                              hwDetails['error'] = false;
+                              hwDetails['hwName'] = _hwName;
+                              hwDetails['hwSeries'] = _hwSeries;
+                              hwDetails['hwIP'] = _hwIP;
+                              Navigator.pop(context, hwDetails);
+                            } else {
+                              hwDetails['error'] = true;
+                              Navigator.pop(context, hwDetails);
+                            }
+                          } else {
+                            setState(() {
+                              _autoValidateDvRe = true;
+                            });
+                          }
+                        } else {
+                          this._showDialog.showDialogCustom(
+                              context,
+                              "Internet Connection Problem",
+                              "Please check your internet connection",
+                              fontSize: 17.0,
+                              boxHeight: 58.0);
+                        }
+                      },
                       decoration: new InputDecoration(
                         labelText: 'Hardware IP',
                       ),

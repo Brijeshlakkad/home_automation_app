@@ -1,5 +1,6 @@
 import 'package:home_automation/utils/network_util.dart';
 import 'package:home_automation/data/database_helper.dart';
+import 'package:home_automation/utils/custom_exception.dart';
 
 class Home {
   String _homeName, _email;
@@ -25,7 +26,6 @@ class Home {
 
   @override
   String toString() {
-    // TODO: implement toString
     return homeName;
   }
 }
@@ -37,15 +37,13 @@ class SendHomeData {
   static final db = new DatabaseHelper();
   Future<List<Home>> getAllHome() async {
     final user = await db.getUser();
-    return _netUtil.post(finalURL, body: {
-      "email": user,
-      "action": "0"
-    }).then((dynamic res) {
+    return _netUtil.post(finalURL, body: {"email": user, "action": "0"}).then(
+        (dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessage"]);
-      int total=int.parse(res['total'].toString());
-      List<Home> homeList= new List<Home>();
-      for(int i=0;i<total;i++){
+      if (res["error"]) throw new FormException(res["errorMessage"]);
+      int total = int.parse(res['total'].toString());
+      List<Home> homeList = new List<Home>();
+      for (int i = 0; i < total; i++) {
         homeList.add(Home.map(res['user']['home'][i]));
       }
       return homeList;
@@ -60,7 +58,7 @@ class SendHomeData {
       "action": "1"
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessage"]);
+      if (res["error"]) throw new FormException(res["errorMessage"]);
       return new Home.map(res['user']['home']);
     });
   }
@@ -68,13 +66,10 @@ class SendHomeData {
   Future<Home> delete(Home home) async {
     final user = home.email;
     final id = home.id.toString();
-    return _netUtil.post(finalURL, body: {
-      "email": user,
-      "action": "2",
-      "id": id
-    }).then((dynamic res) {
+    return _netUtil.post(finalURL,
+        body: {"email": user, "action": "2", "id": id}).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessege"]);
       return home;
     });
   }
@@ -89,8 +84,8 @@ class SendHomeData {
       "id": id
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
-      home._homeName=homeName;
+      if (res["error"]) throw new FormException(res["errorMessege"]);
+      home._homeName = homeName;
       return home;
     });
   }
@@ -114,7 +109,6 @@ class HomeScreenPresenter {
       _view.onSuccess(home);
     } on Exception catch (error) {
       _view.onError(error.toString());
-      print('Error');
     }
   }
 
@@ -124,7 +118,6 @@ class HomeScreenPresenter {
       _view.onSuccessDelete(h);
     } on Exception catch (error) {
       _view.onError(error.toString());
-      print('Error');
     }
   }
 
@@ -134,7 +127,6 @@ class HomeScreenPresenter {
       _view.onSuccessRename(h);
     } on Exception catch (error) {
       _view.onError(error.toString());
-      print('Error');
     }
   }
 }

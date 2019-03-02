@@ -1,7 +1,7 @@
 import 'package:home_automation/utils/network_util.dart';
 import 'package:home_automation/data/database_helper.dart';
 import 'package:home_automation/models/room_data.dart';
-
+import 'package:home_automation/utils/custom_exception.dart';
 class Hardware {
   String _hwName, _email, _hwIP, _hwSeries;
   int _id, _homeID, _roomID;
@@ -62,7 +62,7 @@ class SendHardwareData {
       "action": "0"
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessege"]);
       int total = int.parse(res['total'].toString());
       List<Hardware> roomList = new List<Hardware>();
       for (int i = 0; i < total; i++) {
@@ -87,7 +87,7 @@ class SendHardwareData {
       "action": "1"
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessege"]);
       return new Hardware.map(res['user']['hw']);
     });
   }
@@ -98,7 +98,7 @@ class SendHardwareData {
     return _netUtil.post(finalURL,
         body: {"email": user, "id": id, "action": "2"}).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessege"]);
       return hw;
     });
   }
@@ -116,7 +116,7 @@ class SendHardwareData {
       "id": id
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessege"]);
       hw._hwName = hwName;
       return hw;
     });
@@ -142,7 +142,6 @@ class HardwareScreenPresenter {
       _view.onSuccess(hw);
     } on Exception catch (error) {
       _view.onError(error.toString());
-      print('Error');
     }
   }
 
@@ -152,7 +151,6 @@ class HardwareScreenPresenter {
       _view.onSuccessDelete(w);
     } on Exception catch (error) {
       _view.onError(error.toString());
-      print('Error');
     }
   }
 
@@ -163,7 +161,6 @@ class HardwareScreenPresenter {
       _view.onSuccessRename(r);
     } on Exception catch (error) {
       _view.onError(error.toString());
-      print('Error');
     }
   }
 }

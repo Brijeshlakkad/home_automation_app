@@ -1,7 +1,7 @@
 import 'package:home_automation/utils/network_util.dart';
 import 'package:home_automation/data/database_helper.dart';
 import 'package:home_automation/models/hardware_data.dart';
-
+import 'package:home_automation/utils/custom_exception.dart';
 class Device {
   String _dvName, _email, _dvPort, _dvImg;
   int _id, _homeID, _roomID, _hwID, _dvStatus;
@@ -138,7 +138,7 @@ class SendDeviceData {
       "action": "0"
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessege"]);
       int total = int.parse(res['total'].toString());
       List<Device> dvList = new List<Device>();
       for (int i = 0; i < total; i++) {
@@ -151,7 +151,7 @@ class SendDeviceData {
   Future<List<DeviceImg>> getAllDeviceImg() async {
     return _netUtil.post(finalURL, body: {"action": "4"}).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessege"]);
       int total = int.parse(res['total'].toString());
       List<DeviceImg> dvImgList = new List<DeviceImg>();
       for (int i = 0; i < total; i++) {
@@ -178,7 +178,7 @@ class SendDeviceData {
       "action": "1"
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessege"]);
       return new Device.map(res['user']['device']);
     });
   }
@@ -189,7 +189,7 @@ class SendDeviceData {
     return _netUtil.post(finalURL,
         body: {"email": user, "id": id, "action": "2"}).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessege"]);
       return dv;
     });
   }
@@ -207,7 +207,7 @@ class SendDeviceData {
       "id": id
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessege"]);
       dv._dvName = dvName;
       dv._dvPort = dvPort;
       return dv;
@@ -223,7 +223,7 @@ class SendDeviceData {
       "action": "5"
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessege"]);
       return Device.map(res['user']);
     });
   }
@@ -238,7 +238,7 @@ class SendDeviceData {
       "action": "6",
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessege"]);
       return Device.map(res['user']);
     });
   }
@@ -253,7 +253,7 @@ class SendDeviceData {
       "action": "7",
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessege"]);
       dvSlider._value=val;
     });
   }

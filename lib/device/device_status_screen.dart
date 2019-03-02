@@ -399,7 +399,6 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                   ],
                 ),
               ),
-              trailing: GetLogOut(),
             )
           : AppBar(
               leading: new IconButton(
@@ -435,9 +434,6 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                   ],
                 ),
               ),
-              actions: <Widget>[
-                GetLogOut(),
-              ],
             ),
       body: _isLoading
           ? ShowProgress()

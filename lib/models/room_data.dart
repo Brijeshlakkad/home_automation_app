@@ -1,7 +1,7 @@
 import 'package:home_automation/utils/network_util.dart';
 import 'package:home_automation/data/database_helper.dart';
 import 'package:home_automation/models/home_data.dart';
-
+import 'package:home_automation/utils/custom_exception.dart';
 class Room {
   String _roomName, _email;
   int _id, _homeID;
@@ -49,7 +49,7 @@ class SendRoomData {
       "action": "0"
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessege"]);
       int total = int.parse(res['total'].toString());
       List<Room> roomList = new List<Room>();
       for (int i = 0; i < total; i++) {
@@ -69,7 +69,7 @@ class SendRoomData {
       "action": "1"
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessege"]);
       return new Room.map(res['user']['room']);
     });
   }
@@ -80,7 +80,7 @@ class SendRoomData {
     return _netUtil.post(finalURL,
         body: {"email": user, "id": id, "action": "2"}).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessege"]);
       return room;
     });
   }
@@ -95,7 +95,7 @@ class SendRoomData {
       "id": id
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessege"]);
       room._roomName=roomName;
       return room;
     });
@@ -120,7 +120,6 @@ class RoomScreenPresenter {
       _view.onSuccess(room);
     } on Exception catch (error) {
       _view.onError(error.toString());
-      print('Error');
     }
   }
 
@@ -130,7 +129,6 @@ class RoomScreenPresenter {
       _view.onSuccessDelete(r);
     } on Exception catch (error) {
       _view.onError(error.toString());
-      print('Error');
     }
   }
 
@@ -140,7 +138,6 @@ class RoomScreenPresenter {
       _view.onSuccessRename(r);
     } on Exception catch (error) {
       _view.onError(error.toString());
-      print('Error');
     }
   }
 

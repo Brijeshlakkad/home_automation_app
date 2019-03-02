@@ -46,6 +46,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     scaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
+
   User user;
   Function callbackUser;
 
@@ -73,7 +74,6 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     super.initState();
   }
 
-
   Future getInternetAccessObject() async {
     CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
     bool internetAccess = await checkInternetAccess.check();
@@ -97,24 +97,22 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
 
   @override
   void onSuccess(Home home) async {
-    _showSnackBar("Created ${home.toString()} home");
-    setState(() => _isLoading = false);
+    _showDialog.showDialogCustom(context, "Success", "$home Home created");
+    getHomeList();
   }
 
   void onSuccessDelete(Home home) async {
-    _showSnackBar("Deleted ${home.homeName} home");
-    setState(() => _isLoading = false);
+    _showDialog.showDialogCustom(context, "Success", "$home Home Deleted");
     getHomeList();
   }
 
   void onSuccessRename(Home home) async {
-    _showSnackBar(home.toString());
-    setState(() => _isLoading = false);
     getHomeList();
   }
 
   @override
   void onError(String errorTxt) {
+    _showDialog.showDialogCustom(context, "Error", errorTxt);
     setState(() => _isLoading = false);
   }
 
@@ -174,6 +172,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                     title: Text("Create Home Here"),
                     content: CupertinoTextField(
                       autofocus: true,
+                      textCapitalization: TextCapitalization.words,
                       clearButtonMode: OverlayVisibilityMode.editing,
                       onSubmitted: (val) async {
                         await getInternetAccessObject();
@@ -214,6 +213,35 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                             child: new TextFormField(
                               onSaved: (val) => _homeName = val,
                               autofocus: true,
+                              textCapitalization: TextCapitalization.words,
+                              textInputAction: TextInputAction.next,
+                              onFieldSubmitted: (val) async {
+                                await getInternetAccessObject();
+                                if (internetAccess) {
+                                  var form = homeNameFormKey.currentState;
+                                  if (form.validate()) {
+                                    form.save();
+                                    Navigator.pop(context);
+                                    setState(() {
+                                      _isLoading = true;
+                                      _autoValidateHomeName = false;
+                                    });
+                                    _createHome(_homeName);
+                                  } else {
+                                    setState(() {
+                                      _autoValidateHomeName = true;
+                                    });
+                                  }
+                                } else {
+                                  Navigator.pop(context);
+                                  this._showDialog.showDialogCustom(
+                                      context,
+                                      "Internet Connection Problem",
+                                      "Please check your internet connection",
+                                      fontSize: 17.0,
+                                      boxHeight: 58.0);
+                                }
+                              },
                               validator: (val) => homeValidator(val, null),
                               decoration: new InputDecoration(
                                 labelText: 'Home',
@@ -273,6 +301,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                     content: CupertinoTextField(
                       autofocus: true,
                       clearButtonMode: OverlayVisibilityMode.editing,
+                      textCapitalization: TextCapitalization.words,
                       onSubmitted: (val) async {
                         await getInternetAccessObject();
                         if (internetAccess) {
@@ -317,6 +346,35 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                             child: new TextFormField(
                               initialValue: home.homeName,
                               onSaved: (val) => _homeName = val,
+                              textCapitalization: TextCapitalization.words,
+                              textInputAction: TextInputAction.next,
+                              onFieldSubmitted: (val) async {
+                                await getInternetAccessObject();
+                                if (internetAccess) {
+                                  var form = homeReNameFormKey.currentState;
+                                  if (form.validate()) {
+                                    form.save();
+                                    Navigator.pop(context);
+                                    setState(() {
+                                      _isLoading = true;
+                                      _autoValidateHomeReName = false;
+                                    });
+                                    _renameHome(home, _homeName);
+                                  } else {
+                                    setState(() {
+                                      _autoValidateHomeReName = true;
+                                    });
+                                  }
+                                } else {
+                                  Navigator.pop(context);
+                                  this._showDialog.showDialogCustom(
+                                      context,
+                                      "Internet Connection Problem",
+                                      "Please check your internet connection",
+                                      fontSize: 17.0,
+                                      boxHeight: 58.0);
+                                }
+                              },
                               autofocus: true,
                               validator: (val) => homeValidator(val, null),
                               decoration: new InputDecoration(
@@ -331,6 +389,8 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                       new FlatButton(
                         child: const Text('CANCEL'),
                         onPressed: () {
+                          var form = homeReNameFormKey.currentState;
+                          form.reset();
                           Navigator.pop(context);
                         },
                       ),
@@ -424,7 +484,10 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => RoomScreen(user:user,callbackUser:callbackThis,home: homeList[index])),
+                    builder: (context) => RoomScreen(
+                        user: user,
+                        callbackUser: callbackThis,
+                        home: homeList[index])),
               );
             } else {
               this._showDialog.showDialogCustom(
@@ -549,6 +612,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
             ),
       );
     }
+
     return WillPopScope(
       onWillPop: () => new Future<bool>.value(false),
       child: new Scaffold(

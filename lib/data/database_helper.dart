@@ -94,6 +94,14 @@ class DatabaseHelper {
     }
   }
 
+  Future updateUser(User user) async {
+    var dbClient = await db;
+    int res = await dbClient.rawUpdate(
+        "UPDATE User SET name=?,address=?,city=?,mobile=? WHERE email=?",
+        [user.name, user.address, user.city, user.mobile, user.email]);
+    return res;
+  }
+
 //  Future<int> saveHome(Home home) async {
 //    var dbClient = await db;
 //    int res = await dbClient.insert("Home", home.toMap());

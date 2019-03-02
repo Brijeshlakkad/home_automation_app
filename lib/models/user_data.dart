@@ -52,7 +52,7 @@ class RequestUser {
     return _netUtil.post(finalURL, body: {"email": user, "action": "1"}).then(
         (dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessage"]);
+      if (res["error"]) throw new FormException(res["errorMessage"]);
       return User.map(res['user']);
     });
   }

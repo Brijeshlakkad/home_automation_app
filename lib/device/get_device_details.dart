@@ -117,6 +117,8 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                       validator: (val) => deviceNameValidator(val, null),
                       onSaved: (val) => _dvName = val,
                       autofocus: true,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.done,
                       decoration: new InputDecoration(
                         labelText: 'Device Name',
                       ),
@@ -242,6 +244,8 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                       onSaved: (val) => _dvName = val,
                       autofocus: true,
                       initialValue: _dvName,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.done,
                       decoration: new InputDecoration(
                         labelText: 'Device Name',
                       ),

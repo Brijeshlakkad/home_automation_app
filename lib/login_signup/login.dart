@@ -18,6 +18,7 @@ class LoginScreen extends StatefulWidget {
 
 class LoginScreenState extends State<LoginScreen>
     implements LoginScreenContract, AuthStateListener {
+  DatabaseHelper db = new DatabaseHelper();
   User user;
   bool _obscureText = true;
   bool _isLoadingValue = false;
@@ -44,6 +45,7 @@ class LoginScreenState extends State<LoginScreen>
     setState(() {
       this.user=userDetails;
     });
+    db.updateUser(user);
   }
 
   void _submit() async {

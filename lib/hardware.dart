@@ -42,9 +42,12 @@ class HardwareScreenState extends State<HardwareScreen>
   var hwFormKey = new GlobalKey<FormState>();
   var hwReFormKey = new GlobalKey<FormState>();
   bool _autoValidateHw = false;
-  bool _autoValidateHwRe = false;
   final showHwScaffoldKey = new GlobalKey<ScaffoldState>();
   var hwRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
+
+  FocusNode _hwNameNode = new FocusNode();
+  FocusNode _hwSeriesNode = new FocusNode();
+  FocusNode _hwIPNode = new FocusNode();
 
   void _showSnackBar(String text) {
     showHwScaffoldKey.currentState.removeCurrentSnackBar();
@@ -103,28 +106,31 @@ class HardwareScreenState extends State<HardwareScreen>
 
   @override
   void onSuccess(Hardware hw) async {
-    _showSnackBar("Created ${hw.toString()} hardware");
-    setState(() => _isLoading = false);
+    _showDialog.showDialogCustom(context, "Success", "$hw Hardware created");
     getHardwareList();
   }
 
   @override
   void onSuccessDelete(Hardware hw) async {
-    _showSnackBar("Hardware ${hw.hwName} deleted");
-    setState(() => _isLoading = false);
+    _showDialog.showDialogCustom(context, "Success", "$hw Hardware deleted");
     getHardwareList();
   }
 
   @override
   void onSuccessRename(Hardware hw) async {
-    _showSnackBar(hw.toString());
-    setState(() => _isLoading = false);
     getHardwareList();
   }
 
   @override
   void onError(String errorTxt) {
+    _showDialog.showDialogCustom(context, "Error", errorTxt);
     setState(() => _isLoading = false);
+  }
+
+  void _fieldFocusChange(
+      BuildContext context, FocusNode current, FocusNode next) {
+    current.unfocus();
+    FocusScope.of(context).requestFocus(next);
   }
 
   @override
@@ -218,6 +224,13 @@ class HardwareScreenState extends State<HardwareScreen>
                                 hardwareNameValidator(val, null),
                             onSaved: (val) => _hwName = val,
                             autofocus: true,
+                            focusNode: _hwNameNode,
+                            textCapitalization: TextCapitalization.words,
+                            textInputAction: TextInputAction.next,
+                            onFieldSubmitted: (val) {
+                              _fieldFocusChange(
+                                  context, _hwNameNode, _hwSeriesNode);
+                            },
                             decoration: new InputDecoration(
                               labelText: 'Hardware Name',
                             ),
@@ -226,6 +239,13 @@ class HardwareScreenState extends State<HardwareScreen>
                             onSaved: (val) => _hwSeries = val,
                             autofocus: true,
                             validator: hardwareSeriesValidator,
+                            focusNode: _hwSeriesNode,
+                            textCapitalization: TextCapitalization.words,
+                            textInputAction: TextInputAction.next,
+                            onFieldSubmitted: (val) {
+                              _fieldFocusChange(
+                                  context, _hwSeriesNode, _hwIPNode);
+                            },
                             decoration: new InputDecoration(
                               labelText: 'Hardware Series',
                             ),
@@ -234,6 +254,37 @@ class HardwareScreenState extends State<HardwareScreen>
                             validator: hardwareIPValidator,
                             onSaved: (val) => _hwIP = val,
                             autofocus: true,
+                            focusNode: _hwIPNode,
+                            textCapitalization: TextCapitalization.words,
+                            textInputAction: TextInputAction.next,
+                            onFieldSubmitted: (val) async {
+                              await getInternetAccessObject();
+                              if (internetAccess) {
+                                var form = hwFormKey.currentState;
+                                if (form.validate()) {
+                                  form.save();
+                                  Navigator.pop(context);
+                                  setState(() {
+                                    _isLoading = true;
+                                    _autoValidateHw = false;
+                                  });
+                                  _createHardware(
+                                      _hwName, _hwSeries, _hwIP, widget.room);
+                                } else {
+                                  setState(() {
+                                    _autoValidateHw = true;
+                                  });
+                                }
+                              } else {
+                                Navigator.pop(context);
+                                this._showDialog.showDialogCustom(
+                                    context,
+                                    "Internet Connection Problem",
+                                    "Please check your internet connection",
+                                    fontSize: 17.0,
+                                    boxHeight: 58.0);
+                              }
+                            },
                             decoration: new InputDecoration(
                               labelText: 'Hardware IP',
                             ),
@@ -264,107 +315,6 @@ class HardwareScreenState extends State<HardwareScreen>
                           _autoValidateHw = false;
                         });
                         _createHardware(_hwName, _hwSeries, _hwIP, widget.room);
-                      } else {
-                        setState(() {
-                          _autoValidateHw = true;
-                        });
-                      }
-                    } else {
-                      Navigator.pop(context);
-                      this._showDialog.showDialogCustom(
-                          context,
-                          "Internet Connection Problem",
-                          "Please check your internet connection",
-                          fontSize: 17.0,
-                          boxHeight: 58.0);
-                    }
-                  },
-                ),
-              ],
-            ),
-      );
-    }
-
-    _showHardwareReNameDialog(Hardware hw) async {
-      await showDialog<String>(
-        context: context,
-        builder: (BuildContext context) => new AlertDialog(
-              contentPadding: const EdgeInsets.all(16.0),
-              content: Container(
-                width: double.maxFinite,
-                child: new ListView(
-                  children: <Widget>[
-                    new Container(
-                      child: Center(
-                        child: Text("Hardware details"),
-                      ),
-                      padding: EdgeInsets.only(bottom: 20.0),
-                    ),
-                    Form(
-                      key: hwReFormKey,
-                      autovalidate: _autoValidateHwRe,
-                      child: Column(
-                        children: <Widget>[
-                          new TextFormField(
-                            validator: (val) =>
-                                hardwareNameValidator(val, hw.hwName),
-                            initialValue: hw.hwName,
-                            onSaved: (val) => _hwName = val,
-                            autofocus: true,
-                            decoration: new InputDecoration(
-                              labelText: 'Hardware Name',
-                            ),
-                          ),
-                          new TextFormField(
-                            validator: hardwareSeriesValidator,
-                            onSaved: (val) => _hwSeries = val,
-                            autofocus: true,
-                            initialValue: hw.hwSeries,
-                            decoration: new InputDecoration(
-                              labelText: 'Hardware Series',
-                            ),
-                          ),
-                          new TextFormField(
-                            onSaved: (val) => _hwIP = val,
-                            autofocus: true,
-                            validator: hardwareIPValidator,
-                            initialValue: hw.hwIP,
-                            decoration: new InputDecoration(
-                              labelText: 'Hardware IP',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: <Widget>[
-                new FlatButton(
-                    child: const Text('CANCEL'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    }),
-                new FlatButton(
-                  child: const Text('MODIFY'),
-                  onPressed: () async {
-                    await getInternetAccessObject();
-                    if (internetAccess) {
-                      var form = hwReFormKey.currentState;
-                      if (form.validate()) {
-                        form.save();
-                        if (_hwName != hw.hwName ||
-                            _hwSeries != hw.hwSeries ||
-                            _hwIP != hw.hwIP) {
-                          Navigator.pop(context);
-                          setState(() {
-                            _isLoading = true;
-                            _autoValidateHwRe = false;
-                          });
-                          _renameHardware(hw, _hwName, _hwSeries, _hwIP);
-                        } else {
-                          Navigator.pop(context);
-                        }
                       } else {
                         setState(() {
                           _autoValidateHw = true;

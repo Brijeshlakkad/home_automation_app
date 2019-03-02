@@ -115,27 +115,24 @@ class DeviceScreenState extends State<DeviceScreen>
 
   @override
   void onSuccess(Device dv) async {
-    _showSnackBar("Created ${dv.toString()} device");
-    setState(() => _isLoading = false);
+    _showDialog.showDialogCustom(context, "Success", "$dv Device created");
     getDeviceList();
   }
 
   @override
   void onSuccessDelete(Device dv) async {
-    _showSnackBar(dv.toString());
-    setState(() => _isLoading = false);
+    _showDialog.showDialogCustom(context, "Success", "$dv Device deleted");
     getDeviceList();
   }
 
   @override
   void onSuccessRename(Device dv) async {
-    _showSnackBar(dv.toString());
-    setState(() => _isLoading = false);
     getDeviceList();
   }
 
   @override
   void onError(String errorTxt) {
+    _showDialog.showDialogCustom(context, "Error", errorTxt);
     setState(() => _isLoading = false);
   }
 
@@ -253,6 +250,9 @@ class DeviceScreenState extends State<DeviceScreen>
                       DeviceStatusScreen(device: dvList[index]),
                 ),
               );
+              setState(() {
+                _isLoading=true;
+              });
               getDeviceList();
             } else {
               this._showDialog.showDialogCustom(
