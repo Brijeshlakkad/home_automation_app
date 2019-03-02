@@ -48,6 +48,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   }
   User user;
   Function callbackUser;
+
   Function callbackThis(User user) {
     this.callbackUser(user);
     setState(() {
@@ -64,7 +65,6 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
 
   @override
   void initState() {
-    print("${this.user.id}");
     _showDialog = new ShowDialog();
     _deleteConfirmation = new DeleteConfirmation();
     _checkPlatform = new CheckPlatform(context: context);
@@ -86,7 +86,6 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     await getInternetAccessObject();
     if (internetAccess) {
       homeList = await _presenter.api.getAllHome();
-      print("${homeList.toString()}");
       if (homeList != null) {
         homeList = homeList.toList();
       } else {

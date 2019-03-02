@@ -18,6 +18,7 @@ class LoginScreen extends StatefulWidget {
 
 class LoginScreenState extends State<LoginScreen>
     implements LoginScreenContract, AuthStateListener {
+  User user;
   bool _obscureText = true;
   bool _isLoadingValue = false;
   bool _isLoading = true;
@@ -37,6 +38,12 @@ class LoginScreenState extends State<LoginScreen>
   @override
   void initState() {
     super.initState();
+  }
+
+  Function callbackUser(User userDetails){
+    setState(() {
+      this.user=userDetails;
+    });
   }
 
   void _submit() async {
@@ -66,8 +73,9 @@ class LoginScreenState extends State<LoginScreen>
   @override
   onAuthStateChanged(AuthState state, User user) {
     if (state == AuthState.LOGGED_IN) {
+      this.callbackUser(user);
       Navigator.push(context,
-          MaterialPageRoute(builder: (context) => HomeScreen(user: user)));
+          MaterialPageRoute(builder: (context) => HomeScreen(user: this.user, callbackUser: this.callbackUser,)));
     }
     setState(() {
       _isLoading = false;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:home_automation/user_profile.dart';
+import 'package:home_automation/show_user.dart';
 import 'package:home_automation/models/user_data.dart';
 
 class GoToUserProfile {
@@ -15,7 +15,7 @@ class GoToUserProfile {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => UserProfile(
+                  builder: (context) => ShowUser(
                         user: this.user,
                         callbackUser: this.callbackThis,
                       ),
@@ -29,7 +29,7 @@ class GoToUserProfile {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => UserProfile(
+                  builder: (context) => ShowUser(
                         user: this.user,
                         callbackUser: this.callbackThis,
                       ),

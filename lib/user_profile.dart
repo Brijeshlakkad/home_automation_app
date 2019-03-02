@@ -4,8 +4,10 @@ import 'package:home_automation/models/user_data.dart';
 import 'package:home_automation/utils/show_progress.dart';
 import 'package:home_automation/utils/internet_access.dart';
 import 'package:home_automation/utils/show_dialog.dart';
+import 'package:home_automation/utils/show_internet_status.dart';
+import 'package:home_automation/utils/check_platform.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import 'package:home_automation/login_signup/logout.dart';
 
 class UserProfile extends StatefulWidget {
   final User user;
@@ -21,15 +23,22 @@ class UserProfileState extends State<UserProfile>
     implements UserUpdateContract {
   bool _isLoading = false;
   bool internetAccess = false;
+  CheckPlatform _checkPlatform;
 
   User user;
   ShowDialog showDialog;
+  ShowInternetStatus _showInternetStatus;
   UserUpdatePresenter _userUpdatePresenter;
 
-  String _name, _email, _mobile, _city;
+  String _name, _email, _mobile, _address, _city;
   var scaffoldKey = new GlobalKey<ScaffoldState>();
   var formKey = new GlobalKey<FormState>();
   bool _autoValidate = false;
+
+  final FocusNode _nameFocus = new FocusNode();
+  final FocusNode _addressFocus = new FocusNode();
+  final FocusNode _cityFocus = new FocusNode();
+  final FocusNode _mobileFocus = new FocusNode();
 
   Function callbackUser;
 
@@ -52,6 +61,8 @@ class UserProfileState extends State<UserProfile>
       DeviceOrientation.portraitUp,
     ]);
     _userUpdatePresenter = new UserUpdatePresenter(this);
+    _checkPlatform = new CheckPlatform(context: context);
+    _showInternetStatus = new ShowInternetStatus();
     getInternetAccessObject();
     showDialog = new ShowDialog();
     super.initState();
@@ -69,6 +80,7 @@ class UserProfileState extends State<UserProfile>
     _email = this.user.email;
     _name = this.user.name;
     _mobile = this.user.mobile;
+    _address = this.user.address;
     _city = this.user.city;
   }
 
@@ -84,19 +96,54 @@ class UserProfileState extends State<UserProfile>
     setState(() {
       _isLoading = false;
     });
-    _showSnackBar(errorString);
+    this.showDialog.showDialogCustom(context, "Error", errorString);
   }
 
   @override
   void onUserUpdateSuccess(User userDetails) {
-    this.widget.callbackUser(userDetails);
+    this.callbackThis(userDetails);
     setState(() {
       _isLoading = false;
-      this.user = userDetails;
-      this
-          .showDialog
-          .showDialogCustom(context, "Success", "Profile Details Updated");
     });
+    this
+        .showDialog
+        .showDialogCustom(context, "Success", "Profile Details Updated");
+  }
+
+  void _fieldFocusChange(
+      BuildContext context, FocusNode current, FocusNode next) {
+    current.unfocus();
+    FocusScope.of(context).requestFocus(next);
+  }
+
+  Future _updateUserProfile() async {
+    await getInternetAccessObject();
+    if (internetAccess) {
+      var form = formKey.currentState;
+      if (form.validate()) {
+        form.save();
+        if (this.user.name != _name ||
+            this.user.city != _city ||
+            this.user.mobile != _mobile ||
+            this.user.address != _address) {
+          setState(() {
+            _isLoading = true;
+          });
+          await _userUpdatePresenter.doUpdateUser(
+              _email, _name, _address, _city, _mobile);
+        } else {
+          this
+              .showDialog
+              .showDialogCustom(context, "Success", "Profile Details Updated");
+        }
+      } else {
+        _autoValidate = true;
+      }
+    } else {
+      this.showDialog.showDialogCustom(context, "Internet Connection Problem",
+          "Please check your internet connection",
+          fontSize: 17.0, boxHeight: 58.0);
+    }
   }
 
   Widget _showBody(BuildContext context) {
@@ -137,6 +184,19 @@ class UserProfileState extends State<UserProfile>
         return 'Name should not start with alpanumerics';
       else if (value.length <= 3)
         return "Name should have more than 3 characters";
+      else
+        return null;
+    }
+
+    String addressValidator(String value) {
+      Pattern pattern = r'^[0-9a-zA-Z,/. ]+$';
+      RegExp regex = new RegExp(pattern);
+      if (value.isEmpty)
+        return 'Address should not be empty';
+      else if (!regex.hasMatch(value))
+        return 'Address should have only [,/. ] special characters';
+      else if (value.length <= 8)
+        return "Address should have more than 8 characters";
       else
         return null;
     }
@@ -186,15 +246,49 @@ class UserProfileState extends State<UserProfile>
                             onSaved: (val) {
                               _name = val;
                             },
+                            autofocus: true,
+                            focusNode: _nameFocus,
+                            keyboardType: TextInputType.text,
+                            textInputAction: TextInputAction.next,
+                            textCapitalization: TextCapitalization.characters,
+                            onFieldSubmitted: (val) {
+                              _fieldFocusChange(
+                                  context, _nameFocus, _addressFocus);
+                            },
                             decoration: InputDecoration(
                               labelText: "Name",
                             ),
                             validator: nameValidator,
                           ),
                           TextFormField(
+                            initialValue: _address,
+                            onSaved: (val) {
+                              _address = val;
+                            },
+                            keyboardType: TextInputType.text,
+                            textInputAction: TextInputAction.next,
+                            textCapitalization: TextCapitalization.characters,
+                            focusNode: _addressFocus,
+                            onFieldSubmitted: (val) {
+                              _fieldFocusChange(
+                                  context, _addressFocus, _cityFocus);
+                            },
+                            decoration: InputDecoration(
+                              labelText: "Address",
+                            ),
+                            validator: addressValidator,
+                          ),
+                          TextFormField(
                             initialValue: _city,
                             onSaved: (val) {
                               _city = val;
+                            },
+                            textCapitalization: TextCapitalization.sentences,
+                            textInputAction: TextInputAction.next,
+                            focusNode: _cityFocus,
+                            onFieldSubmitted: (val) {
+                              _fieldFocusChange(
+                                  context, _cityFocus, _mobileFocus);
                             },
                             decoration: InputDecoration(
                               labelText: "City",
@@ -205,6 +299,12 @@ class UserProfileState extends State<UserProfile>
                             initialValue: _mobile,
                             onSaved: (val) {
                               _mobile = val;
+                            },
+                            keyboardType: TextInputType.phone,
+                            textInputAction: TextInputAction.next,
+                            focusNode: _mobileFocus,
+                            onFieldSubmitted: (val) async {
+                              await _updateUserProfile();
                             },
                             decoration: InputDecoration(
                               labelText: "Mobile",
@@ -217,34 +317,7 @@ class UserProfileState extends State<UserProfile>
                           FlatButton(
                             color: kHAutoBlue300,
                             onPressed: () async {
-                              await getInternetAccessObject();
-                              if (internetAccess) {
-                                var form = formKey.currentState;
-                                if (form.validate()) {
-                                  form.save();
-                                  if (this.user.name != _name ||
-                                      this.user.city != _city ||
-                                      this.user.mobile != _mobile) {
-                                    setState(() {
-                                      _isLoading = true;
-                                    });
-                                    await _userUpdatePresenter.doUpdateUser(
-                                        _email, _name, _city, _mobile);
-                                  } else {
-                                    this.showDialog.showDialogCustom(context,
-                                        "Success", "Profile Details Updated");
-                                  }
-                                } else {
-                                  _autoValidate = true;
-                                }
-                              } else {
-                                this.showDialog.showDialogCustom(
-                                    context,
-                                    "Internet Connection Problem",
-                                    "Please check your internet connection",
-                                    fontSize: 17.0,
-                                    boxHeight: 58.0);
-                              }
+                              await _updateUserProfile();
                             },
                             child: Text("Update"),
                           )
@@ -255,9 +328,6 @@ class UserProfileState extends State<UserProfile>
                 ),
                 SizedBox(
                   height: 20.0,
-                ),
-                Container(
-                  child: GetLogOut()
                 ),
               ],
             ),
@@ -271,10 +341,33 @@ class UserProfileState extends State<UserProfile>
   Widget build(BuildContext context) {
     return Scaffold(
       key: scaffoldKey,
-      appBar: AppBar(
-        title: Text("Learn N Earn"),
-      ),
-      body: _isLoading ? ShowProgress() : _showBody(context),
+      appBar: _checkPlatform.isIOS()
+          ? CupertinoNavigationBar(
+              backgroundColor: kHAutoBlue100,
+              middle: new Text("Profile Details"),
+            )
+          : new AppBar(
+              title: new Text("Profile Details"),
+            ),
+      body: internetAccess
+          ? _isLoading ? ShowProgress() : _showBody(context)
+          : _checkPlatform.isIOS()
+              ? new CustomScrollView(
+                  slivers: <Widget>[
+                    new CupertinoSliverRefreshControl(
+                      onRefresh: getInternetAccessObject,
+                    ),
+                    new SliverSafeArea(
+                        top: false,
+                        sliver: _showInternetStatus
+                            .showInternetStatus(_checkPlatform.isIOS())),
+                  ],
+                )
+              : RefreshIndicator(
+                  child: _showInternetStatus
+                      .showInternetStatus(_checkPlatform.isIOS()),
+                  onRefresh: getInternetAccessObject,
+                ),
     );
   }
 }

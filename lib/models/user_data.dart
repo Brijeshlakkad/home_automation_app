@@ -1,31 +1,12 @@
 import 'package:home_automation/data/database_helper.dart';
 import 'package:home_automation/utils/network_util.dart';
-//class User {
-//  String _email;
-//  String _password;
-//  User(this._email, this._password);
-//
-//  User.map(dynamic obj) {
-//    this._email = obj["email"];
-//    this._password = obj["password"];
-//  }
-//
-//  String get email => _email;
-//  String get password => _password;
-//
-//  Map<String, dynamic> toMap() {
-//    var map = new Map<String, dynamic>();
-//    map["email"] = _email;
-//    map["password"] = _password;
-//    return map;
-//  }
-//}
+import 'package:home_automation/utils/custom_exception.dart';
 
 class User {
   int _id;
   String _email, _password, _name, _city, _address, _mobile;
-  User(this._id,this._email, this._password, this._name, this._city, this._mobile,
-      this._address);
+  User(this._id, this._email, this._password, this._name, this._city,
+      this._mobile, this._address);
 
   User.map(dynamic obj) {
     this._id = int.parse(obj['id'].toString());
@@ -76,16 +57,32 @@ class RequestUser {
     });
   }
 
-  Future updateUser(email, name, city, mobile) async {
+  Future<User> updateUser(String email, String name, String address,
+      String city, String mobile) async {
     return _netUtil.post(finalURL, body: {
       "email": email,
       "name": name,
+      "address": address,
       "city": city,
       "mobile": mobile,
-      "action": "5"
+      "action": "2"
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new Exception(res["errorMessage"]);
+      if (res["error"]) throw new FormException(res["errorMessage"]);
+      return User.map(res['user']);
+    });
+  }
+
+  Future<User> changePassword(
+      String email, String oldPassword, String newPassword) async {
+    return _netUtil.post(finalURL, body: {
+      "email": email,
+      "oldPassword": oldPassword,
+      "newPassword": newPassword,
+      "action": "3"
+    }).then((dynamic res) {
+      print(res.toString());
+      if (res["error"]) throw new FormException(res['errorMessage']);
       return User.map(res['user']);
     });
   }
@@ -126,9 +123,23 @@ class UserUpdatePresenter {
   RequestUser api = new RequestUser();
   UserUpdatePresenter(this._view);
 
-  doUpdateUser(email, name, city, mobile) async {
+  doUpdateUser(String email, String name, String address, String city,
+      String mobile) async {
     try {
-      var user = await api.updateUser(email, name, city, mobile);
+      User user = await api.updateUser(email, name, address, city, mobile);
+      if (user == null) {
+        _view.onUserUpdateError("Update Failed");
+      } else {
+        _view.onUserUpdateSuccess(user);
+      }
+    } on Exception catch (error) {
+      _view.onUserUpdateError(error.toString());
+    }
+  }
+
+  doChangePassword(String email, String oldPassword, String newPassword) async {
+    try {
+      User user = await api.changePassword(email, oldPassword, newPassword);
       if (user == null) {
         _view.onUserUpdateError("Update Failed");
       } else {
