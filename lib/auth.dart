@@ -8,7 +8,6 @@ abstract class AuthStateListener {
   void onAuthStateChanged(AuthState state, User user);
 }
 
-// A naive implementation of Observer/Subscriber Pattern. Will do for now.
 class AuthStateProvider implements UserContract {
   bool internetAccess = false;
   UserPresenter _userPresenter;
@@ -22,7 +21,6 @@ class AuthStateProvider implements UserContract {
     _userPresenter = new UserPresenter(this);
     _subscribers = new List<AuthStateListener>();
     getInternetAccessObject();
-    initState();
   }
   Future getInternetAccessObject() async {
     CheckInternetAccess checkInternetAccess = new CheckInternetAccess();

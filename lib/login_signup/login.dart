@@ -32,6 +32,7 @@ class LoginScreenState extends State<LoginScreen>
     _presenter = new LoginScreenPresenter(this);
     var authStateProvider = new AuthStateProvider();
     authStateProvider.subscribe(this);
+    authStateProvider.initState();
   }
   @override
   void initState() {
@@ -199,7 +200,9 @@ class LoginScreenState extends State<LoginScreen>
       ],
     );
 
-    return new Scaffold(
+    return new WillPopScope(
+      onWillPop: () => new Future<bool>.value(false),
+      child: new Scaffold(
         appBar: null,
         key: scaffoldKey,
         body: new Center(
@@ -207,7 +210,9 @@ class LoginScreenState extends State<LoginScreen>
             padding: EdgeInsets.all(30.0),
             child: _isLoading ? ShowProgress() : loginForm,
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   @override

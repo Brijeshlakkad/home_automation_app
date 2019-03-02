@@ -5,29 +5,32 @@ import 'package:home_automation/utils/show_progress.dart';
 import 'package:home_automation/utils/internet_access.dart';
 import 'package:home_automation/utils/show_dialog.dart';
 import 'package:flutter/services.dart';
+import 'package:home_automation/login_signup/logout.dart';
 
 class UserProfile extends StatefulWidget {
-  final scaffoldKey;
   final User user;
   final Function callbackUser;
-  UserProfile({this.scaffoldKey, this.user, this.callbackUser});
+  UserProfile({this.user, this.callbackUser});
   @override
   UserProfileState createState() {
-    return UserProfileState(scaffoldKey, user, callbackUser);
+    return UserProfileState(user, callbackUser);
   }
 }
 
 class UserProfileState extends State<UserProfile>
     implements UserUpdateContract {
-  var scaffoldKey;
+  bool _isLoading = false;
+  bool internetAccess = false;
+
   User user;
   ShowDialog showDialog;
   UserUpdatePresenter _userUpdatePresenter;
-  var formKey = new GlobalKey<FormState>();
+
   String _name, _email, _mobile, _city;
+  var scaffoldKey = new GlobalKey<ScaffoldState>();
+  var formKey = new GlobalKey<FormState>();
   bool _autoValidate = false;
-  bool _isLoading = false;
-  bool internetAccess = false;
+
   Function callbackUser;
 
   Function callbackThis(User userDetails) {
@@ -37,8 +40,7 @@ class UserProfileState extends State<UserProfile>
     });
   }
 
-  UserProfileState(var scaffoldKey, User user, callbackUser) {
-    this.scaffoldKey = scaffoldKey;
+  UserProfileState(User user, callbackUser) {
     this.user = user;
     this.callbackUser = callbackUser;
     setUserVariables();
@@ -254,14 +256,9 @@ class UserProfileState extends State<UserProfile>
                 SizedBox(
                   height: 20.0,
                 ),
-//                Container(
-//                  child: RaisedButton(
-//                    onPressed: () {
-//
-//                    },
-//                    child: Text("FAQs"),
-//                  ),
-//                ),
+                Container(
+                  child: GetLogOut()
+                ),
               ],
             ),
           ),
@@ -273,6 +270,7 @@ class UserProfileState extends State<UserProfile>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: scaffoldKey,
       appBar: AppBar(
         title: Text("Learn N Earn"),
       ),

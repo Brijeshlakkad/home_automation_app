@@ -47,7 +47,6 @@ class DatabaseHelper {
     await this.deleteUsers();
     var dbClient = await db;
     int res = await dbClient.insert("User", user.toMap());
-    print("$res");
     return res;
   }
 

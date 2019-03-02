@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/models/room_data.dart';
-import 'package:home_automation/login_signup/logout.dart';
 import 'package:home_automation/models/hardware_data.dart';
 import 'package:home_automation/device.dart';
 import 'package:home_automation/get_hardware_details.dart';
@@ -13,14 +12,18 @@ import 'package:home_automation/utils/show_dialog.dart';
 import 'package:home_automation/utils/delete_confirmation.dart';
 import 'package:home_automation/utils/check_platform.dart';
 import 'package:home_automation/utils/show_internet_status.dart';
+import 'package:home_automation/models/user_data.dart';
+import 'package:home_automation/get_to_user_profile.dart';
 
 class HardwareScreen extends StatefulWidget {
   final Home home;
   final Room room;
-  const HardwareScreen({this.home, this.room});
+  final User user;
+  final Function callbackUser;
+  const HardwareScreen({this.user, this.callbackUser, this.home, this.room});
   @override
   HardwareScreenState createState() {
-    return new HardwareScreenState();
+    return new HardwareScreenState(user, callbackUser);
   }
 }
 
@@ -32,6 +35,7 @@ class HardwareScreenState extends State<HardwareScreen>
   CheckPlatform _checkPlatform;
   DeleteConfirmation _deleteConfirmation;
   ShowInternetStatus _showInternetStatus;
+  GoToUserProfile _goToUserProfile;
 
   String _hwName, _hwSeries, _hwIP;
   List<Hardware> hwList = new List<Hardware>();
@@ -48,8 +52,19 @@ class HardwareScreenState extends State<HardwareScreen>
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
+  User user;
+  Function callbackUser;
+  Function callbackThis(User user) {
+    this.callbackUser(user);
+    setState(() {
+      this.user = user;
+    });
+  }
+
   HardwareScreenPresenter _presenter;
-  HardwareScreenState() {
+  HardwareScreenState(user, callbackUser) {
+    this.user = user;
+    this.callbackUser = callbackUser;
     _presenter = new HardwareScreenPresenter(this);
   }
 
@@ -74,7 +89,6 @@ class HardwareScreenState extends State<HardwareScreen>
   Future getHardwareList() async {
     await getInternetAccessObject();
     if (internetAccess) {
-      hwRefreshIndicatorKey.currentState?.show();
       hwList = await _presenter.api.getAllHardware(widget.room);
       if (hwList != null) {
         hwList = hwList.toList();
@@ -115,6 +129,11 @@ class HardwareScreenState extends State<HardwareScreen>
 
   @override
   Widget build(BuildContext context) {
+    _goToUserProfile = new GoToUserProfile(
+        context: context,
+        isIOS: _checkPlatform.isIOS(),
+        user: user,
+        callbackThis: this.callbackThis);
     _createHardware(
         String hwName, String hwSeries, String hwIP, Room room) async {
       await _presenter.doCreateHardware(hwName, hwSeries, hwIP, room);
@@ -638,7 +657,7 @@ class HardwareScreenState extends State<HardwareScreen>
                   ],
                 ),
               ),
-              trailing: GetLogOut(),
+              trailing: _goToUserProfile.showUser(),
             )
           : AppBar(
               title: Center(
@@ -665,7 +684,7 @@ class HardwareScreenState extends State<HardwareScreen>
                 ),
               ),
               actions: <Widget>[
-                GetLogOut(),
+                _goToUserProfile.showUser(),
               ],
             ),
       body: _isLoading

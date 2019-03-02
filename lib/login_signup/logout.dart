@@ -61,8 +61,6 @@ class LogoutScreenPresenter {
     try {
       var db = new DatabaseHelper();
       await db.deleteUsers();
-      print("logout");
-      Navigator.popUntil(context, ModalRoute.withName('/'));
       Navigator.pushNamed(context, "/login");
       //var user = await api.logout(email, password);
       _view.onLogoutSuccess();

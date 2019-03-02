@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:home_automation/models/user_data.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/room.dart';
-import 'package:home_automation/show_user.dart';
 import 'package:home_automation/utils/internet_access.dart';
 import 'package:home_automation/utils/show_progress.dart';
 import 'package:home_automation/utils/show_dialog.dart';
 import 'package:home_automation/utils/delete_confirmation.dart';
 import 'package:home_automation/utils/check_platform.dart';
 import 'package:home_automation/utils/show_internet_status.dart';
+import 'package:home_automation/models/user_data.dart';
+import 'package:home_automation/get_to_user_profile.dart';
 
 class HomeScreen extends StatefulWidget {
   final User user;
-  HomeScreen({this.user});
+  final Function callbackUser;
+  HomeScreen({this.user, this.callbackUser});
   @override
   HomeScreenState createState() {
-    return new HomeScreenState();
+    return new HomeScreenState(user, callbackUser);
   }
 }
 
@@ -28,6 +29,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   CheckPlatform _checkPlatform;
   DeleteConfirmation _deleteConfirmation;
   ShowInternetStatus _showInternetStatus;
+  GoToUserProfile _goToUserProfile;
 
   String _homeName;
   List<Home> homeList = new List<Home>();
@@ -44,14 +46,25 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     scaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
+  User user;
+  Function callbackUser;
+  Function callbackThis(User user) {
+    this.callbackUser(user);
+    setState(() {
+      this.user = user;
+    });
+  }
 
   HomeScreenPresenter _presenter;
-  HomeScreenState() {
+  HomeScreenState(User user, Function callbackUser) {
+    this.user = user;
+    this.callbackUser = callbackUser;
     _presenter = new HomeScreenPresenter(this);
   }
 
   @override
   void initState() {
+    print("${this.user.id}");
     _showDialog = new ShowDialog();
     _deleteConfirmation = new DeleteConfirmation();
     _checkPlatform = new CheckPlatform(context: context);
@@ -59,6 +72,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     getHomeList();
     super.initState();
   }
+
 
   Future getInternetAccessObject() async {
     CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
@@ -71,8 +85,8 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   Future getHomeList() async {
     await getInternetAccessObject();
     if (internetAccess) {
-      homeRefreshIndicatorKey.currentState?.show();
       homeList = await _presenter.api.getAllHome();
+      print("${homeList.toString()}");
       if (homeList != null) {
         homeList = homeList.toList();
       } else {
@@ -107,6 +121,11 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
 
   @override
   Widget build(BuildContext context) {
+    _goToUserProfile = new GoToUserProfile(
+        context: context,
+        isIOS: _checkPlatform.isIOS(),
+        user: user,
+        callbackThis: this.callbackThis);
     _createHome(String homeName) async {
       await _presenter.doCreateHome(homeName);
     }
@@ -406,7 +425,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => RoomScreen(home: homeList[index])),
+                    builder: (context) => RoomScreen(user:user,callbackUser:callbackThis,home: homeList[index])),
               );
             } else {
               this._showDialog.showDialogCustom(
@@ -531,7 +550,6 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
             ),
       );
     }
-
     return WillPopScope(
       onWillPop: () => new Future<bool>.value(false),
       child: new Scaffold(
@@ -541,11 +559,14 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                 backgroundColor: kHAutoBlue100,
                 leading: Container(),
                 middle: new Text("Home Automation"),
+                trailing: _goToUserProfile.showUser(),
               )
             : new AppBar(
                 leading: Container(),
                 title: new Text("Home Automation"),
-                actions: <Widget>[],
+                actions: <Widget>[
+                  _goToUserProfile.showUser(),
+                ],
               ),
         body: _isLoading
             ? ShowProgress()

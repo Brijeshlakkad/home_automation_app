@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/models/room_data.dart';
-import 'package:home_automation/login_signup/logout.dart';
 import 'package:home_automation/models/hardware_data.dart';
 import 'package:home_automation/models/device_data.dart';
 import 'package:home_automation/device/get_device_details.dart';
@@ -14,15 +13,20 @@ import 'package:home_automation/utils/show_dialog.dart';
 import 'package:home_automation/utils/delete_confirmation.dart';
 import 'package:home_automation/utils/check_platform.dart';
 import 'package:home_automation/utils/show_internet_status.dart';
+import 'package:home_automation/models/user_data.dart';
+import 'package:home_automation/get_to_user_profile.dart';
 
 class DeviceScreen extends StatefulWidget {
   final Home home;
   final Room room;
   final Hardware hardware;
-  const DeviceScreen({this.home, this.room, this.hardware});
+  final User user;
+  final Function callbackUser;
+  const DeviceScreen(
+      {this.user, this.callbackUser, this.home, this.room, this.hardware});
   @override
   DeviceScreenState createState() {
-    return new DeviceScreenState();
+    return new DeviceScreenState(user, callbackUser);
   }
 }
 
@@ -34,6 +38,7 @@ class DeviceScreenState extends State<DeviceScreen>
   CheckPlatform _checkPlatform;
   DeleteConfirmation _deleteConfirmation;
   ShowInternetStatus _showInternetStatus;
+  GoToUserProfile _goToUserProfile;
 
   List<Device> dvList = new List<Device>();
   List<DeviceImg> dvImgList = new List<DeviceImg>();
@@ -47,8 +52,19 @@ class DeviceScreenState extends State<DeviceScreen>
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
+  User user;
+  Function callbackUser;
+  Function callbackThis(User user) {
+    this.callbackUser(user);
+    setState(() {
+      this.user = user;
+    });
+  }
+
   DeviceScreenPresenter _presenter;
-  DeviceScreenState() {
+  DeviceScreenState(user, callbackUser) {
+    this.user = user;
+    this.callbackUser = callbackUser;
     _presenter = new DeviceScreenPresenter(this);
   }
 
@@ -79,7 +95,7 @@ class DeviceScreenState extends State<DeviceScreen>
       } else {
         dvList = new List<Device>();
       }
-      getDeviceImgList();
+      await getDeviceImgList();
     }
     setState(() {
       _isLoading = false;
@@ -136,6 +152,11 @@ class DeviceScreenState extends State<DeviceScreen>
 
   @override
   Widget build(BuildContext context) {
+    _goToUserProfile = new GoToUserProfile(
+        context: context,
+        isIOS: _checkPlatform.isIOS(),
+        user: user,
+        callbackThis: this.callbackThis);
     _createDevice(
         String dvName, String dvPort, String dvImg, Hardware hw) async {
       await _presenter.doCreateDevice(dvName, dvPort, dvImg, hw);
@@ -402,7 +423,7 @@ class DeviceScreenState extends State<DeviceScreen>
                   ],
                 ),
               ),
-              trailing: GetLogOut(),
+              trailing: _goToUserProfile.showUser(),
             )
           : AppBar(
               title: Center(
@@ -429,7 +450,7 @@ class DeviceScreenState extends State<DeviceScreen>
                 ),
               ),
               actions: <Widget>[
-                GetLogOut(),
+                _goToUserProfile.showUser(),
               ],
             ),
       body: _isLoading

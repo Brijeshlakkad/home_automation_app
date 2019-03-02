@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/home_data.dart';
 import 'package:home_automation/models/room_data.dart';
-import 'package:home_automation/login_signup/logout.dart';
 import 'package:home_automation/hardware.dart';
 import 'package:home_automation/utils/internet_access.dart';
 import 'package:home_automation/utils/show_progress.dart';
@@ -11,13 +10,17 @@ import 'package:home_automation/utils/show_dialog.dart';
 import 'package:home_automation/utils/delete_confirmation.dart';
 import 'package:home_automation/utils/check_platform.dart';
 import 'package:home_automation/utils/show_internet_status.dart';
+import 'package:home_automation/models/user_data.dart';
+import 'package:home_automation/get_to_user_profile.dart';
 
 class RoomScreen extends StatefulWidget {
   final Home home;
-  const RoomScreen({this.home});
+  final User user;
+  final Function callbackUser;
+  const RoomScreen({this.user, this.callbackUser, this.home});
   @override
   RoomScreenState createState() {
-    return new RoomScreenState();
+    return new RoomScreenState(user, callbackUser);
   }
 }
 
@@ -28,6 +31,7 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
   CheckPlatform _checkPlatform;
   DeleteConfirmation _deleteConfirmation;
   ShowInternetStatus _showInternetStatus;
+  GoToUserProfile _goToUserProfile;
 
   List<Room> roomList = new List<Room>();
   String _roomName;
@@ -45,8 +49,19 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
+  User user;
+  Function callbackUser;
+  Function callbackThis(User user) {
+    this.callbackUser(user);
+    setState(() {
+      this.user = user;
+    });
+  }
+
   RoomScreenPresenter _presenter;
-  RoomScreenState() {
+  RoomScreenState(user, callbackUser) {
+    this.user = user;
+    this.callbackUser = callbackUser;
     _presenter = new RoomScreenPresenter(this);
   }
 
@@ -71,7 +86,6 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
   Future getRoomList() async {
     await getInternetAccessObject();
     if (internetAccess) {
-      roomRefreshIndicatorKey.currentState?.show();
       roomList = await _presenter.api.getAllRoom(widget.home);
       if (roomList != null) {
         roomList = roomList.toList();
@@ -112,6 +126,11 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
 
   @override
   Widget build(BuildContext context) {
+    _goToUserProfile = new GoToUserProfile(
+        context: context,
+        isIOS: _checkPlatform.isIOS(),
+        user: user,
+        callbackThis: this.callbackThis);
     _createRoom(String roomName, Home home) async {
       await _presenter.doCreateRoom(roomName, home);
     }
@@ -410,7 +429,10 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
                 context,
                 MaterialPageRoute(
                     builder: (context) => HardwareScreen(
-                        home: widget.home, room: roomList[index])),
+                        user: this.user,
+                        callbackUser: this.callbackUser,
+                        home: widget.home,
+                        room: roomList[index])),
               );
             } else {
               this._showDialog.showDialogCustom(
@@ -542,7 +564,7 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
                   ],
                 ),
               ),
-              trailing: GetLogOut(),
+              trailing: _goToUserProfile.showUser(),
             )
           : new AppBar(
               title: Center(
@@ -569,7 +591,7 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
                 ),
               ),
               actions: <Widget>[
-                GetLogOut(),
+                _goToUserProfile.showUser(),
               ],
             ),
       body: _isLoading
