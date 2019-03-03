@@ -632,7 +632,12 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
             ? CupertinoNavigationBar(
                 backgroundColor: kHAutoBlue100,
                 leading: Container(),
-                middle: new Text("Home Automation"),
+                middle: new Text(
+                  "Home Automation",
+                  style: TextStyle(
+                    fontSize: 17.0,
+                  ),
+                ),
                 trailing: _goToUserProfile.showUser(),
               )
             : new AppBar(

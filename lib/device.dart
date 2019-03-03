@@ -412,7 +412,10 @@ class DeviceScreenState extends State<DeviceScreen>
                   children: <Widget>[
                     Text(
                       'Hardware',
-                      style: Theme.of(context).textTheme.headline,
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline
+                          .copyWith(fontSize: 18.0),
                     ),
                     SizedBox(
                       width: 15.0,
@@ -423,7 +426,10 @@ class DeviceScreenState extends State<DeviceScreen>
                         width: 100.0,
                         child: Text(
                           "${widget.hardware.hwName}",
-                          style: Theme.of(context).textTheme.headline,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline
+                              .copyWith(fontSize: 18.0),
                         ),
                       ),
                     ),

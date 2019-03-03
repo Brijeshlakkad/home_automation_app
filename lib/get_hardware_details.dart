@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:home_automation/models/hardware_data.dart';
 import 'package:home_automation/utils/internet_access.dart';
 import 'package:home_automation/utils/show_dialog.dart';
+import 'package:home_automation/utils/check_platform.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:home_automation/colors.dart';
 
 class GetHardwareDetails extends StatefulWidget {
   final room;
@@ -17,6 +20,7 @@ class GetHardwareDetails extends StatefulWidget {
 class GetHardwareDetailsState extends State<GetHardwareDetails> {
   bool internetAccess = false;
   ShowDialog _showDialog;
+  CheckPlatform _checkPlatform;
 
   String _hwName, _hwSeries, _hwIP;
   Map hwDetails = new Map();
@@ -43,6 +47,7 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
   ];
   @override
   void initState() {
+    _checkPlatform = new CheckPlatform(context: context);
     _showDialog = new ShowDialog();
     if (widget.hwDetails['isModifying']) {
       setState(() {
@@ -420,9 +425,28 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Add Device Details'),
-      ),
+      appBar: _checkPlatform.isIOS()
+          ? CupertinoNavigationBar(
+              backgroundColor: kHAutoBlue100,
+              middle: Text(
+                'Hardware Details',
+                style: Theme.of(context)
+                    .textTheme
+                    .headline
+                    .copyWith(fontSize: 18.0),
+              ),
+            )
+          : AppBar(
+              title: Center(
+                child: Text(
+                  'Hardware Details',
+                  style: Theme.of(context)
+                      .textTheme
+                      .headline
+                      .copyWith(fontSize: 18.0),
+                ),
+              ),
+            ),
       body: widget.hwDetails['isModifying'] ? modifyDevice() : createDevice(),
     );
   }

@@ -77,11 +77,15 @@ class UserProfileState extends State<UserProfile>
   }
 
   setUserVariables() {
-    _email = this.user.email;
-    _name = this.user.name;
-    _mobile = this.user.mobile;
-    _address = this.user.address;
-    _city = this.user.city;
+    try {
+      _email = this.user.email;
+      _name = this.user.name;
+      _mobile = this.user.mobile;
+      _address = this.user.address;
+      _city = this.user.city;
+    }catch(e){
+      Navigator.of(context).pop();
+    }
   }
 
   void _showSnackBar(String text) {

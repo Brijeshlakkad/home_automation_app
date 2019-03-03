@@ -303,7 +303,7 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                   children: <Widget>[
                     Text(
                       'Device',
-                      style: Theme.of(context).textTheme.headline,
+                      style: Theme.of(context).textTheme.headline.copyWith(fontSize: 18.0),
                     ),
                     SizedBox(
                       width: 15.0,
@@ -314,7 +314,7 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                         width: 100.0,
                         child: Text(
                           "${getName()}",
-                          style: Theme.of(context).textTheme.headline,
+                          style: Theme.of(context).textTheme.headline.copyWith(fontSize: 18.0),
                         ),
                       ),
                     ),

@@ -524,9 +524,10 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
                         child: Text(
                           '${roomList[index].roomName}',
                           textAlign: TextAlign.left,
-                          style: Theme.of(context).textTheme.headline.copyWith(
-                              fontSize: 17.0
-                          ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline
+                              .copyWith(fontSize: 17.0),
                         ),
                       ),
                     ),
@@ -613,7 +614,10 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
                   children: <Widget>[
                     Text(
                       'Home',
-                      style: Theme.of(context).textTheme.headline,
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline
+                          .copyWith(fontSize: 18.0),
                     ),
                     SizedBox(
                       width: 15.0,
@@ -624,7 +628,10 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
                         width: 100.0,
                         child: Text(
                           "${widget.home.homeName}",
-                          style: Theme.of(context).textTheme.headline,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline
+                              .copyWith(fontSize: 18.0),
                         ),
                       ),
                     ),
@@ -639,9 +646,10 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
                   children: <Widget>[
                     Text(
                       'Home',
-                      style: Theme.of(context).textTheme.headline.copyWith(
-                          fontSize: 17.0
-                      ),
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline
+                          .copyWith(fontSize: 17.0),
                     ),
                     SizedBox(
                       width: 15.0,
@@ -652,9 +660,10 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
                         width: 100.0,
                         child: Text(
                           "${widget.home.homeName}",
-                          style: Theme.of(context).textTheme.headline.copyWith(
-                            fontSize: 17.0
-                          ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline
+                              .copyWith(fontSize: 17.0),
                         ),
                       ),
                     ),

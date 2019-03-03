@@ -598,7 +598,10 @@ class HardwareScreenState extends State<HardwareScreen>
                   children: <Widget>[
                     Text(
                       'Room',
-                      style: Theme.of(context).textTheme.headline,
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline
+                          .copyWith(fontSize: 18.0),
                     ),
                     SizedBox(
                       width: 15.0,
@@ -609,7 +612,10 @@ class HardwareScreenState extends State<HardwareScreen>
                         width: 100.0,
                         child: Text(
                           "${widget.room.roomName}",
-                          style: Theme.of(context).textTheme.headline,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline
+                              .copyWith(fontSize: 18.0),
                         ),
                       ),
                     ),

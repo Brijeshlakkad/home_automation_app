@@ -3,6 +3,9 @@ import 'package:home_automation/models/device_data.dart';
 import 'package:home_automation/utils/internet_access.dart';
 import 'package:home_automation/utils/show_dialog.dart';
 import 'package:home_automation/utils/custom_services.dart';
+import 'package:home_automation/utils/check_platform.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:home_automation/colors.dart';
 
 class GetDeviceDetails extends StatefulWidget {
   final hardware;
@@ -21,6 +24,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
   bool internetAccess = false;
   ShowDialog _showDialog;
   CustomService _customService;
+  CheckPlatform _checkPlatform;
 
   String _dvName, _dvPort, _dvImg;
   bool _isError = false;
@@ -47,6 +51,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
 
   @override
   void initState() {
+    _checkPlatform = new CheckPlatform(context: context);
     _customService = new CustomService();
     _showDialog = new ShowDialog();
     if (widget.dvDetails['isModifying']) {
@@ -108,10 +113,10 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
     }
   }
 
-  Map portValidate(String port,String dvPort) {
+  Map portValidate(String port, String dvPort) {
     Map portV = new Map();
     for (int i = 0; i < widget.deviceList.length; i++) {
-      if (widget.deviceList[i].dvPort == port.toString() && port!=dvPort) {
+      if (widget.deviceList[i].dvPort == port.toString() && port != dvPort) {
         portV['portValid'] = false;
         portV['errorMessage'] =
             "\"${widget.deviceList[i].dvName}\" device has been assigned ${widget.deviceList[i].dvPort} port.";
@@ -230,7 +235,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                                 var form = dvFormKey.currentState;
                                 if (form.validate()) {
                                   form.save();
-                                  Map portV = portValidate(_dvPort,null);
+                                  Map portV = portValidate(_dvPort, null);
                                   if (portV['portValid']) {
                                     setState(() {
                                       _autoValidateDv = false;
@@ -383,7 +388,8 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                                   if (_dvName != widget.dvDetails['dvName'] ||
                                       _dvPort != widget.dvDetails['dvPort'] ||
                                       _dvImg != widget.dvDetails['dvImg']) {
-                                    Map portV = portValidate(_dvPort,widget.dvDetails['dvPort']);
+                                    Map portV = portValidate(
+                                        _dvPort, widget.dvDetails['dvPort']);
                                     if (portV['portValid']) {
                                       setState(() {
                                         _autoValidateDvRe = false;
@@ -431,9 +437,28 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Add Device Details'),
-      ),
+      appBar: _checkPlatform.isIOS()
+          ? CupertinoNavigationBar(
+              backgroundColor: kHAutoBlue100,
+              middle: Text(
+                'Hardware Details',
+                style: Theme.of(context)
+                    .textTheme
+                    .headline
+                    .copyWith(fontSize: 18.0),
+              ),
+            )
+          : AppBar(
+              title: Center(
+                child: Text(
+                  'Hardware Details',
+                  style: Theme.of(context)
+                      .textTheme
+                      .headline
+                      .copyWith(fontSize: 18.0),
+                ),
+              ),
+            ),
       body: widget.dvDetails['isModifying'] ? modifyDevice() : createDevice(),
     );
   }
