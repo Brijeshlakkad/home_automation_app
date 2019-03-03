@@ -16,7 +16,7 @@ class RestDatasource {
       "password": password
     }).then((dynamic res) {
       print(res.toString());
-      if(res["error"]) throw new Exception(res["errorMessege"].toString());
+      if(res["error"]) throw new Exception(res["errorMessage"].toString());
       return new User.map(res["user"]);
     });
   }
@@ -32,7 +32,7 @@ class RestDatasource {
       "contact": contact
     }).then((dynamic res) {
       print(res.toString());
-      if(res["error"]) throw new Exception(res["errorMessege"].toString());
+      if(res["error"]) throw new Exception(res["errorMessage"].toString());
       return null;
     });
   }

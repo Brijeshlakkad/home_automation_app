@@ -14,6 +14,7 @@ import 'package:home_automation/utils/check_platform.dart';
 import 'package:home_automation/utils/show_internet_status.dart';
 import 'package:home_automation/models/user_data.dart';
 import 'package:home_automation/get_to_user_profile.dart';
+import 'package:home_automation/utils/custom_services.dart';
 
 class HardwareScreen extends StatefulWidget {
   final Home home;
@@ -36,6 +37,7 @@ class HardwareScreenState extends State<HardwareScreen>
   DeleteConfirmation _deleteConfirmation;
   ShowInternetStatus _showInternetStatus;
   GoToUserProfile _goToUserProfile;
+  CustomService _customService;
 
   String _hwName, _hwSeries, _hwIP;
   List<Hardware> hwList = new List<Hardware>();
@@ -73,6 +75,7 @@ class HardwareScreenState extends State<HardwareScreen>
 
   @override
   void initState() {
+    _customService = new CustomService();
     _showDialog = new ShowDialog();
     _deleteConfirmation = new DeleteConfirmation();
     _checkPlatform = new CheckPlatform(context: context);
@@ -155,7 +158,7 @@ class HardwareScreenState extends State<HardwareScreen>
       if (list != null) {
         List hwNameList = new List();
         for (int i = 0; i < list.length; i++) {
-          hwNameList.add(list[i].hwName);
+          hwNameList.add(list[i].hwName.toLowerCase());
         }
         return hwNameList;
       }
@@ -174,10 +177,15 @@ class HardwareScreenState extends State<HardwareScreen>
     }
 
     hardwareNameValidator(String val, String ignoreName) {
+      RegExp hwNamePattern = new RegExp(r"^(([A-Za-z]+)([1-9]+))$");
       if (val.isEmpty) {
         return 'Please enter hardware name';
-      } else if (existHardwareName(val) && val != ignoreName) {
-        return 'Hardware already exists';
+      } else if (!hwNamePattern.hasMatch(val) ||
+          val.length < 3 ||
+          val.length > 8) {
+        return "Hardware Name invalid.";
+      } else if (existHardwareName(val.toLowerCase()) && val != ignoreName) {
+        return '"${_customService.ucFirst(val)}" Hardware already exists.';
       } else {
         return null;
       }

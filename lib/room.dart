@@ -12,6 +12,7 @@ import 'package:home_automation/utils/check_platform.dart';
 import 'package:home_automation/utils/show_internet_status.dart';
 import 'package:home_automation/models/user_data.dart';
 import 'package:home_automation/get_to_user_profile.dart';
+import 'package:home_automation/utils/custom_services.dart';
 
 class RoomScreen extends StatefulWidget {
   final Home home;
@@ -32,6 +33,7 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
   DeleteConfirmation _deleteConfirmation;
   ShowInternetStatus _showInternetStatus;
   GoToUserProfile _goToUserProfile;
+  CustomService _customService;
 
   List<Room> roomList = new List<Room>();
   String _roomName;
@@ -67,6 +69,7 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
 
   @override
   void initState() {
+    _customService = new CustomService();
     _showDialog = new ShowDialog();
     _deleteConfirmation = new DeleteConfirmation();
     _checkPlatform = new CheckPlatform(context: context);
@@ -141,7 +144,7 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
       if (list != null) {
         List roomNameList = new List();
         for (int i = 0; i < list.length; i++) {
-          roomNameList.add(list[i].roomName);
+          roomNameList.add(list[i].roomName.toLowerCase());
         }
         return roomNameList;
       }
@@ -160,10 +163,15 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
     }
 
     roomValidator(String val, String ignoreName) {
+      RegExp roomNamePattern = new RegExp(r"^(([A-Za-z]+)([1-9]+))$");
       if (val.isEmpty) {
-        return 'Please enter room name';
-      } else if (existRoomName(val) && val != ignoreName) {
-        return 'Room already exists';
+        return 'Please enter room name.';
+      } else if (!roomNamePattern.hasMatch(val) ||
+          val.length < 3 ||
+          val.length > 8) {
+        return "Room Name invalid.";
+      } else if (existRoomName(val.toLowerCase()) && val != ignoreName) {
+        return '"${_customService.ucFirst(val)}" Room already exists.';
       } else {
         return null;
       }

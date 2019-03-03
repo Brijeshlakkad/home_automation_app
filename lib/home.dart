@@ -11,6 +11,7 @@ import 'package:home_automation/utils/check_platform.dart';
 import 'package:home_automation/utils/show_internet_status.dart';
 import 'package:home_automation/models/user_data.dart';
 import 'package:home_automation/get_to_user_profile.dart';
+import 'package:home_automation/utils/custom_services.dart';
 
 class HomeScreen extends StatefulWidget {
   final User user;
@@ -30,6 +31,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   DeleteConfirmation _deleteConfirmation;
   ShowInternetStatus _showInternetStatus;
   GoToUserProfile _goToUserProfile;
+  CustomService _customService;
 
   String _homeName;
   List<Home> homeList = new List<Home>();
@@ -66,6 +68,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
 
   @override
   void initState() {
+    _customService = new CustomService();
     _showDialog = new ShowDialog();
     _deleteConfirmation = new DeleteConfirmation();
     _checkPlatform = new CheckPlatform(context: context);
@@ -136,7 +139,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       if (list != null) {
         List homeNameList = new List();
         for (int i = 0; i < list.length; i++) {
-          homeNameList.add(list[i].homeName);
+          homeNameList.add(list[i].homeName.toLowerCase());
         }
         return homeNameList;
       }
@@ -155,10 +158,15 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     }
 
     homeValidator(String val, String ignoreName) {
+      RegExp homeNamePattern = new RegExp(r"^(([A-Za-z]+)([1-9]+))$");
       if (val.isEmpty) {
-        return 'Please enter home name';
-      } else if (existHomeName(val) && val != ignoreName) {
-        return 'Home already exists';
+        return 'Please enter home name.';
+      }
+      else if(!homeNamePattern.hasMatch(val) || val.length<3 || val.length>8){
+        return "Home Name invalid.";
+      } else if (existHomeName(val.toLowerCase()) &&
+          val != ignoreName) {
+        return '"${_customService.ucFirst(val)}" Home already exists.';
       } else {
         return null;
       }

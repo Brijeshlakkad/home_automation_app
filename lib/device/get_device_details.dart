@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:home_automation/models/device_data.dart';
 import 'package:home_automation/utils/internet_access.dart';
 import 'package:home_automation/utils/show_dialog.dart';
+import 'package:home_automation/utils/custom_services.dart';
 
 class GetDeviceDetails extends StatefulWidget {
   final hardware;
@@ -19,8 +20,11 @@ class GetDeviceDetails extends StatefulWidget {
 class GetDeviceDetailsState extends State<GetDeviceDetails> {
   bool internetAccess = false;
   ShowDialog _showDialog;
+  CustomService _customService;
 
   String _dvName, _dvPort, _dvImg;
+  bool _isError = false;
+  String _showError;
   Map deviceDetails = new Map();
   List<Device> dvList = new List<Device>();
   var dvFormKey = new GlobalKey<FormState>();
@@ -43,6 +47,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
 
   @override
   void initState() {
+    _customService = new CustomService();
     _showDialog = new ShowDialog();
     if (widget.dvDetails['isModifying']) {
       setState(() {
@@ -89,13 +94,32 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
   }
 
   deviceNameValidator(String val, String ignoreName) {
+    RegExp dvNamePattern = new RegExp(r"^(([A-Za-z]+)([1-9]+))$");
     if (val.isEmpty) {
       return 'Please enter device name';
-    } else if (existDeviceName(val) && val != ignoreName) {
-      return 'Device already exists';
+    } else if (!dvNamePattern.hasMatch(val) ||
+        val.length < 3 ||
+        val.length > 8) {
+      return "Device Name invalid.";
+    } else if (existDeviceName(val.toLowerCase()) && val != ignoreName) {
+      return '"${_customService.ucFirst(val)}" Device already exists.';
     } else {
       return null;
     }
+  }
+
+  Map portValidate(String port) {
+    Map portV = new Map();
+    for (int i = 0; i < widget.deviceList.length; i++) {
+      if (widget.deviceList[i].dvPort == port.toString()) {
+        portV['portValid'] = false;
+        portV['errorMessage'] =
+            "${widget.deviceList[i].dvName} device has been assigned ${widget.deviceList[i].dvPort} port.";
+        return portV;
+      }
+    }
+    portV['portValid'] = true;
+    return portV;
   }
 
   @override
@@ -165,6 +189,21 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                         ),
                       ),
                     ),
+                    _isError
+                        ? Container(
+                            child: Column(
+                              children: <Widget>[
+                                SizedBox(
+                                  height: 4.0,
+                                ),
+                                Text(
+                                  "$_showError",
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ],
+                            ),
+                          )
+                        : Container(),
                     Container(
                       padding: EdgeInsets.only(top: 30.0),
                       child: Row(
@@ -191,14 +230,22 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                                 var form = dvFormKey.currentState;
                                 if (form.validate()) {
                                   form.save();
-                                  setState(() {
-                                    _autoValidateDv = false;
-                                  });
-                                  deviceDetails['error'] = false;
-                                  deviceDetails['dvName'] = _dvName;
-                                  deviceDetails['dvPort'] = _dvPort;
-                                  deviceDetails['dvImg'] = _dvImg;
-                                  Navigator.pop(context, deviceDetails);
+                                  Map portV = portValidate(_dvPort);
+                                  if (portV['portValid']) {
+                                    setState(() {
+                                      _autoValidateDv = false;
+                                    });
+                                    deviceDetails['error'] = false;
+                                    deviceDetails['dvName'] = _dvName;
+                                    deviceDetails['dvPort'] = _dvPort;
+                                    deviceDetails['dvImg'] = _dvImg;
+                                    Navigator.pop(context, deviceDetails);
+                                  } else {
+                                    setState(() {
+                                      _isError = true;
+                                      _showError = portV['errorMessage'];
+                                    });
+                                  }
                                 } else {
                                   setState(() {
                                     _autoValidateDv = true;
@@ -292,6 +339,21 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                         ),
                       ),
                     ),
+                    _isError
+                        ? Container(
+                            child: Column(
+                              children: <Widget>[
+                                SizedBox(
+                                  height: 4.0,
+                                ),
+                                Text(
+                                  "$_showError",
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ],
+                            ),
+                          )
+                        : Container(),
                     Container(
                       padding: EdgeInsets.only(top: 30.0),
                       child: Row(
@@ -321,14 +383,22 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                                   if (_dvName != widget.dvDetails['dvName'] ||
                                       _dvPort != widget.dvDetails['dvPort'] ||
                                       _dvImg != widget.dvDetails['dvImg']) {
-                                    setState(() {
-                                      _autoValidateDvRe = false;
-                                    });
-                                    deviceDetails['error'] = false;
-                                    deviceDetails['dvName'] = _dvName;
-                                    deviceDetails['dvPort'] = _dvPort;
-                                    deviceDetails['dvImg'] = _dvImg;
-                                    Navigator.pop(context, deviceDetails);
+                                    Map portV = portValidate(_dvPort);
+                                    if (portV['portValid']) {
+                                      setState(() {
+                                        _autoValidateDvRe = false;
+                                      });
+                                      deviceDetails['error'] = false;
+                                      deviceDetails['dvName'] = _dvName;
+                                      deviceDetails['dvPort'] = _dvPort;
+                                      deviceDetails['dvImg'] = _dvImg;
+                                      Navigator.pop(context, deviceDetails);
+                                    } else {
+                                      setState(() {
+                                        _isError = true;
+                                        _showError = portV['errorMessage'];
+                                      });
+                                    }
                                   } else {
                                     deviceDetails['error'] = true;
                                     Navigator.pop(context, deviceDetails);

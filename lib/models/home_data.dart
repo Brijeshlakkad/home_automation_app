@@ -69,7 +69,7 @@ class SendHomeData {
     return _netUtil.post(finalURL,
         body: {"email": user, "action": "2", "id": id}).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new FormException(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessage"]);
       return home;
     });
   }
@@ -84,7 +84,7 @@ class SendHomeData {
       "id": id
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new FormException(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessage"]);
       home._homeName = homeName;
       return home;
     });

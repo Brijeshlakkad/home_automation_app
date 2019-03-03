@@ -49,7 +49,7 @@ class SendRoomData {
       "action": "0"
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new FormException(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessage"]);
       int total = int.parse(res['total'].toString());
       List<Room> roomList = new List<Room>();
       for (int i = 0; i < total; i++) {
@@ -69,7 +69,7 @@ class SendRoomData {
       "action": "1"
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new FormException(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessage"]);
       return new Room.map(res['user']['room']);
     });
   }
@@ -80,7 +80,7 @@ class SendRoomData {
     return _netUtil.post(finalURL,
         body: {"email": user, "id": id, "action": "2"}).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new FormException(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessage"]);
       return room;
     });
   }
@@ -95,7 +95,7 @@ class SendRoomData {
       "id": id
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new FormException(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessage"]);
       room._roomName=roomName;
       return room;
     });

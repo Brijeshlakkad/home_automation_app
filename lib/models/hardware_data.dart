@@ -62,7 +62,7 @@ class SendHardwareData {
       "action": "0"
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new FormException(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessage"]);
       int total = int.parse(res['total'].toString());
       List<Hardware> roomList = new List<Hardware>();
       for (int i = 0; i < total; i++) {
@@ -87,7 +87,7 @@ class SendHardwareData {
       "action": "1"
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new FormException(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessage"]);
       return new Hardware.map(res['user']['hw']);
     });
   }
@@ -98,7 +98,7 @@ class SendHardwareData {
     return _netUtil.post(finalURL,
         body: {"email": user, "id": id, "action": "2"}).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new FormException(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessage"]);
       return hw;
     });
   }
@@ -116,7 +116,7 @@ class SendHardwareData {
       "id": id
     }).then((dynamic res) {
       print(res.toString());
-      if (res["error"]) throw new FormException(res["errorMessege"]);
+      if (res["error"]) throw new FormException(res["errorMessage"]);
       hw._hwName = hwName;
       return hw;
     });
