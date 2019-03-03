@@ -89,11 +89,11 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
   Future getRoomList() async {
     await getInternetAccessObject();
     if (internetAccess) {
-      roomList = await _presenter.api.getAllRoom(widget.home);
+      List<Room> roomList = await _presenter.api.getAllRoom(widget.home);
       if (roomList != null) {
-        roomList = roomList.toList();
+        this.roomList = roomList.toList();
       } else {
-        roomList = new List<Room>();
+        this.roomList = new List<Room>();
       }
     }
     setState(() {
@@ -163,7 +163,7 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
     }
 
     roomValidator(String val, String ignoreName) {
-      RegExp roomNamePattern = new RegExp(r"^(([A-Za-z]+)([1-9]+))$");
+      RegExp roomNamePattern = new RegExp(r"^(([A-Za-z]+)([1-9]*))$");
       if (val.isEmpty) {
         return 'Please enter room name.';
       } else if (!roomNamePattern.hasMatch(val) ||
@@ -465,8 +465,8 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
       if (index == len) {
         return Center(
             child: SizedBox(
-          width: 150.0,
-          height: 150.0,
+          width: 130.0,
+          height: 130.0,
           child: RaisedButton(
             shape: new RoundedRectangleBorder(
                 borderRadius: new BorderRadius.circular(30.0)),
@@ -524,7 +524,9 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
                         child: Text(
                           '${roomList[index].roomName}',
                           textAlign: TextAlign.left,
-                          style: Theme.of(context).textTheme.headline,
+                          style: Theme.of(context).textTheme.headline.copyWith(
+                              fontSize: 17.0
+                          ),
                         ),
                       ),
                     ),
@@ -637,7 +639,9 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
                   children: <Widget>[
                     Text(
                       'Home',
-                      style: Theme.of(context).textTheme.headline,
+                      style: Theme.of(context).textTheme.headline.copyWith(
+                          fontSize: 17.0
+                      ),
                     ),
                     SizedBox(
                       width: 15.0,
@@ -648,7 +652,9 @@ class RoomScreenState extends State<RoomScreen> implements RoomScreenContract {
                         width: 100.0,
                         child: Text(
                           "${widget.home.homeName}",
-                          style: Theme.of(context).textTheme.headline,
+                          style: Theme.of(context).textTheme.headline.copyWith(
+                            fontSize: 17.0
+                          ),
                         ),
                       ),
                     ),

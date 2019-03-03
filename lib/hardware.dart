@@ -95,11 +95,11 @@ class HardwareScreenState extends State<HardwareScreen>
   Future getHardwareList() async {
     await getInternetAccessObject();
     if (internetAccess) {
-      hwList = await _presenter.api.getAllHardware(widget.room);
+      List<Hardware> hwList = await _presenter.api.getAllHardware(widget.room);
       if (hwList != null) {
-        hwList = hwList.toList();
+        this.hwList = hwList.toList();
       } else {
-        hwList = new List<Hardware>();
+        this.hwList = new List<Hardware>();
       }
     }
     setState(() {
@@ -177,12 +177,10 @@ class HardwareScreenState extends State<HardwareScreen>
     }
 
     hardwareNameValidator(String val, String ignoreName) {
-      RegExp hwNamePattern = new RegExp(r"^(([A-Za-z]+)([1-9]+))$");
+      RegExp hwNamePattern = new RegExp(r"^([A-Za-z1-9]*)$");
       if (val.isEmpty) {
         return 'Please enter hardware name';
-      } else if (!hwNamePattern.hasMatch(val) ||
-          val.length < 3 ||
-          val.length > 8) {
+      } else if (!hwNamePattern.hasMatch(val) || val.length < 2) {
         return "Hardware Name invalid.";
       } else if (existHardwareName(val.toLowerCase()) && val != ignoreName) {
         return '"${_customService.ucFirst(val)}" Hardware already exists.';
@@ -406,7 +404,10 @@ class HardwareScreenState extends State<HardwareScreen>
                         child: Text(
                           '${hwList[index].hwName}',
                           textAlign: TextAlign.left,
-                          style: Theme.of(context).textTheme.headline,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline
+                              .copyWith(fontSize: 17.0),
                         ),
                       ),
                     ),
@@ -490,8 +491,8 @@ class HardwareScreenState extends State<HardwareScreen>
             if (index == len) {
               return Center(
                 child: SizedBox(
-                  width: 150.0,
-                  height: 150.0,
+                  width: 130.0,
+                  height: 130.0,
                   child: RaisedButton(
                     shape: new RoundedRectangleBorder(
                         borderRadius: new BorderRadius.circular(30.0)),
@@ -532,8 +533,8 @@ class HardwareScreenState extends State<HardwareScreen>
             if (index == len) {
               return Center(
                   child: SizedBox(
-                width: 150.0,
-                height: 150.0,
+                width: 130.0,
+                height: 130.0,
                 child: RaisedButton(
                   shape: new RoundedRectangleBorder(
                       borderRadius: new BorderRadius.circular(30.0)),
@@ -623,7 +624,10 @@ class HardwareScreenState extends State<HardwareScreen>
                   children: <Widget>[
                     Text(
                       'Room',
-                      style: Theme.of(context).textTheme.headline,
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline
+                          .copyWith(fontSize: 17.0),
                     ),
                     SizedBox(
                       width: 15.0,
@@ -634,7 +638,10 @@ class HardwareScreenState extends State<HardwareScreen>
                         width: 100.0,
                         child: Text(
                           "${widget.room.roomName}",
-                          style: Theme.of(context).textTheme.headline,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline
+                              .copyWith(fontSize: 17.0),
                         ),
                       ),
                     ),

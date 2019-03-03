@@ -2,8 +2,10 @@ import 'package:home_automation/utils/network_util.dart';
 import 'package:home_automation/data/database_helper.dart';
 import 'package:home_automation/models/hardware_data.dart';
 import 'package:home_automation/utils/custom_exception.dart';
+
 class Device {
   String _dvName, _email, _dvPort, _dvImg;
+  DeviceImg _deviceImg;
   int _id, _homeID, _roomID, _hwID, _dvStatus;
   DeviceSlider _deviceSlider;
   Device(this._dvName, this._dvPort, this._dvImg, this._dvStatus, this._email,
@@ -13,6 +15,11 @@ class Device {
     this._dvPort = obj["dvPort"].toString();
     this._dvImg = obj['dvImg'];
     this._email = obj["email"];
+    if (obj['deviceImg'] != null) {
+      this._deviceImg = DeviceImg.map(obj['deviceImg']);
+    } else {
+      this._deviceImg = null;
+    }
     var id = obj['id'].toString();
     this._id = int.parse(id);
     var homeID = obj['homeID'].toString();
@@ -23,10 +30,10 @@ class Device {
     this._hwID = int.parse(hwID);
     var dvStatus = obj['dvStatus'].toString();
     this._dvStatus = int.parse(dvStatus);
-    if(obj['deviceSlider']!="null"){
-      this._deviceSlider=DeviceSlider.map(obj['deviceSlider']);
-    }else{
-      this._deviceSlider=null;
+    try {
+      this._deviceSlider = DeviceSlider.map(obj['deviceSlider']);
+    } catch (e) {
+      this._deviceSlider = null;
     }
   }
 
@@ -39,6 +46,7 @@ class Device {
   int get homeID => _homeID;
   int get roomID => _roomID;
   int get hwID => _hwID;
+  DeviceImg get deviceImg => _deviceImg;
   DeviceSlider get deviceSlider => _deviceSlider;
   Map<String, dynamic> toMap() {
     var map = new Map<String, dynamic>();
@@ -51,10 +59,11 @@ class Device {
     map['roomID'] = _roomID;
     map['hwID'] = _hwID;
     map['id'] = _id;
-    if(_deviceSlider!=null){
-      map['deviceSlider']=_deviceSlider.toMap();
-    }else{
-      map['deviceSlider']=null;
+    map['deviceImg'] = _deviceImg;
+    if (_deviceSlider != null) {
+      map['deviceSlider'] = _deviceSlider.toMap();
+    } else {
+      map['deviceSlider'] = null;
     }
     return map;
   }
@@ -68,17 +77,21 @@ class Device {
 class DeviceImg {
   String _key;
   String _value;
-  DeviceImg(this._key, this._value);
+  int _maxVal;
+  DeviceImg(this._key, this._value, this._maxVal);
   String get key => _key;
   String get value => _value;
+  int get maxVal => _maxVal;
   DeviceImg.map(dynamic obj) {
     this._key = obj["key"];
     this._value = obj["value"];
+    this._maxVal = int.parse(obj['maxVal']);
   }
   Map<String, String> toMap() {
     var map = new Map<String, String>();
     map["key"] = _key;
     map["value"] = _value;
+    map['maxVal'] = _maxVal.toString();
     return map;
   }
 
@@ -243,7 +256,8 @@ class SendDeviceData {
     });
   }
 
-  Future<DeviceSlider> changeDeviceSlider(DeviceSlider dvSlider, int val) async {
+  Future<DeviceSlider> changeDeviceSlider(
+      DeviceSlider dvSlider, int val) async {
     final user = dvSlider.email;
     final dvID = dvSlider.dvID.toString();
     return _netUtil.post(finalURL, body: {
@@ -254,7 +268,7 @@ class SendDeviceData {
     }).then((dynamic res) {
       print(res.toString());
       if (res["error"]) throw new FormException(res["errorMessage"]);
-      dvSlider._value=val;
+      dvSlider._value = val;
     });
   }
 }

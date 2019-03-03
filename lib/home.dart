@@ -88,11 +88,11 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
   Future getHomeList() async {
     await getInternetAccessObject();
     if (internetAccess) {
-      homeList = await _presenter.api.getAllHome();
+      List<Home> homeList = await _presenter.api.getAllHome();
       if (homeList != null) {
-        homeList = homeList.toList();
+        this.homeList = homeList.toList();
       } else {
-        homeList = new List<Home>();
+        this.homeList = new List<Home>();
       }
     }
     setState(() => _isLoading = false);
@@ -158,14 +158,14 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
     }
 
     homeValidator(String val, String ignoreName) {
-      RegExp homeNamePattern = new RegExp(r"^(([A-Za-z]+)([1-9]+))$");
+      RegExp homeNamePattern = new RegExp(r"^(([A-Za-z]+)([1-9]*))$");
       if (val.isEmpty) {
         return 'Please enter home name.';
-      }
-      else if(!homeNamePattern.hasMatch(val) || val.length<3 || val.length>8){
+      } else if (!homeNamePattern.hasMatch(val) ||
+          val.length < 3 ||
+          val.length > 8) {
         return "Home Name invalid.";
-      } else if (existHomeName(val.toLowerCase()) &&
-          val != ignoreName) {
+      } else if (existHomeName(val.toLowerCase()) && val != ignoreName) {
         return '"${_customService.ucFirst(val)}" Home already exists.';
       } else {
         return null;
@@ -463,8 +463,8 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       if (index == len) {
         return Center(
           child: SizedBox(
-            width: 150.0,
-            height: 150.0,
+            width: 130.0,
+            height: 130.0,
             child: RaisedButton(
               shape: new RoundedRectangleBorder(
                   borderRadius: new BorderRadius.circular(30.0)),
@@ -522,7 +522,10 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                         child: Text(
                           '${homeList[index].homeName}',
                           textAlign: TextAlign.left,
-                          style: Theme.of(context).textTheme.headline,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline
+                              .copyWith(fontSize: 18.0),
                         ),
                       ),
                     ),
@@ -634,7 +637,12 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
               )
             : new AppBar(
                 leading: Container(),
-                title: new Text("Home Automation"),
+                title: new Text(
+                  "Home Automation",
+                  style: TextStyle(
+                    fontSize: 17.0,
+                  ),
+                ),
                 actions: <Widget>[
                   _goToUserProfile.showUser(),
                 ],

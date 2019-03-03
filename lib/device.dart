@@ -89,11 +89,11 @@ class DeviceScreenState extends State<DeviceScreen>
   Future getDeviceList() async {
     await getInternetAccessObject();
     if (internetAccess) {
-      dvList = await _presenter.api.getAllDevice(widget.hardware);
+      List<Device> dvList = await _presenter.api.getAllDevice(widget.hardware);
       if (dvList != null) {
-        dvList = dvList.toList();
+        this.dvList = dvList.toList();
       } else {
-        dvList = new List<Device>();
+        this.dvList = new List<Device>();
       }
       await getDeviceImgList();
     }
@@ -188,8 +188,8 @@ class DeviceScreenState extends State<DeviceScreen>
       if (index == len) {
         return Center(
             child: SizedBox(
-          width: 150.0,
-          height: 150.0,
+          width: 130.0,
+          height: 130.0,
           child: RaisedButton(
             shape: new RoundedRectangleBorder(
                 borderRadius: new BorderRadius.circular(30.0)),
@@ -251,7 +251,7 @@ class DeviceScreenState extends State<DeviceScreen>
                 ),
               );
               setState(() {
-                _isLoading=true;
+                _isLoading = true;
               });
               getDeviceList();
             } else {
@@ -278,11 +278,18 @@ class DeviceScreenState extends State<DeviceScreen>
                         child: Text(
                           '${dvList[index].dvName}',
                           textAlign: TextAlign.left,
-                          style: Theme.of(context).textTheme.headline,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline
+                              .copyWith(fontSize: 17.0),
                         ),
                       ),
-                      subtitle:
-                          Text("${getDeviceCategory(dvList[index].dvImg)}"),
+                      subtitle: Text(
+                        "${getDeviceCategory(dvList[index].dvImg)}",
+                        style: TextStyle(
+                          fontSize: 13.0,
+                        ),
+                      ),
                       trailing: new Container(
                         width: 10.0,
                         height: 10.0,
@@ -431,7 +438,10 @@ class DeviceScreenState extends State<DeviceScreen>
                   children: <Widget>[
                     Text(
                       'Hardware',
-                      style: Theme.of(context).textTheme.headline,
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline
+                          .copyWith(fontSize: 17.0),
                     ),
                     SizedBox(
                       width: 15.0,
@@ -442,7 +452,10 @@ class DeviceScreenState extends State<DeviceScreen>
                         width: 100.0,
                         child: Text(
                           "${widget.hardware.hwName}",
-                          style: Theme.of(context).textTheme.headline,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline
+                              .copyWith(fontSize: 17.0),
                         ),
                       ),
                     ),

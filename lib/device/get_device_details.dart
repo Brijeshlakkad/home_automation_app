@@ -94,11 +94,11 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
   }
 
   deviceNameValidator(String val, String ignoreName) {
-    RegExp dvNamePattern = new RegExp(r"^(([A-Za-z]+)([1-9]+))$");
+    RegExp dvNamePattern = new RegExp(r"^(([A-Za-z]+)([1-9]*))$");
     if (val.isEmpty) {
       return 'Please enter device name';
     } else if (!dvNamePattern.hasMatch(val) ||
-        val.length < 3 ||
+        val.length < 2 ||
         val.length > 8) {
       return "Device Name invalid.";
     } else if (existDeviceName(val.toLowerCase()) && val != ignoreName) {
@@ -108,13 +108,13 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
     }
   }
 
-  Map portValidate(String port) {
+  Map portValidate(String port,String dvPort) {
     Map portV = new Map();
     for (int i = 0; i < widget.deviceList.length; i++) {
-      if (widget.deviceList[i].dvPort == port.toString()) {
+      if (widget.deviceList[i].dvPort == port.toString() && port!=dvPort) {
         portV['portValid'] = false;
         portV['errorMessage'] =
-            "${widget.deviceList[i].dvName} device has been assigned ${widget.deviceList[i].dvPort} port.";
+            "\"${widget.deviceList[i].dvName}\" device has been assigned ${widget.deviceList[i].dvPort} port.";
         return portV;
       }
     }
@@ -230,7 +230,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                                 var form = dvFormKey.currentState;
                                 if (form.validate()) {
                                   form.save();
-                                  Map portV = portValidate(_dvPort);
+                                  Map portV = portValidate(_dvPort,null);
                                   if (portV['portValid']) {
                                     setState(() {
                                       _autoValidateDv = false;
@@ -383,7 +383,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
                                   if (_dvName != widget.dvDetails['dvName'] ||
                                       _dvPort != widget.dvDetails['dvPort'] ||
                                       _dvImg != widget.dvDetails['dvImg']) {
-                                    Map portV = portValidate(_dvPort);
+                                    Map portV = portValidate(_dvPort,widget.dvDetails['dvPort']);
                                     if (portV['portValid']) {
                                       setState(() {
                                         _autoValidateDvRe = false;

@@ -102,83 +102,44 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
 
   Widget build(BuildContext context) {
     Widget showDeviceSlider(BuildContext context, Device device) {
-      return device.dvImg == "ac.png"
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Container(
-                  padding: EdgeInsets.all(10.0),
-                  child: Text("$vSlide"),
-                ),
-                Container(
-                  child: Slider(
-                    value: vSlide,
-                    min: 0.0,
-                    max: 5.0,
-                    divisions: 5,
-                    onChanged: (val) async {
-                      await getInternetAccessObject();
-                      if (internetAccess) {
-                        setState(() {
-                          vSlide = val;
-                          _isLoadingValue = true;
-                        });
-                        await _presenter.api.changeDeviceSlider(
-                            device.deviceSlider, val.toInt());
-                        setState(() {
-                          _isLoadingValue = false;
-                        });
-                      } else {
-                        this._showDialog.showDialogCustom(
-                            context,
-                            "Internet Connection Problem",
-                            "Please check your internet connection",
-                            fontSize: 17.0,
-                            boxHeight: 58.0);
-                      }
-                    },
-                  ),
-                )
-              ],
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Container(
-                  padding: EdgeInsets.all(10.0),
-                  child: Text("$vSlide"),
-                ),
-                Container(
-                  child: Slider(
-                    value: vSlide,
-                    min: 0.0,
-                    max: 5.0,
-                    divisions: 5,
-                    onChanged: (val) async {
-                      await getInternetAccessObject();
-                      if (internetAccess) {
-                        setState(() {
-                          vSlide = val;
-                          _isLoadingValue = true;
-                        });
-                        await _presenter.api.changeDeviceSlider(
-                            device.deviceSlider, val.toInt());
-                        setState(() {
-                          _isLoadingValue = false;
-                        });
-                      } else {
-                        this._showDialog.showDialogCustom(
-                            context,
-                            "Internet Connection Problem",
-                            "Please check your internet connection",
-                            fontSize: 17.0,
-                            boxHeight: 58.0);
-                      }
-                    },
-                  ),
-                ),
-              ],
-            );
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Container(
+            padding: EdgeInsets.all(10.0),
+            child: Text("$vSlide"),
+          ),
+          Container(
+            child: Slider(
+              value: vSlide,
+              min: 0.0,
+              max: double.parse(device.deviceImg.maxVal.toString()),
+              divisions: device.deviceImg.maxVal,
+              onChanged: (val) async {
+                await getInternetAccessObject();
+                if (internetAccess) {
+                  setState(() {
+                    vSlide = val;
+                    _isLoadingValue = true;
+                  });
+                  await _presenter.api
+                      .changeDeviceSlider(device.deviceSlider, val.toInt());
+                  setState(() {
+                    _isLoadingValue = false;
+                  });
+                } else {
+                  this._showDialog.showDialogCustom(
+                      context,
+                      "Internet Connection Problem",
+                      "Please check your internet connection",
+                      fontSize: 17.0,
+                      boxHeight: 58.0);
+                }
+              },
+            ),
+          ),
+        ],
+      );
     }
 
     Widget createDeviceView(BuildContext context, Device device) {
@@ -231,83 +192,44 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
     }
 
     Widget showIOSDeviceSlider(BuildContext context, Device device) {
-      return device.dvImg == "ac.png"
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Container(
-                  padding: EdgeInsets.all(10.0),
-                  child: Text("$vSlide"),
-                ),
-                Container(
-                  child: CupertinoSlider(
-                    value: vSlide,
-                    min: 0.0,
-                    max: 30.0,
-                    divisions: 30,
-                    onChanged: (val) async {
-                      await getInternetAccessObject();
-                      if (internetAccess) {
-                        setState(() {
-                          vSlide = val;
-                          _isLoadingValue = true;
-                        });
-                        await _presenter.api.changeDeviceSlider(
-                            device.deviceSlider, val.toInt());
-                        setState(() {
-                          _isLoadingValue = false;
-                        });
-                      } else {
-                        this._showDialog.showDialogCustom(
-                            context,
-                            "Internet Connection Problem",
-                            "Please check your internet connection",
-                            fontSize: 17.0,
-                            boxHeight: 58.0);
-                      }
-                    },
-                  ),
-                )
-              ],
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Container(
-                  padding: EdgeInsets.all(10.0),
-                  child: Text("$vSlide"),
-                ),
-                Container(
-                  child: CupertinoSlider(
-                    value: vSlide,
-                    min: 0.0,
-                    max: 5.0,
-                    divisions: 5,
-                    onChanged: (val) async {
-                      await getInternetAccessObject();
-                      if (internetAccess) {
-                        setState(() {
-                          vSlide = val;
-                          _isLoadingValue = true;
-                        });
-                        await _presenter.api.changeDeviceSlider(
-                            device.deviceSlider, val.toInt());
-                        setState(() {
-                          _isLoadingValue = false;
-                        });
-                      } else {
-                        this._showDialog.showDialogCustom(
-                            context,
-                            "Internet Connection Problem",
-                            "Please check your internet connection",
-                            fontSize: 17.0,
-                            boxHeight: 58.0);
-                      }
-                    },
-                  ),
-                ),
-              ],
-            );
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Container(
+            padding: EdgeInsets.all(10.0),
+            child: Text("$vSlide"),
+          ),
+          Container(
+            child: CupertinoSlider(
+              value: vSlide,
+              min: 0.0,
+              max: double.parse(device.deviceImg.maxVal.toString()),
+              divisions: device.deviceImg.maxVal,
+              onChanged: (val) async {
+                await getInternetAccessObject();
+                if (internetAccess) {
+                  setState(() {
+                    vSlide = val;
+                    _isLoadingValue = true;
+                  });
+                  await _presenter.api
+                      .changeDeviceSlider(device.deviceSlider, val.toInt());
+                  setState(() {
+                    _isLoadingValue = false;
+                  });
+                } else {
+                  this._showDialog.showDialogCustom(
+                      context,
+                      "Internet Connection Problem",
+                      "Please check your internet connection",
+                      fontSize: 17.0,
+                      boxHeight: 58.0);
+                }
+              },
+            ),
+          ),
+        ],
+      );
     }
 
     Widget createIOSDeviceView(BuildContext context, Device device) {
@@ -416,7 +338,10 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                   children: <Widget>[
                     Text(
                       'Device',
-                      style: Theme.of(context).textTheme.headline,
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline
+                          .copyWith(fontSize: 17.0),
                     ),
                     SizedBox(
                       width: 15.0,
@@ -427,7 +352,10 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                         width: 100.0,
                         child: Text(
                           "${getName()}",
-                          style: Theme.of(context).textTheme.headline,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline
+                              .copyWith(fontSize: 17.0),
                         ),
                       ),
                     ),
