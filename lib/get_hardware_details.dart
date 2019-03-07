@@ -101,9 +101,13 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
   }
 
   hardwareSeriesValidator(String val) {
+    RegExp seriesPattern = new RegExp(r"^([0-9]{4})([A-Z0-9]{4})([0-9]{4})$");
     if (val.isEmpty) {
       return 'Please enter hardware series';
-    } else {
+    }else if(!seriesPattern.hasMatch(val)) {
+      return "Hardware series invalid";
+    }  else
+    {
       return null;
     }
   }

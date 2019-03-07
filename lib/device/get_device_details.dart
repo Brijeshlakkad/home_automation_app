@@ -441,7 +441,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
           ? CupertinoNavigationBar(
               backgroundColor: kHAutoBlue100,
               middle: Text(
-                'Hardware Details',
+                'Device Details',
                 style: Theme.of(context)
                     .textTheme
                     .headline
@@ -451,7 +451,7 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
           : AppBar(
               title: Center(
                 child: Text(
-                  'Hardware Details',
+                  'Device Details',
                   style: Theme.of(context)
                       .textTheme
                       .headline

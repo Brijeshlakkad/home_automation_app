@@ -190,16 +190,23 @@ class HardwareScreenState extends State<HardwareScreen>
     }
 
     hardwareSeriesValidator(String val) {
+      RegExp seriesPattern = new RegExp(r"^([0-9]{4})([A-Z0-9]{4})([0-9]{4})$");
       if (val.isEmpty) {
         return 'Please enter hardware series';
+      } else if (!seriesPattern.hasMatch(val)) {
+        return "Hardware series invalid";
       } else {
         return null;
       }
     }
 
     hardwareIPValidator(String val) {
+      RegExp ipPattern = new RegExp(
+          r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
       if (val.isEmpty) {
         return 'Please enter hardware IP value';
+      } else if (!ipPattern.hasMatch(val)) {
+        return "Hardware IP address invalid";
       } else {
         return null;
       }
