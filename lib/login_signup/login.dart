@@ -8,6 +8,8 @@ import 'package:home_automation/colors.dart';
 import 'package:home_automation/utils/internet_access.dart';
 import 'package:home_automation/utils/show_progress.dart';
 import 'package:home_automation/home.dart';
+import 'package:home_automation/utils/show_dialog.dart';
+import 'package:home_automation/login_signup/signup.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -29,7 +31,9 @@ class LoginScreenState extends State<LoginScreen>
   bool _autoValidate = false;
   LoginScreenPresenter _presenter;
   bool _showError = false;
-
+  ShowDialog _showDialog;
+  FocusNode _emailNode = new FocusNode();
+  FocusNode _passwordNode = new FocusNode();
   LoginScreenState() {
     _presenter = new LoginScreenPresenter(this);
     var authStateProvider = new AuthStateProvider();
@@ -38,12 +42,13 @@ class LoginScreenState extends State<LoginScreen>
   }
   @override
   void initState() {
+    _showDialog = new ShowDialog();
     super.initState();
   }
 
-  Function callbackUser(User userDetails){
+  Function callbackUser(User userDetails) {
     setState(() {
-      this.user=userDetails;
+      this.user = userDetails;
     });
     db.updateUser(user);
   }
@@ -76,12 +81,23 @@ class LoginScreenState extends State<LoginScreen>
   onAuthStateChanged(AuthState state, User user) {
     if (state == AuthState.LOGGED_IN) {
       this.callbackUser(user);
-      Navigator.push(context,
-          MaterialPageRoute(builder: (context) => HomeScreen(user: this.user, callbackUser: this.callbackUser,)));
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => HomeScreen(
+                    user: this.user,
+                    callbackUser: this.callbackUser,
+                  )));
     }
     setState(() {
       _isLoading = false;
     });
+  }
+
+  void _fieldFocusChange(
+      BuildContext context, FocusNode current, FocusNode next) {
+    current.unfocus();
+    FocusScope.of(context).requestFocus(next);
   }
 
   @override
@@ -140,9 +156,14 @@ class LoginScreenState extends State<LoginScreen>
                 padding: const EdgeInsets.all(8.0),
                 child: new TextFormField(
                   autofocus: true,
-                  keyboardType: TextInputType.emailAddress,
                   onSaved: (val) => _email = val,
                   validator: validateEmail,
+                  focusNode: _emailNode,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (val) {
+                    _fieldFocusChange(context, _emailNode, _passwordNode);
+                  },
                   decoration: new InputDecoration(labelText: "Email"),
                 ),
               ),
@@ -154,6 +175,13 @@ class LoginScreenState extends State<LoginScreen>
                       child: new TextFormField(
                         onSaved: (val) => _password = val,
                         validator: validatePassword,
+                        focusNode: _passwordNode,
+                        keyboardType: TextInputType.text,
+                        textInputAction: TextInputAction.next,
+                        onFieldSubmitted: (val) {
+                          _passwordNode.unfocus();
+                          _submit();
+                        },
                         decoration: new InputDecoration(
                           labelText: "Password",
                           suffixIcon: IconButton(
@@ -195,8 +223,13 @@ class LoginScreenState extends State<LoginScreen>
         Padding(
           padding: EdgeInsets.only(top: 10.0),
           child: FlatButton(
-            onPressed: () {
-              Navigator.of(context).pushNamed('/signup');
+            onPressed: () async {
+              Map result = await Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => SignupScreen()));
+              if (result != null && result['success']) {
+                _showDialog.showDialogCustom(
+                    context, result['message'], "You may login now");
+              }
             },
             child: Text(
               'Register?',

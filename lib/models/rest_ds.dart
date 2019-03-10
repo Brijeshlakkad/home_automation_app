@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:home_automation/utils/network_util.dart';
 import 'package:home_automation/models/user_data.dart';
+import 'package:home_automation/utils/custom_exception.dart';
 
 class RestDatasource {
   NetworkUtil _netUtil = new NetworkUtil();
@@ -16,24 +17,26 @@ class RestDatasource {
       "password": password
     }).then((dynamic res) {
       print(res.toString());
-      if(res["error"]) throw new Exception(res["errorMessage"].toString());
+      if (res["error"]) throw new FormException(res["errorMessage"].toString());
       return new User.map(res["user"]);
     });
   }
 
-  Future<Null> signup(String name, String email, String password, String address, String city, String contact) {
+  Future<Map> signup(String name, String email, String password,
+      String address, String city, String contact) {
     return _netUtil.post(signupURL, body: {
       "token": _apiKEY,
+      "action": "1",
       "name": name,
       "email": email,
-      "password": password,
+      "password": password.toString(),
       "address": address,
       "city": city,
-      "contact": contact
+      "mobile": contact.toString(),
     }).then((dynamic res) {
       print(res.toString());
-      if(res["error"]) throw new Exception(res["errorMessage"].toString());
-      return null;
+      if (res["error"]) throw new FormException(res["errorMessage"].toString());
+      return res;
     });
   }
 }

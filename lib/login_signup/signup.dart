@@ -2,6 +2,8 @@ import "package:flutter/material.dart";
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/utils/show_progress.dart';
 import 'package:home_automation/login_signup/signup_screen_presenter.dart';
+import 'package:home_automation/utils/show_dialog.dart';
+
 class SignupScreen extends StatefulWidget {
   @override
   SignupScreenState createState() {
@@ -9,42 +11,60 @@ class SignupScreen extends StatefulWidget {
   }
 }
 
-class SignupScreenState extends State<SignupScreen> implements SignupScreenContract{
+class SignupScreenState extends State<SignupScreen>
+    implements SignupScreenContract {
   var scaffoldKey = new GlobalKey<ScaffoldState>();
   var formKey = new GlobalKey<FormState>();
-  bool _isLoading = false;
+  bool _isLoading = false, _isLoadingValue = false;
   bool _autoValidate = false;
   String _passwordValidText =
       "Password should contain at least one small and large alpha characters";
   String _name, _email, _password, _address, _city, _contact;
+  ShowDialog _showDialog;
+  FocusNode _nameNode = new FocusNode();
+  FocusNode _emailNode = new FocusNode();
+  FocusNode _passwordNode = new FocusNode();
+  FocusNode _addressNode = new FocusNode();
+  FocusNode _cityNode = new FocusNode();
+  FocusNode _contactNode = new FocusNode();
+
   SignupScreenPresenter _presenter;
-  SignupScreenState(){
+  @override
+  void initState() {
     _presenter = new SignupScreenPresenter(this);
+    _showDialog = new ShowDialog();
+    super.initState();
   }
+
   void _submit() async {
     final form = formKey.currentState;
     if (form.validate()) {
-      setState(() => _isLoading = true);
+      setState(() => _isLoadingValue = true);
       form.save();
-      await _presenter.doSignup(_name, _email, _password, _address, _city, _contact);
+      await _presenter.doSignup(
+          _name, _email, _password, _address, _city, _contact);
     } else {
       setState(() {
         _autoValidate = true;
       });
     }
   }
+
   @override
-  void onSignupSuccess() async {
-    _showSnackBar("Created");
-    setState(() => _isLoading = false);
-    Navigator.of(context).pop();
+  void onSignupSuccess(Map res) async {
+    Map result = new Map();
+    result['success'] = true;
+    result['message'] = res['errorMessage'];
+    setState(() => _isLoadingValue = false);
+    Navigator.of(context).pop(result);
   }
+
   @override
   void onSignupError(String errorTxt) {
     print("x");
-    _showSnackBar(errorTxt);
+    _showDialog.showDialogCustom(context, "Error", errorTxt);
     setState(() {
-      _isLoading = false;
+      _isLoadingValue = false;
     });
   }
 
@@ -53,11 +73,17 @@ class SignupScreenState extends State<SignupScreen> implements SignupScreenContr
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
+  void _fieldFocusChange(
+      BuildContext context, FocusNode current, FocusNode next) {
+    current.unfocus();
+    FocusScope.of(context).requestFocus(next);
+  }
+
   @override
   Widget build(BuildContext context) {
     String nameValidator(String value) {
-      Pattern pattern = r'^[a-zA-Z0-9]+$';
-      Pattern pattern2 = r'^([0-9])+[a-zA-Z0-9]+$';
+      Pattern pattern = r'^[a-zA-Z0-9/s]+$';
+      Pattern pattern2 = r'^([0-9])+[a-zA-Z0-9/s]+$';
       RegExp regex = new RegExp(pattern);
       RegExp regex2 = new RegExp(pattern2);
       if (value.isEmpty)
@@ -128,6 +154,7 @@ class SignupScreenState extends State<SignupScreen> implements SignupScreenContr
       else
         return null;
     }
+
     var _showRegisterForm = new ListView(
       children: <Widget>[
         new Container(
@@ -147,28 +174,45 @@ class SignupScreenState extends State<SignupScreen> implements SignupScreenContr
             child: Column(
               children: <Widget>[
                 new TextFormField(
-                  keyboardType: TextInputType.text,
                   onSaved: (val) {
                     _name = val;
+                  },
+                  autofocus: true,
+                  focusNode: _nameNode,
+                  keyboardType: TextInputType.text,
+                  textInputAction: TextInputAction.next,
+                  textCapitalization: TextCapitalization.words,
+                  onFieldSubmitted: (val) {
+                    _fieldFocusChange(context, _nameNode, _emailNode);
                   },
                   validator: nameValidator,
                   decoration: InputDecoration(labelText: 'Name'),
                 ),
                 new TextFormField(
-                  keyboardType: TextInputType.emailAddress,
                   onSaved: (val) {
                     _email = val;
+                  },
+                  focusNode: _emailNode,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (val) {
+                    _fieldFocusChange(context, _emailNode, _passwordNode);
                   },
                   validator: emailValidator,
                   decoration: InputDecoration(labelText: 'Email'),
                 ),
                 new TextFormField(
-                  keyboardType: TextInputType.text,
                   onSaved: (val) {
                     _password = val;
                   },
                   validator: passwordValidator,
                   obscureText: true,
+                  focusNode: _passwordNode,
+                  keyboardType: TextInputType.text,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (val) {
+                    _fieldFocusChange(context, _passwordNode, _addressNode);
+                  },
                   decoration: InputDecoration(
                     labelText: 'Password',
                     suffixIcon: Tooltip(
@@ -187,35 +231,56 @@ class SignupScreenState extends State<SignupScreen> implements SignupScreenContr
                   ),
                 ),
                 new TextFormField(
-                  keyboardType: TextInputType.text,
                   onSaved: (val) {
                     _address = val;
+                  },
+                  focusNode: _addressNode,
+                  keyboardType: TextInputType.text,
+                  textInputAction: TextInputAction.next,
+                  textCapitalization: TextCapitalization.words,
+                  onFieldSubmitted: (val) {
+                    _fieldFocusChange(context, _addressNode, _cityNode);
                   },
                   validator: addressValidator,
                   decoration: InputDecoration(labelText: 'Address'),
                 ),
                 new TextFormField(
-                  keyboardType: TextInputType.text,
                   onSaved: (val) {
                     _city = val;
+                  },
+                  focusNode: _cityNode,
+                  keyboardType: TextInputType.text,
+                  textInputAction: TextInputAction.next,
+                  textCapitalization: TextCapitalization.words,
+                  onFieldSubmitted: (val) {
+                    _fieldFocusChange(context, _cityNode, _contactNode);
                   },
                   validator: cityValidator,
                   decoration: InputDecoration(labelText: 'City'),
                 ),
                 new TextFormField(
-                  keyboardType: TextInputType.number,
                   onSaved: (val) {
                     _contact = val;
+                  },
+                  focusNode: _contactNode,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.next,
+                  textCapitalization: TextCapitalization.words,
+                  onFieldSubmitted: (val) {
+                    _contactNode.unfocus();
+                    _submit();
                   },
                   validator: contactValidator,
                   decoration: InputDecoration(labelText: 'Contact'),
                 ),
                 Container(
                   padding: EdgeInsets.only(top: 20.0),
-                  child: new RaisedButton(
-                    onPressed: _submit,
-                    child: Text('Signup'),
-                  ),
+                  child: _isLoadingValue
+                      ? ShowProgress()
+                      : new RaisedButton(
+                          onPressed: _submit,
+                          child: Text('Signup'),
+                        ),
                 ),
                 Container(
                   child: new FlatButton(
