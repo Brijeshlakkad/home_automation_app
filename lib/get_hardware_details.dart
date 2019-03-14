@@ -441,14 +441,12 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
               ),
             )
           : AppBar(
-              title: Center(
-                child: Text(
-                  'Hardware Details',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headline
-                      .copyWith(fontSize: 18.0),
-                ),
+              title: Text(
+                'Hardware Details',
+                style: Theme.of(context)
+                    .textTheme
+                    .headline
+                    .copyWith(fontSize: 18.0),
               ),
             ),
       body: widget.hwDetails['isModifying'] ? modifyDevice() : createDevice(),

@@ -449,14 +449,12 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
               ),
             )
           : AppBar(
-              title: Center(
-                child: Text(
-                  'Device Details',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headline
-                      .copyWith(fontSize: 18.0),
-                ),
+              title: Text(
+                'Device Details',
+                style: Theme.of(context)
+                    .textTheme
+                    .headline
+                    .copyWith(fontSize: 18.0),
               ),
             ),
       body: widget.dvDetails['isModifying'] ? modifyDevice() : createDevice(),

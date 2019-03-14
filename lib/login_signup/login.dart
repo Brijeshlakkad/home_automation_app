@@ -250,7 +250,7 @@ class LoginScreenState extends State<LoginScreen>
         key: scaffoldKey,
         body: new Center(
           child: Container(
-            padding: EdgeInsets.all(30.0),
+            padding: EdgeInsets.only(top: 30.0, left: 30.0, right: 30.0),
             child: _isLoading ? ShowProgress() : loginForm,
           ),
         ),
@@ -269,7 +269,6 @@ class LoginScreenState extends State<LoginScreen>
 
   @override
   void onLoginSuccess(User user) async {
-    _showSnackBar(user.toString());
     setState(() => _isLoadingValue = false);
     var db = new DatabaseHelper();
     await db.saveUser(user);

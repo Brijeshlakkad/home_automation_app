@@ -126,7 +126,7 @@ class HardwareScreenState extends State<HardwareScreen>
 
   @override
   void onError(String errorTxt) {
-    _showDialog.showDialogCustom(context, "Error", errorTxt);
+    _showDialog.showDialogCustom(context, "Error", errorTxt, boxHeight: 67.0);
     setState(() => _isLoading = false);
   }
 

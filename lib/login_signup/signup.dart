@@ -159,7 +159,7 @@ class SignupScreenState extends State<SignupScreen>
       children: <Widget>[
         new Container(
           padding:
-              EdgeInsets.only(top: 50.0, bottom: 10.0, left: 20.0, right: 20.0),
+              EdgeInsets.only(top: 20.0, bottom: 10.0, left: 20.0, right: 20.0),
           child: Text(
             'Signup',
             textScaleFactor: 2.0,
@@ -237,7 +237,7 @@ class SignupScreenState extends State<SignupScreen>
                   focusNode: _addressNode,
                   keyboardType: TextInputType.text,
                   textInputAction: TextInputAction.next,
-                  textCapitalization: TextCapitalization.words,
+                  textCapitalization: TextCapitalization.sentences,
                   onFieldSubmitted: (val) {
                     _fieldFocusChange(context, _addressNode, _cityNode);
                   },
@@ -263,7 +263,7 @@ class SignupScreenState extends State<SignupScreen>
                     _contact = val;
                   },
                   focusNode: _contactNode,
-                  keyboardType: TextInputType.number,
+                  keyboardType: TextInputType.phone,
                   textInputAction: TextInputAction.next,
                   textCapitalization: TextCapitalization.words,
                   onFieldSubmitted: (val) {

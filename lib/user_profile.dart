@@ -254,7 +254,7 @@ class UserProfileState extends State<UserProfile>
                             focusNode: _nameFocus,
                             keyboardType: TextInputType.text,
                             textInputAction: TextInputAction.next,
-                            textCapitalization: TextCapitalization.characters,
+                            textCapitalization: TextCapitalization.words,
                             onFieldSubmitted: (val) {
                               _fieldFocusChange(
                                   context, _nameFocus, _addressFocus);
@@ -271,7 +271,7 @@ class UserProfileState extends State<UserProfile>
                             },
                             keyboardType: TextInputType.text,
                             textInputAction: TextInputAction.next,
-                            textCapitalization: TextCapitalization.characters,
+                            textCapitalization: TextCapitalization.sentences,
                             focusNode: _addressFocus,
                             onFieldSubmitted: (val) {
                               _fieldFocusChange(
@@ -308,6 +308,7 @@ class UserProfileState extends State<UserProfile>
                             textInputAction: TextInputAction.next,
                             focusNode: _mobileFocus,
                             onFieldSubmitted: (val) async {
+                              _mobileFocus.unfocus();
                               await _updateUserProfile();
                             },
                             decoration: InputDecoration(

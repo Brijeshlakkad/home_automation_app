@@ -9,6 +9,8 @@ import 'package:home_automation/utils/internet_access.dart';
 import 'package:home_automation/user_profile.dart';
 import 'package:home_automation/utils/check_platform.dart';
 import 'package:home_automation/change_password.dart';
+import 'package:home_automation/subscription.dart';
+import 'package:home_automation/control_members.dart';
 
 class ShowUser extends StatefulWidget {
   final User user;
@@ -87,6 +89,36 @@ class ShowUserState extends State<ShowUser> {
               );
             },
             title: Text("Change Password"),
+          ),
+          SizedBox(
+            height: 5.0,
+          ),
+          ListTile(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SubscriptionScreen(user: this.user),
+                ),
+              );
+            },
+            title: Text("Subscription"),
+          ),
+          SizedBox(
+            height: 5.0,
+          ),
+          ListTile(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ControlMember(
+                        user: this.user,
+                      ),
+                ),
+              );
+            },
+            title: Text("Control Members"),
           ),
           SizedBox(
             height: 5.0,
