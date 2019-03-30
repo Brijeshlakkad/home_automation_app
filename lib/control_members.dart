@@ -34,6 +34,8 @@ class _ControlMemberState extends State<ControlMember>
   var subscriptionRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
 
   String _memberEmail;
+  String _hwSeries;
+  List<Hw> hwList = new List<Hw>();
   FocusNode _memberFocus = new FocusNode();
 
   MemberPresenter _memberPresenter;
@@ -42,6 +44,7 @@ class _ControlMemberState extends State<ControlMember>
   _ControlMemberState(User user) {
     this.user = user;
   }
+
   @override
   initState() {
     SystemChrome.setPreferredOrientations([
@@ -67,6 +70,19 @@ class _ControlMemberState extends State<ControlMember>
     await getInternetAccessObject();
     if (internetAccess) {
       memberList = await _memberPresenter.api.getMembers(this.user);
+    }
+    await getHardwareList();
+    setState(() => _isLoading = false);
+  }
+
+  Future getHardwareList() async {
+    await getInternetAccessObject();
+    if (internetAccess) {
+      hwList = await _memberPresenter.api.getHardwareList(this.user);
+      if (hwList.length > 0) {
+        hwList.add(Hw("Permission for all hardwares", "-99"));
+        _hwSeries = hwList[0].hwSeries;
+      }
     }
     setState(() => _isLoading = false);
   }
@@ -96,11 +112,11 @@ class _ControlMemberState extends State<ControlMember>
       // We also need to provide a function that tells our app
       // what to do after an item has been swiped away.
       onDismissed: (direction) {
-        String memberEmail = memberList[index].email;
+        Member member = memberList[index];
         setState(() {
           this.memberList.removeAt(index);
         });
-        _memberPresenter.doRemoveMember(this.user, memberEmail);
+        _memberPresenter.doRemoveMember(this.user, member);
       },
       background: Container(
         color: Colors.red,
@@ -120,8 +136,27 @@ class _ControlMemberState extends State<ControlMember>
             fontSize: 21.0,
           ),
         ),
-        title: Text("${memberList[index].email}"),
-        subtitle: Text("${memberList[index].name}"),
+        title: Text(
+          "${memberList[index].email}",
+          style: TextStyle(height: 1.2),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            Text("${memberList[index].name}"),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                //Text('Hardware'),
+                Text(
+                  "${memberList[index].hwName}",
+                  style: TextStyle(letterSpacing: 1.0),
+                ),
+              ],
+            )
+          ],
+        ),
       ),
     );
   }
@@ -131,7 +166,7 @@ class _ControlMemberState extends State<ControlMember>
     if (form.validate()) {
       setState(() => _isLoading = true);
       form.save();
-      await _memberPresenter.doSaveMember(user, _memberEmail);
+      await _memberPresenter.doSaveMember(user, _memberEmail, _hwSeries);
     } else {
       setState(() {
         _autoValidate = true;
@@ -202,6 +237,30 @@ class _ControlMemberState extends State<ControlMember>
               SizedBox(
                 height: 10.0,
               ),
+              new InputDecorator(
+                decoration: InputDecoration(
+                  labelText: 'Device Port',
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: new DropdownButton<String>(
+                    value: _hwSeries,
+                    items: hwList.map((Hw hw) {
+                      return new DropdownMenuItem<String>(
+                        value: hw.hwSeries,
+                        child: new Text("${hw.hwName}"),
+                      );
+                    }).toList(),
+                    onChanged: (String val) {
+                      setState(() {
+                        _hwSeries = val;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 10.0,
+              ),
               RaisedButton(
                 onPressed: () async {
                   await _saveMember();
@@ -214,7 +273,8 @@ class _ControlMemberState extends State<ControlMember>
       );
     }
 
-    Widget createListViewIOS(BuildContext context, List memberList) {
+    Widget createListViewIOS(
+        BuildContext context, List<Member> memberList, List<Hw> hwList) {
       var len = 0;
       if (memberList != null) {
         len = memberList.length;
@@ -222,6 +282,13 @@ class _ControlMemberState extends State<ControlMember>
       return new SliverList(
         delegate: new SliverChildBuilderDelegate(
           (BuildContext context, int index) {
+            if (hwList.length == 0) {
+              return Container(
+                child: Center(
+                  child: Text("You do not have any hardware"),
+                ),
+              );
+            }
             if (index == 0) {
               return memberForm();
             }
@@ -237,13 +304,21 @@ class _ControlMemberState extends State<ControlMember>
       );
     }
 
-    Widget createListView(BuildContext context, List memberList) {
+    Widget createListView(
+        BuildContext context, List<Member> memberList, List<Hw> hwList) {
       var len = 0;
       if (memberList != null) {
         len = memberList.length;
       }
       return new ListView.builder(
         itemBuilder: (BuildContext context, int index) {
+          if (hwList.length == 0) {
+            return Container(
+              child: Center(
+                child: Text("You do not have any hardware"),
+              ),
+            );
+          }
           if (index == 0) {
             return memberForm();
           }
@@ -272,13 +347,14 @@ class _ControlMemberState extends State<ControlMember>
                             onRefresh: getMemberList),
                         new SliverSafeArea(
                           top: false,
-                          sliver: createListViewIOS(context, memberList),
+                          sliver:
+                              createListViewIOS(context, memberList, hwList),
                         ),
                       ],
                     )
                   : RefreshIndicator(
                       key: subscriptionRefreshIndicatorKey,
-                      child: createListView(context, memberList),
+                      child: createListView(context, memberList, hwList),
                       onRefresh: getMemberList,
                     )
               : _checkPlatform.isIOS()

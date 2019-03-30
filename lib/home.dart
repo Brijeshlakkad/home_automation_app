@@ -573,7 +573,6 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
       }
       return new GridView.count(
         crossAxisCount: 2,
-        // Generate 100 Widgets that display their index in the List
         children: List.generate(
           len + 1,
           (index) {

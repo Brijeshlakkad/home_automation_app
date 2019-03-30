@@ -62,7 +62,8 @@ class SignupScreenState extends State<SignupScreen>
   @override
   void onSignupError(String errorTxt) {
     print("x");
-    _showDialog.showDialogCustom(context, "Error", errorTxt);
+    _showDialog.showDialogCustom(context, "Error", errorTxt,
+        fontSize: 17.0, boxHeight: 58.0);
     setState(() {
       _isLoadingValue = false;
     });
