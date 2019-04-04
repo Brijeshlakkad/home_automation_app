@@ -11,6 +11,7 @@ import 'package:home_automation/utils/check_platform.dart';
 import 'package:home_automation/change_password.dart';
 import 'package:home_automation/subscription.dart';
 import 'package:home_automation/control_members.dart';
+import 'package:home_automation/device/scheduled_devices.dart';
 
 class ShowUser extends StatefulWidget {
   final User user;
@@ -119,6 +120,22 @@ class ShowUserState extends State<ShowUser> {
               );
             },
             title: Text("Control Members"),
+          ),
+          SizedBox(
+            height: 5.0,
+          ),
+          ListTile(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ScheduledDevice(
+                        user: this.user,
+                      ),
+                ),
+              );
+            },
+            title: Text("Scheduled Devices"),
           ),
           SizedBox(
             height: 5.0,

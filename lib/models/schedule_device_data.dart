@@ -6,20 +6,29 @@ import 'package:home_automation/models/device_data.dart';
 
 class Schedule {
   int _dvID;
-  String _startTime, _endTime, _repetition, _afterStatus;
-  Schedule(this._dvID, this._startTime, this._endTime, this._repetition,
-      this._afterStatus);
+  String _deviceName,
+      _roomName,
+      _startTime,
+      _endTime,
+      _repetition,
+      _afterStatus;
+  Schedule(this._dvID, this._deviceName, this._roomName, this._startTime,
+      this._endTime, this._repetition, this._afterStatus);
   Schedule.map(dynamic obj) {
     this._dvID = null;
     if (obj['dvID'] != null) {
       this._dvID = int.parse(obj['dvID']);
     }
+    this._deviceName = obj['deviceName'];
+    this._roomName = obj['roomName'];
     this._startTime = obj['startTime'];
     this._endTime = obj['endTime'];
     this._repetition = obj['repetition'];
     this._afterStatus = obj['afterStatus'];
   }
   int get dvID => _dvID;
+  String get deviceName => _deviceName;
+  String get roomName => _roomName;
   String get startTIme => _startTime;
   String get endTime => _endTime;
   String get repetition => _repetition;
@@ -28,6 +37,8 @@ class Schedule {
   Map<String, dynamic> toMap() {
     Map obj = new Map();
     obj['dvID'] = this._dvID.toString();
+    obj['deviceName'] = this._deviceName;
+    obj['roomName'] = this._roomName;
     obj['startTime'] = this._startTime;
     obj['endTime'] = this._endTime;
     obj['repetition'] = this._repetition;
@@ -98,6 +109,26 @@ class RequestSchedule {
       print(res.toString());
       if (res["error"]) throw new FormException(res["errorMessage"]);
       return res['data'];
+    });
+  }
+
+  Future<List<Schedule>> getScheduleList(User user) async {
+    return _netUtil.post(finalURL, body: {
+      "action": "4",
+      "email": user.email,
+    }).then((dynamic res) {
+      print(res.toString());
+      if (res["error"]) throw new FormException(res["errorMessage"]);
+      try {
+        int total = int.parse(res['totalRows'].toString());
+        List<Schedule> scheduleList = new List<Schedule>();
+        for (int i = 0; i < total; i++) {
+          scheduleList.add(Schedule.map(res['scheduledDevice'][i]));
+        }
+        return scheduleList;
+      } on Exception catch (error) {
+        return null;
+      }
     });
   }
 }

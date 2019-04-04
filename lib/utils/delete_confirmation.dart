@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
 class DeleteConfirmation {
-  Future<bool> showConfirmDialog(BuildContext context, bool isIOS) async {
+  Future<bool> showConfirmDialog(BuildContext context, bool isIOS,
+      {title = "Are you sure?"}) async {
     bool status = false;
     isIOS
         ? await showDialog<String>(
             context: context,
             builder: (BuildContext context) => CupertinoAlertDialog(
-                  title: Text('Are you sure?'),
+                  title: Text('$title'),
                   actions: <Widget>[
                     new CupertinoDialogAction(
                       child: const Text('CANCEL'),

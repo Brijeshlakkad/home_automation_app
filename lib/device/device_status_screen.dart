@@ -223,7 +223,89 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
             Container(
               padding: EdgeInsets.only(top: 50.0),
               child: _isLoadingValue ? ShowProgress() : null,
-            )
+            ),
+            schedule == null
+                ? Container(
+                    child: Text(
+                      "Device has not been scheduled.",
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                : Column(
+                    children: [
+                      Container(
+                        child: Table(
+                          children: [
+                            TableRow(
+                              children: [
+                                TableCell(
+                                  child: Text("Start Time"),
+                                ),
+                                TableCell(
+                                  child: Text("${schedule.startTIme}"),
+                                ),
+                              ],
+                            ),
+                            TableRow(
+                              children: [
+                                TableCell(
+                                  child: Text("Start Time"),
+                                ),
+                                TableCell(
+                                  child: Text("${schedule.endTime}"),
+                                ),
+                              ],
+                            ),
+                            TableRow(
+                              children: [
+                                TableCell(
+                                  child: Text("Repetition"),
+                                ),
+                                TableCell(
+                                  child: Text("${schedule.repetition}"),
+                                ),
+                              ],
+                            ),
+                            TableRow(
+                              children: [
+                                TableCell(
+                                  child: Text("After Status"),
+                                ),
+                                TableCell(
+                                  child: Text("${schedule.afterStatus}"),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        height: 10.0,
+                      ),
+                      Container(
+                        child: RaisedButton(
+                          color: Colors.red,
+                          onPressed: () async {
+                            setState(() {
+                              _isLoading = true;
+                            });
+                            await _schedulePresenter.doRemoveSchedule(
+                                user, this.room.roomName, this.device.dvName);
+                            await getSchedule();
+                            setState(() {
+                              _isLoading = false;
+                            });
+                          },
+                          child: Text(
+                            "Remove",
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
           ],
         ),
       );
