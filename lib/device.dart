@@ -15,6 +15,8 @@ import 'package:home_automation/utils/check_platform.dart';
 import 'package:home_automation/utils/show_internet_status.dart';
 import 'package:home_automation/models/user_data.dart';
 import 'package:home_automation/get_to_user_profile.dart';
+import "package:home_automation/device/schedule_backdrop.dart";
+import "package:home_automation/device/schedule_device.dart";
 
 class DeviceScreen extends StatefulWidget {
   final Home home;
@@ -46,12 +48,6 @@ class DeviceScreenState extends State<DeviceScreen>
   final showDvScaffoldKey = new GlobalKey<ScaffoldState>();
   var dvRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
 
-  void _showSnackBar(String text) {
-    showDvScaffoldKey.currentState.removeCurrentSnackBar();
-    showDvScaffoldKey.currentState
-        .showSnackBar(new SnackBar(content: new Text(text)));
-  }
-
   User user;
   Function callbackUser;
   Function callbackThis(User user) {
@@ -76,6 +72,10 @@ class DeviceScreenState extends State<DeviceScreen>
     _showInternetStatus = new ShowInternetStatus();
     getDeviceList();
     super.initState();
+  }
+
+  updateDeviceList() async {
+    await getDeviceList();
   }
 
   Future getInternetAccessObject() async {
@@ -246,8 +246,21 @@ class DeviceScreenState extends State<DeviceScreen>
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      DeviceStatusScreen(device: dvList[index]),
+                  builder: (context) => Backdrop(
+                        backTitle: Text("Device"),
+                        backPanel: DeviceStatusScreen(
+                            user: this.user,
+                            room: widget.room,
+                            device: dvList[index],
+                            updateDeviceList: this.updateDeviceList),
+                        frontTitle: Text("Schedule Device"),
+                        frontPanel: ScheduleDevice(
+                          user: this.user,
+                          room: widget.room,
+                          device: dvList[index],
+                          updateDeviceList: this.updateDeviceList,
+                        ),
+                      ),
                 ),
               );
               setState(() {

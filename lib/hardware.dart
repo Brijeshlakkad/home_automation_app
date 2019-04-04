@@ -380,6 +380,7 @@ class HardwareScreenState extends State<HardwareScreen>
                 context,
                 MaterialPageRoute(
                   builder: (context) => DeviceScreen(
+                        user: this.user,
                         home: widget.home,
                         room: widget.room,
                         hardware: hwList[index],

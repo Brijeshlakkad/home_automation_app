@@ -1,25 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:home_automation/colors.dart';
-import 'package:home_automation/login_signup/logout.dart';
 import 'package:home_automation/models/device_data.dart';
 import 'package:home_automation/utils/internet_access.dart';
 import 'package:home_automation/utils/show_progress.dart';
 import 'package:home_automation/utils/show_dialog.dart';
 import 'package:home_automation/utils/check_platform.dart';
 import 'package:home_automation/utils/show_internet_status.dart';
+import 'package:home_automation/models/user_data.dart';
+import 'package:home_automation/models/schedule_device_data.dart';
+import 'package:home_automation/models/room_data.dart';
 
 class DeviceStatusScreen extends StatefulWidget {
+  final User user;
+  final Room room;
   final Device device;
-  const DeviceStatusScreen({this.device});
+  final updateDeviceList;
+  const DeviceStatusScreen(
+      {this.user, this.room, this.device, this.updateDeviceList});
   @override
   DeviceStatusScreenState createState() {
-    return new DeviceStatusScreenState();
+    return new DeviceStatusScreenState(user, room, device);
   }
 }
 
 class DeviceStatusScreenState extends State<DeviceStatusScreen>
-    implements DeviceStatusScreenContract {
+    implements DeviceStatusScreenContract, ScheduleContract {
   bool _isLoading = true;
   bool _isLoadingValue = false;
   bool internetAccess = false;
@@ -27,13 +33,20 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
   CheckPlatform _checkPlatform;
   ShowInternetStatus _showInternetStatus;
 
+  User user;
+  Room room;
   Device device;
+  Schedule schedule;
   double vSlide = 0.0;
   var showDvStatusScaffoldKey = new GlobalKey<ScaffoldState>();
   var dvStatusRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
 
   DeviceStatusScreenPresenter _presenter;
-  DeviceStatusScreenState() {
+  SchedulePresenter _schedulePresenter;
+  DeviceStatusScreenState(User user, Room room, Device device) {
+    this.user = user;
+    this.room = room;
+    this.device = device;
     _presenter = new DeviceStatusScreenPresenter(this);
   }
 
@@ -42,6 +55,7 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
     _showDialog = new ShowDialog();
     _checkPlatform = new CheckPlatform(context: context);
     _showInternetStatus = new ShowInternetStatus();
+    _schedulePresenter = new SchedulePresenter(this);
     getDeviceStatus();
     super.initState();
   }
@@ -67,12 +81,35 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
     setState(() => _isLoading = false);
   }
 
+  @override
+  void onScheduleSuccess(String message) {
+    _showDialog.showDialogCustom(context, "Success", message);
+  }
+
+  @override
+  void onScheduleError(String errorString) {
+    _showDialog.showDialogCustom(context, "Error", errorString);
+  }
+
   Future getInternetAccessObject() async {
     CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
     bool internetAccessDummy = await checkInternetAccess.check();
     setState(() {
       internetAccess = internetAccessDummy;
     });
+  }
+
+  Future getSchedule() async {
+    await getInternetAccessObject();
+    if (internetAccess) {
+      Schedule schedule = await _schedulePresenter.api
+          .getSchedule(this.user, this.device.dvName, this.room.roomName);
+      if (schedule != null) {
+        this.schedule = schedule;
+      } else {
+        this.schedule = null;
+      }
+    }
   }
 
   Future getDeviceStatus() async {
@@ -95,6 +132,7 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
         }
       }
     }
+    await getSchedule();
     setState(() {
       _isLoading = false;
     });
@@ -274,7 +312,99 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
         Container(
           padding: EdgeInsets.only(top: 50.0),
           child: _isLoadingValue ? ShowProgress() : null,
-        )
+        ),
+        SizedBox(
+          height: 10.0,
+        ),
+        Container(
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: Colors.grey),
+            ),
+          ),
+        ),
+        schedule == null
+            ? Container(
+                child: Text(
+                  "Device has not been scheduled.",
+                  textAlign: TextAlign.center,
+                ),
+              )
+            : Column(
+                children: [
+                  Container(
+                    child: Table(
+                      children: [
+                        TableRow(
+                          children: [
+                            TableCell(
+                              child: Text("Start Time"),
+                            ),
+                            TableCell(
+                              child: Text("${schedule.startTIme}"),
+                            ),
+                          ],
+                        ),
+                        TableRow(
+                          children: [
+                            TableCell(
+                              child: Text("Start Time"),
+                            ),
+                            TableCell(
+                              child: Text("${schedule.endTime}"),
+                            ),
+                          ],
+                        ),
+                        TableRow(
+                          children: [
+                            TableCell(
+                              child: Text("Repetition"),
+                            ),
+                            TableCell(
+                              child: Text("${schedule.repetition}"),
+                            ),
+                          ],
+                        ),
+                        TableRow(
+                          children: [
+                            TableCell(
+                              child: Text("After Status"),
+                            ),
+                            TableCell(
+                              child: Text("${schedule.afterStatus}"),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    height: 10.0,
+                  ),
+                  Container(
+                    child: RaisedButton(
+                      color: Colors.red,
+                      onPressed: () async {
+                        setState(() {
+                          _isLoading = true;
+                        });
+                        await _schedulePresenter.doRemoveSchedule(
+                            user, this.room.roomName, this.device.dvName);
+                        await getSchedule();
+                        setState(() {
+                          _isLoading = false;
+                        });
+                      },
+                      child: Text(
+                        "Remove",
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
       ];
       return SliverList(
         delegate: SliverChildBuilderDelegate((BuildContext context, int index) {
@@ -303,7 +433,10 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                   children: <Widget>[
                     Text(
                       'Device',
-                      style: Theme.of(context).textTheme.headline.copyWith(fontSize: 18.0),
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline
+                          .copyWith(fontSize: 18.0),
                     ),
                     SizedBox(
                       width: 15.0,
@@ -314,7 +447,10 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                         width: 100.0,
                         child: Text(
                           "${getName()}",
-                          style: Theme.of(context).textTheme.headline.copyWith(fontSize: 18.0),
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline
+                              .copyWith(fontSize: 18.0),
                         ),
                       ),
                     ),

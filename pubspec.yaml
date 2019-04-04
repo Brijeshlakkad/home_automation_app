@@ -19,6 +19,8 @@ dependencies:
   sqflite: ^1.0.0
   path_provider: ^0.4.1
   splashscreen: ^1.2.0
+  flutter_datetime_picker: ^1.1.4
+  material_switch: ^0.0.5
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2
