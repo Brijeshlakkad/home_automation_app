@@ -180,6 +180,115 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
       );
     }
 
+    Widget showScheduledDevice() {
+      return schedule == null
+          ? Container(
+              child: Text(
+                "Device has not been scheduled.",
+                textAlign: TextAlign.center,
+              ),
+            )
+          : Column(
+              children: [
+                Container(
+                  child: Table(
+                    children: [
+                      TableRow(
+                        children: [
+                          TableCell(
+                            child: Text("Start Time"),
+                          ),
+                          TableCell(
+                            child: Text("${schedule.startTIme}"),
+                          ),
+                        ],
+                      ),
+                      TableRow(
+                        children: [
+                          TableCell(
+                            child: Text("Start Time"),
+                          ),
+                          TableCell(
+                            child: Text("${schedule.endTime}"),
+                          ),
+                        ],
+                      ),
+                      TableRow(
+                        children: [
+                          TableCell(
+                            child: Text("Repetition"),
+                          ),
+                          TableCell(
+                            child: Text("${schedule.repetition}"),
+                          ),
+                        ],
+                      ),
+                      TableRow(
+                        children: [
+                          TableCell(
+                            child: Text("After Status"),
+                          ),
+                          TableCell(
+                            child: schedule.afterStatus == "1"
+                                ? Text(
+                                    "ON",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green,
+                                    ),
+                                  )
+                                : Text(
+                                    "OFF",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green,
+                                    ),
+                                  ),
+                          ),
+                        ],
+                      ),
+                      TableRow(
+                        children: [
+                          TableCell(
+                            child: Text("Created Date"),
+                          ),
+                          TableCell(
+                            child: Text("${schedule.createdDate}"),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  height: 10.0,
+                ),
+                Container(
+                  child: RaisedButton(
+                    color: Colors.red,
+                    onPressed: () async {
+                      setState(() {
+                        _isLoading = true;
+                      });
+                      await _schedulePresenter.doRemoveSchedule(
+                          user, this.room.roomName, this.device.dvName);
+                      await getSchedule();
+                      setState(() {
+                        _isLoading = false;
+                      });
+                    },
+                    child: Text(
+                      "Remove",
+                      style: TextStyle(
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+    }
+
     Widget createDeviceView(BuildContext context, Device device) {
       return Container(
         padding: EdgeInsets.only(top: 40.0, left: 20.0, right: 20.0),
@@ -224,88 +333,7 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
               padding: EdgeInsets.only(top: 50.0),
               child: _isLoadingValue ? ShowProgress() : null,
             ),
-            schedule == null
-                ? Container(
-                    child: Text(
-                      "Device has not been scheduled.",
-                      textAlign: TextAlign.center,
-                    ),
-                  )
-                : Column(
-                    children: [
-                      Container(
-                        child: Table(
-                          children: [
-                            TableRow(
-                              children: [
-                                TableCell(
-                                  child: Text("Start Time"),
-                                ),
-                                TableCell(
-                                  child: Text("${schedule.startTIme}"),
-                                ),
-                              ],
-                            ),
-                            TableRow(
-                              children: [
-                                TableCell(
-                                  child: Text("Start Time"),
-                                ),
-                                TableCell(
-                                  child: Text("${schedule.endTime}"),
-                                ),
-                              ],
-                            ),
-                            TableRow(
-                              children: [
-                                TableCell(
-                                  child: Text("Repetition"),
-                                ),
-                                TableCell(
-                                  child: Text("${schedule.repetition}"),
-                                ),
-                              ],
-                            ),
-                            TableRow(
-                              children: [
-                                TableCell(
-                                  child: Text("After Status"),
-                                ),
-                                TableCell(
-                                  child: Text("${schedule.afterStatus}"),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(
-                        height: 10.0,
-                      ),
-                      Container(
-                        child: RaisedButton(
-                          color: Colors.red,
-                          onPressed: () async {
-                            setState(() {
-                              _isLoading = true;
-                            });
-                            await _schedulePresenter.doRemoveSchedule(
-                                user, this.room.roomName, this.device.dvName);
-                            await getSchedule();
-                            setState(() {
-                              _isLoading = false;
-                            });
-                          },
-                          child: Text(
-                            "Remove",
-                            style: TextStyle(
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+            showScheduledDevice(),
           ],
         ),
       );
@@ -405,88 +433,7 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
             ),
           ),
         ),
-        schedule == null
-            ? Container(
-                child: Text(
-                  "Device has not been scheduled.",
-                  textAlign: TextAlign.center,
-                ),
-              )
-            : Column(
-                children: [
-                  Container(
-                    child: Table(
-                      children: [
-                        TableRow(
-                          children: [
-                            TableCell(
-                              child: Text("Start Time"),
-                            ),
-                            TableCell(
-                              child: Text("${schedule.startTIme}"),
-                            ),
-                          ],
-                        ),
-                        TableRow(
-                          children: [
-                            TableCell(
-                              child: Text("Start Time"),
-                            ),
-                            TableCell(
-                              child: Text("${schedule.endTime}"),
-                            ),
-                          ],
-                        ),
-                        TableRow(
-                          children: [
-                            TableCell(
-                              child: Text("Repetition"),
-                            ),
-                            TableCell(
-                              child: Text("${schedule.repetition}"),
-                            ),
-                          ],
-                        ),
-                        TableRow(
-                          children: [
-                            TableCell(
-                              child: Text("After Status"),
-                            ),
-                            TableCell(
-                              child: Text("${schedule.afterStatus}"),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: 10.0,
-                  ),
-                  Container(
-                    child: RaisedButton(
-                      color: Colors.red,
-                      onPressed: () async {
-                        setState(() {
-                          _isLoading = true;
-                        });
-                        await _schedulePresenter.doRemoveSchedule(
-                            user, this.room.roomName, this.device.dvName);
-                        await getSchedule();
-                        setState(() {
-                          _isLoading = false;
-                        });
-                      },
-                      child: Text(
-                        "Remove",
-                        style: TextStyle(
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+        showScheduledDevice(),
       ];
       return SliverList(
         delegate: SliverChildBuilderDelegate((BuildContext context, int index) {

@@ -153,7 +153,23 @@ class _ScheduledDeviceState extends State<ScheduledDevice>
                   ),
                 ),
               ],
-            )
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  "Created Date: ",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black),
+                ),
+                Text(
+                  "${scheduleList[index].createdDate}",
+                  style: TextStyle(
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
         trailing: scheduleList[index].afterStatus == "1"

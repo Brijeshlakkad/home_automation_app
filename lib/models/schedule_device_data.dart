@@ -11,9 +11,10 @@ class Schedule {
       _startTime,
       _endTime,
       _repetition,
-      _afterStatus;
+      _afterStatus,
+      _createdDate;
   Schedule(this._dvID, this._deviceName, this._roomName, this._startTime,
-      this._endTime, this._repetition, this._afterStatus);
+      this._endTime, this._repetition, this._afterStatus, _createdDate);
   Schedule.map(dynamic obj) {
     this._dvID = null;
     if (obj['dvID'] != null) {
@@ -25,6 +26,7 @@ class Schedule {
     this._endTime = obj['endTime'];
     this._repetition = obj['repetition'];
     this._afterStatus = obj['afterStatus'];
+    this._createdDate = obj['createdDate'];
   }
   int get dvID => _dvID;
   String get deviceName => _deviceName;
@@ -33,6 +35,7 @@ class Schedule {
   String get endTime => _endTime;
   String get repetition => _repetition;
   String get afterStatus => _afterStatus;
+  String get createdDate => _createdDate;
 
   Map<String, dynamic> toMap() {
     Map obj = new Map();
@@ -43,6 +46,7 @@ class Schedule {
     obj['endTime'] = this._endTime;
     obj['repetition'] = this._repetition;
     obj['afterStatus'] = this._afterStatus;
+    obj['createdDate'] = this._createdDate;
     return obj;
   }
 
