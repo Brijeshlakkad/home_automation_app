@@ -282,7 +282,11 @@ class _ControlMemberState extends State<ControlMember>
       return new SliverList(
         delegate: new SliverChildBuilderDelegate(
           (BuildContext context, int index) {
-            if (hwList.length == 0) {
+            if (hwList.length == 0 && index == 0) {
+              return Container(
+                padding: EdgeInsets.only(top: 10.0),
+              );
+            } else if (hwList.length == 0 && index == 1) {
               return Container(
                 child: Center(
                   child: Text("You do not have any hardware"),
@@ -312,7 +316,11 @@ class _ControlMemberState extends State<ControlMember>
       }
       return new ListView.builder(
         itemBuilder: (BuildContext context, int index) {
-          if (hwList.length == 0) {
+          if (hwList.length == 0 && index == 0) {
+            return Container(
+              padding: EdgeInsets.only(top: 10.0),
+            );
+          } else if (hwList.length == 0 && index == 1) {
             return Container(
               child: Center(
                 child: Text("You do not have any hardware"),

@@ -162,6 +162,7 @@ class ChangePasswordState extends State<ChangePassword>
               onSaved: (value) {
                 _oldPassword = value;
               },
+              obscureText: true,
               validator: oldPasswordValidator,
               keyboardType: TextInputType.text,
               textInputAction: TextInputAction.next,
@@ -180,6 +181,7 @@ class ChangePasswordState extends State<ChangePassword>
               },
               validator: passwordValidator,
               keyboardType: TextInputType.text,
+              obscureText: true,
               textInputAction: TextInputAction.next,
               focusNode: _newPasswordFocus,
               onFieldSubmitted: (value) {
@@ -195,6 +197,7 @@ class ChangePasswordState extends State<ChangePassword>
                 _newCPassword = value;
               },
               validator: passwordValidator,
+              obscureText: true,
               keyboardType: TextInputType.text,
               textInputAction: TextInputAction.next,
               focusNode: _newCPasswordFocus,

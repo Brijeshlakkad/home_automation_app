@@ -142,11 +142,22 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         delegate: new SliverChildBuilderDelegate(
           (BuildContext context, int index) {
             if (len == 0) {
-              return Container();
+              return Container(
+                padding: EdgeInsets.only(top: 10.0),
+                child: Text(
+                  "You have not started using any hardwares.",
+                  textAlign: TextAlign.center,
+                ),
+              );
             }
-            return _getSubscriptionObject(subscriptionList, index, len);
+            if (index == 0) {
+              return Container(
+                padding: EdgeInsets.only(top: 10.0),
+              );
+            }
+            return _getSubscriptionObject(subscriptionList, index - 1, len);
           },
-          childCount: len,
+          childCount: len + 1,
         ),
       );
     }
@@ -159,11 +170,22 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
       return new ListView.builder(
         itemBuilder: (BuildContext context, int index) {
           if (len == 0) {
-            return Container();
+            return Container(
+              padding: EdgeInsets.only(top: 10.0),
+              child: Text(
+                "You have not started using any hardwares.",
+                textAlign: TextAlign.center,
+              ),
+            );
           }
-          return _getSubscriptionObject(memberList, index, len);
+          if (index == 0) {
+            return Container(
+              padding: EdgeInsets.only(top: 10.0),
+            );
+          }
+          return _getSubscriptionObject(memberList, index - 1, len);
         },
-        itemCount: len,
+        itemCount: len + 1,
       );
     }
 
