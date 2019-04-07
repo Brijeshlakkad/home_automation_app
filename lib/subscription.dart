@@ -86,11 +86,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           children: [
             Row(
               children: <Widget>[
-                Text("Hardware Name"),
+                Text("Hardware Series"),
                 Expanded(
                   child: Container(),
                 ),
-                Text("${subscription.hwName}"),
+                Text("${subscription.hwSeries}"),
               ],
             ),
             Row(

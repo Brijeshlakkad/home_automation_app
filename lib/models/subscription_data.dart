@@ -3,10 +3,10 @@ import 'package:home_automation/utils/custom_exception.dart';
 import 'package:home_automation/models/user_data.dart';
 
 class Subscription {
-  String _hwName, _leftTime, _state;
-  Subscription(this._hwName, this._leftTime, this._state);
+  String _hwSeries, _leftTime, _state;
+  Subscription(this._leftTime, this._state);
   Subscription.map(dynamic obj) {
-    this._hwName = obj['hwName'];
+    this._hwSeries = obj['serialNo'];
     this._leftTime = obj['leftTime'];
     if (int.parse(obj['state'].toString()) == 1) {
       this._state = "Running";
@@ -14,12 +14,12 @@ class Subscription {
       this._state = "Expired";
     }
   }
-  String get hwName => _hwName;
+  String get hwSeries => _hwSeries;
   String get leftTime => _leftTime;
   String get state => _state;
   Map<String, dynamic> toMap() {
     Map obj = new Map();
-    obj['hwName'] = this._hwName;
+    obj['serialNo'] = this._hwSeries;
     obj['leftTime'] = this._leftTime;
     obj['state'] = this._state;
     return obj;
@@ -27,7 +27,7 @@ class Subscription {
 
   @override
   String toString() {
-    return hwName;
+    return hwSeries;
   }
 }
 
