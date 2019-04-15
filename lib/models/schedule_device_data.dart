@@ -5,7 +5,7 @@ import 'package:home_automation/models/room_data.dart';
 import 'package:home_automation/models/device_data.dart';
 
 class Schedule {
-  int _dvID;
+  int _dvID, _scheduleID;
   String _deviceName,
       _roomName,
       _startTime,
@@ -13,12 +13,23 @@ class Schedule {
       _repetition,
       _afterStatus,
       _createdDate;
-  Schedule(this._dvID, this._deviceName, this._roomName, this._startTime,
-      this._endTime, this._repetition, this._afterStatus, _createdDate);
+  Schedule(
+      this._scheduleID,
+      this._dvID,
+      this._deviceName,
+      this._roomName,
+      this._startTime,
+      this._endTime,
+      this._repetition,
+      this._afterStatus,
+      _createdDate);
   Schedule.map(dynamic obj) {
     this._dvID = null;
     if (obj['dvID'] != null) {
       this._dvID = int.parse(obj['dvID']);
+    }
+    if (obj['scheduleID'] != null) {
+      this._scheduleID = int.parse(obj['scheduleID']);
     }
     this._deviceName = obj['deviceName'];
     this._roomName = obj['roomName'];
@@ -29,6 +40,7 @@ class Schedule {
     this._createdDate = obj['createdDate'];
   }
   int get dvID => _dvID;
+  int get scheduleID => _scheduleID;
   String get deviceName => _deviceName;
   String get roomName => _roomName;
   String get startTIme => _startTime;
@@ -40,6 +52,7 @@ class Schedule {
   Map<String, dynamic> toMap() {
     Map obj = new Map();
     obj['dvID'] = this._dvID.toString();
+    obj['scheduleID'] = this._scheduleID.toString();
     obj['deviceName'] = this._deviceName;
     obj['roomName'] = this._roomName;
     obj['startTime'] = this._startTime;
@@ -61,7 +74,7 @@ class RequestSchedule {
   static final baseURL = 'https://homeautomations.tk/brijesh/server_files';
   static final finalURL = baseURL + "/schedule_device.php";
 
-  Future<Schedule> getSchedule(
+  Future<List<Schedule>> getSchedule(
       User user, String deviceName, String roomName) async {
     return _netUtil.post(finalURL, body: {
       "action": "2",
@@ -71,10 +84,12 @@ class RequestSchedule {
     }).then((dynamic res) {
       print(res.toString());
       if (res["error"]) throw new FormException(res["errorMessage"]);
-      if (res['isScheduled'] == true) {
-        return Schedule.map(res['scheduleInfo']);
+      int total = int.parse(res['totalRows'].toString());
+      List<Schedule> scheduleList = new List<Schedule>();
+      for (int i = 0; i < total; i++) {
+        scheduleList.add(Schedule.map(res['scheduleInfo'][i]));
       }
-      return null;
+      return scheduleList;
     });
   }
 
@@ -102,13 +117,11 @@ class RequestSchedule {
     });
   }
 
-  Future<String> removeSchedule(
-      User user, String roomName, String deviceName) async {
+  Future<String> removeSchedule(User user, Schedule schedule) async {
     return _netUtil.post(finalURL, body: {
-      "action": "3",
+      "action": "4",
       "email": user.email,
-      "deviceName": deviceName,
-      "roomName": roomName,
+      "scheduleID": schedule.scheduleID.toString()
     }).then((dynamic res) {
       print(res.toString());
       if (res["error"]) throw new FormException(res["errorMessage"]);
@@ -118,7 +131,7 @@ class RequestSchedule {
 
   Future<List<Schedule>> getScheduleList(User user) async {
     return _netUtil.post(finalURL, body: {
-      "action": "4",
+      "action": "3",
       "email": user.email,
     }).then((dynamic res) {
       print(res.toString());
@@ -157,9 +170,9 @@ class SchedulePresenter {
     }
   }
 
-  doRemoveSchedule(User user, String roomName, String deviceName) async {
+  doRemoveSchedule(User user, Schedule schedule) async {
     try {
-      String message = await api.removeSchedule(user, roomName, deviceName);
+      String message = await api.removeSchedule(user, schedule);
       _view.onScheduleSuccess(message);
     } on Exception catch (error) {
       _view.onScheduleError(error.toString());

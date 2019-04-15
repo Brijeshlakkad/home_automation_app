@@ -1,65 +1,75 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:home_automation/colors.dart';
-import 'package:home_automation/models/user_data.dart';
-import 'package:home_automation/utils/show_progress.dart';
+import 'package:home_automation/models/device_data.dart';
 import 'package:home_automation/utils/internet_access.dart';
+import 'package:home_automation/utils/show_progress.dart';
 import 'package:home_automation/utils/show_dialog.dart';
-import 'package:home_automation/utils/show_internet_status.dart';
 import 'package:home_automation/utils/check_platform.dart';
-import 'package:flutter/services.dart';
+import 'package:home_automation/utils/show_internet_status.dart';
+import 'package:home_automation/models/user_data.dart';
 import 'package:home_automation/models/schedule_device_data.dart';
+import 'package:home_automation/models/room_data.dart';
 import 'package:home_automation/utils/delete_confirmation.dart';
 
-class ScheduledDevice extends StatefulWidget {
+class ViewSchedule extends StatefulWidget {
   final User user;
-  ScheduledDevice({this.user});
+  final Room room;
+  final Device device;
+  final updateDeviceList;
+  const ViewSchedule(
+      {this.user, this.room, this.device, this.updateDeviceList});
   @override
-  _ScheduledDeviceState createState() => _ScheduledDeviceState(user);
+  ViewScheduleState createState() {
+    return new ViewScheduleState(user, room, device);
+  }
 }
 
-class _ScheduledDeviceState extends State<ScheduledDevice>
+class ViewScheduleState extends State<ViewSchedule>
     implements ScheduleContract {
   bool _isLoading = true;
+  bool _isLoadingValue = false;
   bool internetAccess = false;
+  ShowDialog _showDialog;
   CheckPlatform _checkPlatform;
+  ShowInternetStatus _showInternetStatus;
+  DeleteConfirmation _deleteConfirmation;
 
   User user;
-  DeleteConfirmation _deleteConfirmation;
+  Room room;
+  Device device;
   List<Schedule> scheduleList = new List<Schedule>();
-  ShowDialog _showDialog;
-  ShowInternetStatus _showInternetStatus;
+  double vSlide = 0.0;
+  var showDvStatusScaffoldKey = new GlobalKey<ScaffoldState>();
+  var dvStatusRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
 
-  var scaffoldKey = new GlobalKey<ScaffoldState>();
-  var scheduledDeviecRefreshIndicatorKey =
-      new GlobalKey<RefreshIndicatorState>();
   SchedulePresenter _schedulePresenter;
-
-  _ScheduledDeviceState(User user) {
+  ViewScheduleState(User user, Room room, Device device) {
     this.user = user;
+    this.room = room;
+    this.device = device;
   }
 
   @override
   initState() {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-    ]);
-    _checkPlatform = new CheckPlatform(context: context);
-    _deleteConfirmation = new DeleteConfirmation();
-    _showInternetStatus = new ShowInternetStatus();
     _showDialog = new ShowDialog();
+    _checkPlatform = new CheckPlatform(context: context);
+    _showInternetStatus = new ShowInternetStatus();
     _schedulePresenter = new SchedulePresenter(this);
-    getScheduleList();
+    _deleteConfirmation = new DeleteConfirmation();
+    getSchedule();
     super.initState();
   }
 
   @override
   void onScheduleSuccess(String message) {
+    setState(() => _isLoading = false);
     _showDialog.showDialogCustom(context, "Success", message);
   }
 
   @override
   void onScheduleError(String errorString) {
+    setState(() => _isLoading = false);
     _showDialog.showDialogCustom(context, "Error", errorString);
   }
 
@@ -71,15 +81,15 @@ class _ScheduledDeviceState extends State<ScheduledDevice>
     });
   }
 
-  Future getScheduleList() async {
+  Future getSchedule() async {
     await getInternetAccessObject();
     if (internetAccess) {
-      List<Schedule> scheduleList =
-          await _schedulePresenter.api.getScheduleList(user);
-      if (scheduleList != null) {
+      List<Schedule> scheduleList = await _schedulePresenter.api
+          .getSchedule(this.user, this.device.dvName, this.room.roomName);
+      if (scheduleList.length > 0) {
         this.scheduleList = scheduleList;
       } else {
-        this.scheduleList = null;
+        this.scheduleList = new List<Schedule>();
       }
     }
     setState(() {
@@ -87,9 +97,8 @@ class _ScheduledDeviceState extends State<ScheduledDevice>
     });
   }
 
-  @override
   Widget build(BuildContext context) {
-    Widget getObject(List<Schedule> scheduleList, int index, int len) {
+    Widget getScheduleObject(List<Schedule> scheduleList, int index) {
       return ListTile(
         onTap: () async {
           bool perm = await _deleteConfirmation.showConfirmDialog(
@@ -101,11 +110,15 @@ class _ScheduledDeviceState extends State<ScheduledDevice>
             });
             await _schedulePresenter.doRemoveSchedule(
                 user, scheduleList[index]);
-            await getScheduleList();
+            await getSchedule();
           }
         },
         title: Text(
-            "${scheduleList[index].deviceName} (${scheduleList[index].roomName})"),
+          "${scheduleList[index].repetition}",
+          style: TextStyle(
+            color: Colors.black,
+          ),
+        ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.start,
@@ -135,22 +148,6 @@ class _ScheduledDeviceState extends State<ScheduledDevice>
                 Text(
                   "${scheduleList[index].endTime}",
                   style: TextStyle(color: Colors.black),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  "Repetition: ",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.black),
-                ),
-                Text(
-                  "${scheduleList[index].repetition}",
-                  style: TextStyle(
-                    color: Colors.black,
-                  ),
                 ),
               ],
             ),
@@ -196,20 +193,14 @@ class _ScheduledDeviceState extends State<ScheduledDevice>
       );
     }
 
-    Widget createView(BuildContext context, List<Schedule> scheduleList) {
-      var len = 0;
-      if (scheduleList != null) {
-        len = scheduleList.length;
-      }
-      return new ListView.builder(
+    Widget createDeviceView(BuildContext context, List<Schedule> scheduleList) {
+      int len = scheduleList.length;
+      return ListView.builder(
         itemBuilder: (BuildContext context, int index) {
           if (len == 0) {
-            return Container(
-              padding: EdgeInsets.only(top: 20.0),
-              child: Text(
-                "Devices are not scheduled yet!",
-                textAlign: TextAlign.center,
-              ),
+            return Text(
+              "Device has not been scheduled.",
+              textAlign: TextAlign.center,
             );
           }
           if (index == 0) {
@@ -217,50 +208,115 @@ class _ScheduledDeviceState extends State<ScheduledDevice>
               padding: EdgeInsets.only(top: 10.0),
             );
           }
-          return getObject(scheduleList, index - 1, len);
+          return getScheduleObject(scheduleList, index - 1);
         },
         itemCount: len + 1,
       );
     }
 
-    Widget createIOSView(BuildContext context, List<Schedule> scheduleList) {
-      var len = 0;
-      if (scheduleList != null) {
-        len = scheduleList.length;
-      }
-      return new SliverList(
-        delegate: new SliverChildBuilderDelegate(
-          (BuildContext context, int index) {
-            if (len == 0) {
-              return Container(
-                padding: EdgeInsets.only(top: 20.0),
-                child: Text(
-                  "Devices are not scheduled yet!",
-                  textAlign: TextAlign.center,
-                ),
-              );
-            }
-            if (index == 0) {
-              return Container(
-                padding: EdgeInsets.only(top: 10.0),
-              );
-            }
-            return getObject(scheduleList, index - 1, len);
-          },
-          childCount: len + 1,
-        ),
+    Widget createIOSDeviceView(
+        BuildContext context, List<Schedule> scheduleList) {
+      int len = scheduleList.length;
+      return SliverList(
+        delegate: SliverChildBuilderDelegate((BuildContext context, int index) {
+          if (len == 0) {
+            return Text(
+              "Device has not been scheduled.",
+              textAlign: TextAlign.center,
+            );
+          }
+          if (index == 0) {
+            return Container(
+              padding: EdgeInsets.only(top: 10.0),
+            );
+          }
+          return getScheduleObject(scheduleList, index - 1);
+        }, childCount: len + 1),
       );
     }
 
+    String getName() {
+      if (device != null) {
+        return device.dvName;
+      }
+      return widget.device.dvName;
+    }
+
     return Scaffold(
-      key: scaffoldKey,
+      key: showDvStatusScaffoldKey,
       appBar: _checkPlatform.isIOS()
           ? CupertinoNavigationBar(
               backgroundColor: kHAutoBlue100,
-              middle: new Text("Scheduled Devices"),
+              middle: Center(
+                child: Row(
+                  children: <Widget>[
+                    Text(
+                      'Device',
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline
+                          .copyWith(fontSize: 18.0),
+                    ),
+                    SizedBox(
+                      width: 15.0,
+                    ),
+                    new Hero(
+                      tag: widget.device.dvName,
+                      child: SizedBox(
+                        width: 100.0,
+                        child: Text(
+                          "${getName()}",
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline
+                              .copyWith(fontSize: 18.0),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             )
-          : new AppBar(
-              title: new Text("Scheduled Devices"),
+          : AppBar(
+              leading: new IconButton(
+                tooltip: "back",
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: kHAutoBlue900,
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+              title: Center(
+                child: Row(
+                  children: <Widget>[
+                    Text(
+                      'Device',
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline
+                          .copyWith(fontSize: 17.0),
+                    ),
+                    SizedBox(
+                      width: 15.0,
+                    ),
+                    new Hero(
+                      tag: widget.device.id,
+                      child: SizedBox(
+                        width: 100.0,
+                        child: Text(
+                          "${getName()}",
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline
+                              .copyWith(fontSize: 17.0),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
       body: _isLoading
           ? ShowProgress()
@@ -269,22 +325,22 @@ class _ScheduledDeviceState extends State<ScheduledDevice>
                   ? new CustomScrollView(
                       slivers: <Widget>[
                         new CupertinoSliverRefreshControl(
-                            onRefresh: getScheduleList),
+                            onRefresh: getSchedule),
                         new SliverSafeArea(
                             top: false,
-                            sliver: createIOSView(context, scheduleList)),
+                            sliver: createIOSDeviceView(context, scheduleList)),
                       ],
                     )
                   : RefreshIndicator(
-                      key: scheduledDeviecRefreshIndicatorKey,
-                      child: createView(context, scheduleList),
-                      onRefresh: getScheduleList,
+                      key: dvStatusRefreshIndicatorKey,
+                      child: createDeviceView(context, scheduleList),
+                      onRefresh: getSchedule,
                     )
               : _checkPlatform.isIOS()
                   ? new CustomScrollView(
                       slivers: <Widget>[
                         new CupertinoSliverRefreshControl(
-                            onRefresh: getScheduleList),
+                            onRefresh: getSchedule),
                         new SliverSafeArea(
                           top: false,
                           sliver: _showInternetStatus.showInternetStatus(
@@ -294,11 +350,11 @@ class _ScheduledDeviceState extends State<ScheduledDevice>
                       ],
                     )
                   : RefreshIndicator(
-                      key: scheduledDeviecRefreshIndicatorKey,
+                      key: dvStatusRefreshIndicatorKey,
                       child: _showInternetStatus.showInternetStatus(
                         _checkPlatform.isIOS(),
                       ),
-                      onRefresh: getScheduleList,
+                      onRefresh: getSchedule,
                     ),
     );
   }

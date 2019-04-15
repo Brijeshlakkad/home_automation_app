@@ -129,7 +129,7 @@ class _ControlMemberState extends State<ControlMember>
       ),
       child: ListTile(
         leading: Text(
-          "${memberList[index].name[0]}",
+          "${memberList[index].name[0].toUpperCase()}",
           style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:home_automation/colors.dart';
 import 'package:home_automation/models/device_data.dart';
 import 'package:home_automation/utils/internet_access.dart';
 import 'package:home_automation/utils/show_progress.dart';
@@ -17,9 +16,7 @@ class ScheduleDevice extends StatefulWidget {
   final User user;
   final Room room;
   final Device device;
-  final updateDeviceList;
-  const ScheduleDevice(
-      {this.user, this.room, this.device, this.updateDeviceList});
+  const ScheduleDevice({this.user, this.room, this.device});
   @override
   ScheduleDeviceState createState() {
     return new ScheduleDeviceState(user, room, device);
@@ -28,8 +25,7 @@ class ScheduleDevice extends StatefulWidget {
 
 class ScheduleDeviceState extends State<ScheduleDevice>
     implements ScheduleContract {
-  bool _isLoading = true;
-  bool _isLoadingValue = false;
+  bool _isLoading = false;
   bool internetAccess = false;
   ShowDialog _showDialog;
   CheckPlatform _checkPlatform;
@@ -65,7 +61,7 @@ class ScheduleDeviceState extends State<ScheduleDevice>
     _checkPlatform = new CheckPlatform(context: context);
     _showInternetStatus = new ShowInternetStatus();
     repetitionList = [
-      "WEEKLY",
+      "DAILY",
       "ONCE",
       "MONDAY",
       "TUESDAY",
@@ -77,7 +73,7 @@ class ScheduleDeviceState extends State<ScheduleDevice>
     ];
     _repetition = repetitionList[0];
     switchOptions = ["OFF", "ON"];
-    selectedSwitchOption = this.switchOptions[1];
+    selectedSwitchOption = this.switchOptions[0];
     _schedulePresenter = new SchedulePresenter(this);
     super.initState();
   }
@@ -85,15 +81,30 @@ class ScheduleDeviceState extends State<ScheduleDevice>
   @override
   void onScheduleSuccess(String message) {
     _showDialog.showDialogCustom(context, "Success", message);
+    setState(() {
+      this.selectedSwitchOption = this.switchOptions[0];
+      _isLoading = false;
+    });
   }
 
   @override
   void onScheduleError(String errorString) {
     _showDialog.showDialogCustom(context, "Error", errorString);
+    setState(() {
+      this.selectedSwitchOption = this.switchOptions[0];
+      _isLoading = false;
+    });
   }
 
   String getDateTimeFormat(date) {
-    return "${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
+    int hour = int.parse(date.hour.toString());
+    String meridiem = "AM";
+    if (hour > 12) {
+      hour = hour - 12;
+      meridiem = "PM";
+    }
+//    return "${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
+    return "${hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}:${date.second.toString().padLeft(2, '0')} $meridiem";
   }
 
   Future getInternetAccessObject() async {
@@ -132,6 +143,13 @@ class ScheduleDeviceState extends State<ScheduleDevice>
         _showDialog.showDialogCustom(
             context, "Error", "Please fill valid information!");
       }
+    } else {
+      _showDialog.showDialogCustom(
+        context,
+        "Internet Connection Error",
+        "Please check your internet connection.",
+        boxHeight: 57.0,
+      );
     }
     setState(() {
       _isLoading = false;
@@ -151,34 +169,14 @@ class ScheduleDeviceState extends State<ScheduleDevice>
                   : Text("${getDateTimeFormat(startTime)}"),
               RaisedButton(
                 onPressed: () {
-                  DatePicker.showDateTimePicker(
+                  DatePicker.showTimePicker(
                     context,
                     showTitleActions: true,
-                    onChanged: (date) {
-                      if (date.millisecondsSinceEpoch >
-                          todayDate.millisecondsSinceEpoch) {
-                      } else {
-                        setState(() {
-                          startTime = null;
-                        });
-                        _showDialog.showDialogCustom(
-                            context, "Error", "Please select valid date");
-                      }
-                    },
                     onConfirm: (date) {
-                      if (date.millisecondsSinceEpoch >
-                          todayDate.millisecondsSinceEpoch) {
-                        if (date != null && date != startTime) {
-                          setState(() {
-                            startTime = date;
-                          });
-                        }
-                      } else {
+                      if (date != null && date != startTime) {
                         setState(() {
-                          startTime = null;
+                          startTime = date;
                         });
-                        _showDialog.showDialogCustom(
-                            context, "Error", "Please select valid date");
                       }
                     },
                     currentTime: DateTime.now(),
@@ -203,37 +201,14 @@ class ScheduleDeviceState extends State<ScheduleDevice>
                   : Text("${getDateTimeFormat(endTime)}"),
               RaisedButton(
                 onPressed: () {
-                  DatePicker.showDateTimePicker(
+                  DatePicker.showTimePicker(
                     context,
                     showTitleActions: true,
-                    onChanged: (date) {
-                      if (date.millisecondsSinceEpoch >
-                          todayDate.millisecondsSinceEpoch) {
-                      } else {
-                        setState(() {
-                          endTime = null;
-                        });
-                        _showDialog.showDialogCustom(
-                            context, "Error", "Please select valid date");
-                      }
-                    },
                     onConfirm: (date) {
-                      if (date.millisecondsSinceEpoch >
-                              todayDate.millisecondsSinceEpoch &&
-                          startTime != null &&
-                          startTime.millisecondsSinceEpoch <
-                              date.millisecondsSinceEpoch) {
-                        if (date != null && date != endTime) {
-                          setState(() {
-                            endTime = date;
-                          });
-                        }
-                      } else {
+                      if (date != null && date != endTime) {
                         setState(() {
-                          endTime = null;
+                          endTime = date;
                         });
-                        _showDialog.showDialogCustom(
-                            context, "Error", "Please select valid date");
                       }
                     },
                     currentTime: DateTime.now(),
@@ -297,6 +272,9 @@ class ScheduleDeviceState extends State<ScheduleDevice>
           Container(
             child: RaisedButton(
               onPressed: () async {
+                setState(() {
+                  _isLoading = true;
+                });
                 await _scheduleDevice();
               },
               child: Text("Schedule"),
@@ -309,6 +287,6 @@ class ScheduleDeviceState extends State<ScheduleDevice>
 
   @override
   Widget build(BuildContext context) {
-    return _showBody(context);
+    return _isLoading ? ShowProgress() : _showBody(context);
   }
 }

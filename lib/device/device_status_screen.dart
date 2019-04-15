@@ -10,6 +10,10 @@ import 'package:home_automation/utils/show_internet_status.dart';
 import 'package:home_automation/models/user_data.dart';
 import 'package:home_automation/models/schedule_device_data.dart';
 import 'package:home_automation/models/room_data.dart';
+import 'package:home_automation/utils/delete_confirmation.dart';
+import "package:home_automation/device/schedule_backdrop.dart";
+import 'package:home_automation/device/schedule_device.dart';
+import "package:home_automation/device/view_schedule.dart";
 
 class DeviceStatusScreen extends StatefulWidget {
   final User user;
@@ -32,11 +36,12 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
   ShowDialog _showDialog;
   CheckPlatform _checkPlatform;
   ShowInternetStatus _showInternetStatus;
+  DeleteConfirmation _deleteConfirmation;
 
   User user;
   Room room;
   Device device;
-  Schedule schedule;
+  List<Schedule> scheduleList = new List<Schedule>();
   double vSlide = 0.0;
   var showDvStatusScaffoldKey = new GlobalKey<ScaffoldState>();
   var dvStatusRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
@@ -56,6 +61,7 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
     _checkPlatform = new CheckPlatform(context: context);
     _showInternetStatus = new ShowInternetStatus();
     _schedulePresenter = new SchedulePresenter(this);
+    _deleteConfirmation = new DeleteConfirmation();
     getDeviceStatus();
     super.initState();
   }
@@ -77,17 +83,20 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
   }
 
   @override
-  void onError(String errorTxt) {
+  void onError(String errorText) {
     setState(() => _isLoading = false);
+    _showDialog.showDialogCustom(context, "Error", errorText);
   }
 
   @override
   void onScheduleSuccess(String message) {
+    setState(() => _isLoading = false);
     _showDialog.showDialogCustom(context, "Success", message);
   }
 
   @override
   void onScheduleError(String errorString) {
+    setState(() => _isLoading = false);
     _showDialog.showDialogCustom(context, "Error", errorString);
   }
 
@@ -102,12 +111,12 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
   Future getSchedule() async {
     await getInternetAccessObject();
     if (internetAccess) {
-      Schedule schedule = await _schedulePresenter.api
+      List<Schedule> scheduleList = await _schedulePresenter.api
           .getSchedule(this.user, this.device.dvName, this.room.roomName);
-      if (schedule != null) {
-        this.schedule = schedule;
+      if (scheduleList.length > 0) {
+        this.scheduleList = scheduleList;
       } else {
-        this.schedule = null;
+        this.scheduleList = new List<Schedule>();
       }
     }
   }
@@ -181,112 +190,30 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
     }
 
     Widget showScheduledDevice() {
-      return schedule == null
-          ? Container(
-              child: Text(
-                "Device has not been scheduled.",
-                textAlign: TextAlign.center,
-              ),
-            )
-          : Column(
-              children: [
-                Container(
-                  child: Table(
-                    children: [
-                      TableRow(
-                        children: [
-                          TableCell(
-                            child: Text("Start Time"),
-                          ),
-                          TableCell(
-                            child: Text("${schedule.startTIme}"),
-                          ),
-                        ],
-                      ),
-                      TableRow(
-                        children: [
-                          TableCell(
-                            child: Text("Start Time"),
-                          ),
-                          TableCell(
-                            child: Text("${schedule.endTime}"),
-                          ),
-                        ],
-                      ),
-                      TableRow(
-                        children: [
-                          TableCell(
-                            child: Text("Repetition"),
-                          ),
-                          TableCell(
-                            child: Text("${schedule.repetition}"),
-                          ),
-                        ],
-                      ),
-                      TableRow(
-                        children: [
-                          TableCell(
-                            child: Text("After Status"),
-                          ),
-                          TableCell(
-                            child: schedule.afterStatus == "1"
-                                ? Text(
-                                    "ON",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.green,
-                                    ),
-                                  )
-                                : Text(
-                                    "OFF",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.green,
-                                    ),
-                                  ),
-                          ),
-                        ],
-                      ),
-                      TableRow(
-                        children: [
-                          TableCell(
-                            child: Text("Created Date"),
-                          ),
-                          TableCell(
-                            child: Text("${schedule.createdDate}"),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  height: 10.0,
-                ),
-                Container(
-                  child: RaisedButton(
-                    color: Colors.red,
-                    onPressed: () async {
-                      setState(() {
-                        _isLoading = true;
-                      });
-                      await _schedulePresenter.doRemoveSchedule(
-                          user, this.room.roomName, this.device.dvName);
-                      await getSchedule();
-                      setState(() {
-                        _isLoading = false;
-                      });
-                    },
-                    child: Text(
-                      "Remove",
-                      style: TextStyle(
-                        color: Colors.white,
-                      ),
+      return FlatButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (BuildContext context) => Backdrop(
+                    backTitle: Text("Device"),
+                    backPanel: ViewSchedule(
+                      user: this.user,
+                      room: widget.room,
+                      device: this.device,
+                    ),
+                    frontTitle: Text("Schedule Device"),
+                    frontPanel: ScheduleDevice(
+                      user: this.user,
+                      room: widget.room,
+                      device: this.device,
                     ),
                   ),
-                ),
-              ],
-            );
+            ),
+          );
+        },
+        child: Text("View Schedule Information"),
+      );
     }
 
     Widget createDeviceView(BuildContext context, Device device) {

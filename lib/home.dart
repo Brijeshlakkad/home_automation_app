@@ -633,8 +633,9 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                 leading: Container(),
                 middle: new Text(
                   "Home Automation",
+                  textAlign: TextAlign.left,
                   style: TextStyle(
-                    fontSize: 17.0,
+                    fontSize: 15.0,
                   ),
                 ),
                 trailing: _goToUserProfile.showUser(),
@@ -644,7 +645,7 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
                 title: new Text(
                   "Home Automation",
                   style: TextStyle(
-                    fontSize: 17.0,
+                    fontSize: 15.0,
                   ),
                 ),
                 actions: <Widget>[

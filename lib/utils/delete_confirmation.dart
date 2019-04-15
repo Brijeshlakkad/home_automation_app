@@ -36,7 +36,7 @@ class DeleteConfirmation {
             builder: (BuildContext context) => new AlertDialog(
                   contentPadding: const EdgeInsets.all(16.0),
                   content: new Container(
-                    child: Text('Are you sure?'),
+                    child: Text('$title'),
                   ),
                   actions: <Widget>[
                     new FlatButton(

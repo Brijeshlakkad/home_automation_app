@@ -15,8 +15,6 @@ import 'package:home_automation/utils/check_platform.dart';
 import 'package:home_automation/utils/show_internet_status.dart';
 import 'package:home_automation/models/user_data.dart';
 import 'package:home_automation/get_to_user_profile.dart';
-import "package:home_automation/device/schedule_backdrop.dart";
-import "package:home_automation/device/schedule_device.dart";
 
 class DeviceScreen extends StatefulWidget {
   final Home home;
@@ -246,21 +244,11 @@ class DeviceScreenState extends State<DeviceScreen>
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => Backdrop(
-                        backTitle: Text("Device"),
-                        backPanel: DeviceStatusScreen(
-                            user: this.user,
-                            room: widget.room,
-                            device: dvList[index],
-                            updateDeviceList: this.updateDeviceList),
-                        frontTitle: Text("Schedule Device"),
-                        frontPanel: ScheduleDevice(
-                          user: this.user,
-                          room: widget.room,
-                          device: dvList[index],
-                          updateDeviceList: this.updateDeviceList,
-                        ),
-                      ),
+                  builder: (context) => DeviceStatusScreen(
+                      user: this.user,
+                      room: widget.room,
+                      device: dvList[index],
+                      updateDeviceList: this.updateDeviceList),
                 ),
               );
               setState(() {
