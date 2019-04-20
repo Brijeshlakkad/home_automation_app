@@ -11,6 +11,7 @@ import 'package:home_automation/models/user_data.dart';
 import 'package:home_automation/models/schedule_device_data.dart';
 import 'package:home_automation/models/room_data.dart';
 import 'package:home_automation/utils/delete_confirmation.dart';
+import 'dart:async';
 
 class ViewSchedule extends StatefulWidget {
   final User user;
@@ -43,6 +44,7 @@ class ViewScheduleState extends State<ViewSchedule>
   var showDvStatusScaffoldKey = new GlobalKey<ScaffoldState>();
   var dvStatusRefreshIndicatorKey = new GlobalKey<RefreshIndicatorState>();
 
+  Timer _timer;
   SchedulePresenter _schedulePresenter;
   ViewScheduleState(User user, Room room, Device device) {
     this.user = user;
@@ -58,7 +60,23 @@ class ViewScheduleState extends State<ViewSchedule>
     _schedulePresenter = new SchedulePresenter(this);
     _deleteConfirmation = new DeleteConfirmation();
     getSchedule();
+    periodicCheck();
     super.initState();
+  }
+
+  void periodicCheck() async {
+    await getInternetAccessObject();
+    if (internetAccess) {
+      _timer = new Timer.periodic(Duration(seconds: 2), (Timer t) async {
+        await getSchedule();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
   }
 
   @override
@@ -198,13 +216,44 @@ class ViewScheduleState extends State<ViewSchedule>
       return ListView.builder(
         itemBuilder: (BuildContext context, int index) {
           if (len == 0) {
-            return Text(
-              "Device has not been scheduled.",
-              textAlign: TextAlign.center,
+            return Center(
+              child: Container(
+                padding: EdgeInsets.only(top: 20),
+                child: Text(
+                  "Device has not been scheduled.",
+                  textAlign: TextAlign.center,
+                ),
+              ),
             );
           }
           if (index == 0) {
             return Container(
+              child: Container(
+                padding: EdgeInsets.all(20.0),
+                child: RaisedButton(
+                  onPressed: () async {
+                    bool perm = await _deleteConfirmation.showConfirmDialog(
+                        context, _checkPlatform.isIOS(),
+                        title:
+                            "Do you want to remove all the scheduling for ${this.device.dvName}");
+                    if (perm) {
+                      setState(() {
+                        _isLoading = true;
+                      });
+                      await _schedulePresenter.doRemoveScheduleForDevice(
+                          this.user, this.device, this.room);
+                      await getSchedule();
+                    }
+                  },
+                  color: Colors.red[300],
+                  child: Text(
+                    "Remove All",
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
               padding: EdgeInsets.only(top: 10.0),
             );
           }
@@ -220,13 +269,44 @@ class ViewScheduleState extends State<ViewSchedule>
       return SliverList(
         delegate: SliverChildBuilderDelegate((BuildContext context, int index) {
           if (len == 0) {
-            return Text(
-              "Device has not been scheduled.",
-              textAlign: TextAlign.center,
+            return Center(
+              child: Container(
+                padding: EdgeInsets.only(top: 20),
+                child: Text(
+                  "Device has not been scheduled.",
+                  textAlign: TextAlign.center,
+                ),
+              ),
             );
           }
           if (index == 0) {
             return Container(
+              child: Container(
+                padding: EdgeInsets.all(20.0),
+                child: RaisedButton(
+                  onPressed: () async {
+                    bool perm = await _deleteConfirmation.showConfirmDialog(
+                        context, _checkPlatform.isIOS(),
+                        title:
+                            "Do you want to remove all the scheduling for ${this.device.dvName}");
+                    if (perm) {
+                      setState(() {
+                        _isLoading = true;
+                      });
+                      await _schedulePresenter.doRemoveScheduleForDevice(
+                          this.user, this.device, this.room);
+                      await getSchedule();
+                    }
+                  },
+                  color: Colors.red[300],
+                  child: Text(
+                    "Remove All",
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
               padding: EdgeInsets.only(top: 10.0),
             );
           }
@@ -251,7 +331,7 @@ class ViewScheduleState extends State<ViewSchedule>
                 child: Row(
                   children: <Widget>[
                     Text(
-                      'Device',
+                      'Schedule',
                       style: Theme.of(context)
                           .textTheme
                           .headline
@@ -292,7 +372,7 @@ class ViewScheduleState extends State<ViewSchedule>
                 child: Row(
                   children: <Widget>[
                     Text(
-                      'Device',
+                      'Schedule',
                       style: Theme.of(context)
                           .textTheme
                           .headline

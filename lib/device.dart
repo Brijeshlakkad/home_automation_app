@@ -15,6 +15,7 @@ import 'package:home_automation/utils/check_platform.dart';
 import 'package:home_automation/utils/show_internet_status.dart';
 import 'package:home_automation/models/user_data.dart';
 import 'package:home_automation/get_to_user_profile.dart';
+import 'dart:async';
 
 class DeviceScreen extends StatefulWidget {
   final Home home;
@@ -55,6 +56,8 @@ class DeviceScreenState extends State<DeviceScreen>
     });
   }
 
+  Timer _timer;
+  int _timerStatus = 1;
   DeviceScreenPresenter _presenter;
   DeviceScreenState(user, callbackUser) {
     this.user = user;
@@ -69,7 +72,25 @@ class DeviceScreenState extends State<DeviceScreen>
     _checkPlatform = new CheckPlatform(context: context);
     _showInternetStatus = new ShowInternetStatus();
     getDeviceList();
+    periodicCheck();
     super.initState();
+  }
+
+  void periodicCheck() async {
+    await getInternetAccessObject();
+    if (internetAccess) {
+      _timer = new Timer.periodic(Duration(seconds: 2), (Timer t) async {
+        if (_timerStatus == 1) {
+          await getDeviceList();
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
   }
 
   updateDeviceList() async {
@@ -196,6 +217,9 @@ class DeviceScreenState extends State<DeviceScreen>
               if (internetAccess) {
                 Map dvDetails = new Map();
                 dvDetails['isModifying'] = false;
+                setState(() {
+                  _timerStatus = 0;
+                });
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -207,6 +231,9 @@ class DeviceScreenState extends State<DeviceScreen>
                         ),
                   ),
                 );
+                setState(() {
+                  _timerStatus = 1;
+                });
                 print(result.toString());
                 if (result != null && !result['error']) {
                   setState(() {
@@ -241,6 +268,9 @@ class DeviceScreenState extends State<DeviceScreen>
           onTap: () async {
             await getInternetAccessObject();
             if (internetAccess) {
+              setState(() {
+                _timerStatus = 0;
+              });
               await Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -253,6 +283,7 @@ class DeviceScreenState extends State<DeviceScreen>
               );
               setState(() {
                 _isLoading = true;
+                _timerStatus = 1;
               });
               getDeviceList();
             } else {
@@ -317,6 +348,9 @@ class DeviceScreenState extends State<DeviceScreen>
                               Map dvDetails = new Map();
                               dvDetails = dvList[index].toMap();
                               dvDetails['isModifying'] = true;
+                              setState(() {
+                                _timerStatus = 0;
+                              });
                               final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -328,6 +362,9 @@ class DeviceScreenState extends State<DeviceScreen>
                                       ),
                                 ),
                               );
+                              setState(() {
+                                _timerStatus = 1;
+                              });
                               print(result.toString());
                               if (result != null && !result['error']) {
                                 setState(() {

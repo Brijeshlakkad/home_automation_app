@@ -14,6 +14,7 @@ import 'package:home_automation/utils/delete_confirmation.dart';
 import "package:home_automation/device/schedule_backdrop.dart";
 import 'package:home_automation/device/schedule_device.dart';
 import "package:home_automation/device/view_schedule.dart";
+import 'dart:async';
 
 class DeviceStatusScreen extends StatefulWidget {
   final User user;
@@ -48,6 +49,9 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
 
   DeviceStatusScreenPresenter _presenter;
   SchedulePresenter _schedulePresenter;
+  Timer _timer;
+  int _timerStatus = 1;
+
   DeviceStatusScreenState(User user, Room room, Device device) {
     this.user = user;
     this.room = room;
@@ -63,7 +67,25 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
     _schedulePresenter = new SchedulePresenter(this);
     _deleteConfirmation = new DeleteConfirmation();
     getDeviceStatus();
+    periodicCheck();
     super.initState();
+  }
+
+  void periodicCheck() async {
+    await getInternetAccessObject();
+    if (internetAccess) {
+      _timer = new Timer.periodic(Duration(seconds: 2), (Timer t) async {
+        if (_timerStatus == 1) {
+          await getDeviceStatus();
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
   }
 
   @override
@@ -108,19 +130,6 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
     });
   }
 
-  Future getSchedule() async {
-    await getInternetAccessObject();
-    if (internetAccess) {
-      List<Schedule> scheduleList = await _schedulePresenter.api
-          .getSchedule(this.user, this.device.dvName, this.room.roomName);
-      if (scheduleList.length > 0) {
-        this.scheduleList = scheduleList;
-      } else {
-        this.scheduleList = new List<Schedule>();
-      }
-    }
-  }
-
   Future getDeviceStatus() async {
     await getInternetAccessObject();
     if (internetAccess) {
@@ -141,7 +150,6 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
         }
       }
     }
-    await getSchedule();
     setState(() {
       _isLoading = false;
     });
@@ -190,9 +198,12 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
     }
 
     Widget showScheduledDevice() {
-      return FlatButton(
-        onPressed: () {
-          Navigator.push(
+      return RaisedButton(
+        onPressed: () async {
+          setState(() {
+            _timerStatus = 0;
+          });
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (BuildContext context) => Backdrop(
@@ -211,6 +222,9 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
                   ),
             ),
           );
+          setState(() {
+            _timerStatus = 1;
+          });
         },
         child: Text("View Schedule Information"),
       );

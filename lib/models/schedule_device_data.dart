@@ -148,6 +148,20 @@ class RequestSchedule {
       }
     });
   }
+
+  Future<String> removeScheduleForDevice(
+      User user, Device device, Room room) async {
+    return _netUtil.post(finalURL, body: {
+      "action": "5",
+      "email": user.email,
+      "deviceName": device.dvName.toString(),
+      "roomName": room.roomName.toString(),
+    }).then((dynamic res) {
+      print(res.toString());
+      if (res["error"]) throw new FormException(res["errorMessage"]);
+      return res['data'];
+    });
+  }
 }
 
 abstract class ScheduleContract {
@@ -173,6 +187,15 @@ class SchedulePresenter {
   doRemoveSchedule(User user, Schedule schedule) async {
     try {
       String message = await api.removeSchedule(user, schedule);
+      _view.onScheduleSuccess(message);
+    } on Exception catch (error) {
+      _view.onScheduleError(error.toString());
+    }
+  }
+
+  doRemoveScheduleForDevice(User user, Device device, Room room) async {
+    try {
+      String message = await api.removeScheduleForDevice(user, device, room);
       _view.onScheduleSuccess(message);
     } on Exception catch (error) {
       _view.onScheduleError(error.toString());

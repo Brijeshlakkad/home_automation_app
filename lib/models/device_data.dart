@@ -28,8 +28,12 @@ class Device {
     this._roomID = int.parse(roomID);
     var hwID = obj['hwID'].toString();
     this._hwID = int.parse(hwID);
-    var dvStatus = obj['dvStatus'].toString();
-    this._dvStatus = int.parse(dvStatus);
+    try {
+      var dvStatus = obj['dvStatus'].toString();
+      this._dvStatus = int.parse(dvStatus);
+    } catch (e) {
+      this._dvStatus = 0;
+    }
     try {
       this._deviceSlider = DeviceSlider.map(obj['deviceSlider']);
     } catch (e) {
