@@ -72,7 +72,6 @@ class UserProfileState extends State<UserProfile>
   void dispose() {
     SystemChannels.textInput.invokeMethod('TextInput.hide');
     super.dispose();
-    print("Disposing");
   }
 
   Future getInternetAccessObject() async {
@@ -213,15 +212,15 @@ class UserProfileState extends State<UserProfile>
     }
 
     return Container(
-      padding: EdgeInsets.all(20.0),
       child: ListView(
         children: <Widget>[
+          SizedBox(
+            height: 10.0,
+          ),
           Container(
+            padding: EdgeInsets.all(20.0),
             child: Column(
               children: <Widget>[
-                SizedBox(
-                  height: 9.0,
-                ),
                 Card(
                   elevation: 10.0,
                   child: Container(

@@ -75,6 +75,13 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     this.showDialog.showDialogCustom(context, "Error", errorString);
   }
 
+  TextStyle _captionStyle = TextStyle(
+    color: Colors.grey,
+    fontSize: 11.0,
+  );
+  TextStyle _valueStyle = TextStyle(
+    fontSize: 18.0,
+  );
   @override
   Widget build(BuildContext context) {
     Widget drawBox(Subscription subscription) {
@@ -85,41 +92,69 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           decoration: BoxDecoration(
             border: Border.all(color: kHAutoBlue300, width: 2.0),
           ),
-          child: Column(
-            children: [
-              Row(
-                children: <Widget>[
-                  Text("Hardware Series"),
-                  Expanded(
-                    child: Container(),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        "${subscription.hwSeries}",
+                        style: _valueStyle,
+                      ),
+                      Text(
+                        "Hardware Series",
+                        style: _captionStyle,
+                      ),
+                    ],
                   ),
-                  Text("${subscription.hwSeries}"),
+                  SizedBox(
+                    height: 10.0,
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        "${subscription.leftTime}",
+                        style: _valueStyle,
+                      ),
+                      Text(
+                        "Expiration Date",
+                        style: _captionStyle,
+                      ),
+                    ],
+                  ),
                 ],
               ),
-              Row(
+              Column(
                 children: <Widget>[
-                  Text("Expiration Date"),
-                  Expanded(
-                    child: Container(),
-                  ),
-                  Text("${subscription.leftTime}"),
-                ],
-              ),
-              Row(
-                children: <Widget>[
-                  Text("State"),
-                  Expanded(
-                    child: Container(),
-                  ),
                   subscription.state == "Running"
                       ? Text(
                           "${subscription.state}",
-                          style: TextStyle(color: Colors.green),
+                          style: TextStyle(
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18.0,
+                          ),
                         )
                       : Text(
                           "${subscription.state}",
-                          style: TextStyle(color: Colors.red),
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18.0,
+                          ),
                         ),
+                  Text(
+                    "State",
+                    style: _captionStyle,
+                  ),
                 ],
               ),
             ],

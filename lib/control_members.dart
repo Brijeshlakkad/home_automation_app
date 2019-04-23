@@ -142,13 +142,17 @@ class _ControlMemberState extends State<ControlMember>
               ),
               title: Text(
                 "${memberList[index].email}",
-                style: TextStyle(height: 1.2),
+                style: TextStyle(
+                  height: 1.2,
+                ),
               ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
-                  Text("${memberList[index].name}"),
+                  Text(
+                    "${memberList[index].name}",
+                  ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
@@ -212,7 +216,7 @@ class _ControlMemberState extends State<ControlMember>
               style: TextStyle(
                 color: Color.fromRGBO(100, 100, 100, 1.0),
                 fontWeight: FontWeight.bold,
-                fontSize: 20.0,
+                fontSize: 16.0,
               ),
             ),
           ),
@@ -245,6 +249,9 @@ class _ControlMemberState extends State<ControlMember>
                   prefixIcon: Icon(
                     Icons.email,
                   ),
+                  hintStyle: TextStyle(
+                    fontSize: 13.0,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(32.0),
                   ),
@@ -262,6 +269,9 @@ class _ControlMemberState extends State<ControlMember>
                   ),
                   prefixIcon: Icon(
                     Icons.toys,
+                  ),
+                  hintStyle: TextStyle(
+                    fontSize: 13.0,
                   ),
                 ),
                 child: DropdownButtonHideUnderline(
@@ -303,7 +313,7 @@ class _ControlMemberState extends State<ControlMember>
                       Text(
                         " Save",
                         style: TextStyle(
-                          fontSize: 15.0,
+                          fontSize: 13.0,
                         ),
                       ),
                     ],

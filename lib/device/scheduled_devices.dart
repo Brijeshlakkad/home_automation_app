@@ -100,6 +100,15 @@ class _ScheduledDeviceState extends State<ScheduledDevice>
     }
   }
 
+  TextStyle _subTitleStyle = TextStyle(
+    fontWeight: FontWeight.bold,
+    color: Colors.black,
+    fontSize: 13.0,
+  );
+  TextStyle _subTextStyle = TextStyle(
+    color: Colors.black,
+    fontSize: 13.0,
+  );
   @override
   Widget build(BuildContext context) {
     Widget getObject(List<Schedule> scheduleList, int index, int len) {
@@ -129,12 +138,12 @@ class _ScheduledDeviceState extends State<ScheduledDevice>
                     children: <Widget>[
                       Text(
                         "Start Time: ",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.black),
+                        style: _subTitleStyle,
                       ),
                       Text(
                         "${scheduleList[index].startTIme}",
-                        style: TextStyle(color: Colors.black),
+                        style: _subTextStyle,
+                        softWrap: true,
                       ),
                     ],
                   ),
@@ -143,12 +152,12 @@ class _ScheduledDeviceState extends State<ScheduledDevice>
                     children: <Widget>[
                       Text(
                         "End Time: ",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.black),
+                        style: _subTitleStyle,
                       ),
                       Text(
                         "${scheduleList[index].endTime}",
-                        style: TextStyle(color: Colors.black),
+                        style: _subTextStyle,
+                        softWrap: true,
                       ),
                     ],
                   ),
@@ -157,14 +166,12 @@ class _ScheduledDeviceState extends State<ScheduledDevice>
                     children: <Widget>[
                       Text(
                         "Repetition: ",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.black),
+                        style: _subTitleStyle,
                       ),
                       Text(
                         "${scheduleList[index].repetition}",
-                        style: TextStyle(
-                          color: Colors.black,
-                        ),
+                        style: _subTextStyle,
+                        softWrap: true,
                       ),
                     ],
                   ),
@@ -173,14 +180,12 @@ class _ScheduledDeviceState extends State<ScheduledDevice>
                     children: <Widget>[
                       Text(
                         "Created Date: ",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.black),
+                        style: _subTitleStyle,
                       ),
                       Text(
                         "${scheduleList[index].createdDate}",
-                        style: TextStyle(
-                          color: Colors.black,
-                        ),
+                        style: _subTextStyle,
+                        softWrap: true,
                       ),
                     ],
                   ),
