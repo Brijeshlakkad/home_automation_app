@@ -132,16 +132,38 @@ class LoginScreenState extends State<LoginScreen>
         borderRadius: BorderRadius.all(Radius.circular(46.0)),
       ),
       child: new RaisedButton(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
         onPressed: _submit,
         child: new Text("LOGIN"),
       ),
     );
     var loginForm = new ListView(
       children: <Widget>[
-        new Center(
-          child: Text(
-            "Home Automation",
-            textScaleFactor: 2.0,
+//        new Center(
+//          child: Text(
+//            "Home Automation",
+//            textScaleFactor: 2.0,
+//          ),
+//        ),
+        Container(
+          child: Column(
+            children: <Widget>[
+              Image.asset(
+                "assets/images/logo.png",
+                height: 200.0,
+              ),
+              Container(
+                child: Text(
+                  "Home Automation",
+                  style: TextStyle(
+                    fontSize: 25.0,
+                    fontFamily: "Raleway",
+                  ),
+                ),
+              )
+            ],
           ),
         ),
         SizedBox(
@@ -153,7 +175,7 @@ class LoginScreenState extends State<LoginScreen>
           child: new Column(
             children: <Widget>[
               new Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: new TextFormField(
                   autofocus: true,
                   onSaved: (val) => _email = val,
@@ -164,11 +186,20 @@ class LoginScreenState extends State<LoginScreen>
                   onFieldSubmitted: (val) {
                     _fieldFocusChange(context, _emailNode, _passwordNode);
                   },
-                  decoration: new InputDecoration(labelText: "Email"),
+                  decoration: new InputDecoration(
+                    hintText: "Email",
+                    contentPadding: EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
+                    prefixIcon: Icon(
+                      Icons.person_outline,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(32.0),
+                    ),
+                  ),
                 ),
               ),
               new Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: Row(
                   children: <Widget>[
                     Expanded(
@@ -183,7 +214,15 @@ class LoginScreenState extends State<LoginScreen>
                           _submit();
                         },
                         decoration: new InputDecoration(
-                          labelText: "Password",
+                          hintText: "Password",
+                          contentPadding:
+                              EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(32.0),
+                          ),
+                          prefixIcon: Icon(
+                            Icons.lock_open,
+                          ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               // Based on passwordVisible state choose the icon
@@ -259,11 +298,10 @@ class LoginScreenState extends State<LoginScreen>
   }
 
   @override
-  void onLoginError(String errorTxt) {
-    _showSnackBar(errorTxt);
+  void onLoginError(String errorText) async {
+    await _showDialog.showDialogCustom(context, "Error", errorText);
     setState(() {
       _isLoadingValue = false;
-      _showError = true;
     });
   }
 

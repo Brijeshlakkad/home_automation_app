@@ -50,6 +50,7 @@ class _HomeAutomationSplashScreenState
       backgroundColor: Colors.white,
       styleTextUnderTheLoader: new TextStyle(),
       photoSize: 100.0,
+      image: Image.asset("assets/images/logo.png"),
       onClick: () => print("Home Automation"),
       loaderColor: Colors.white,
     );
@@ -96,6 +97,7 @@ TextTheme _buildAppTextTheme(TextTheme base) {
         ),
       )
       .apply(
+        fontFamily: 'Raleway',
         displayColor: kHAutoBlue900,
         bodyColor: kHAutoBlue900,
       );
