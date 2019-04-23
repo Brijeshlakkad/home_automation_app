@@ -5,6 +5,7 @@ import 'package:home_automation/utils/show_progress.dart';
 import 'package:home_automation/login_signup/signup_screen_presenter.dart';
 import 'package:home_automation/utils/show_dialog.dart';
 import 'package:home_automation/utils/check_platform.dart';
+import 'package:flutter/services.dart';
 
 class SignupScreen extends StatefulWidget {
   @override
@@ -34,8 +35,12 @@ class SignupScreenState extends State<SignupScreen>
   FocusNode _contactNode = new FocusNode();
 
   SignupScreenPresenter _presenter;
+
   @override
   void initState() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
     _presenter = new SignupScreenPresenter(this);
     _showDialog = new ShowDialog();
     _checkPlatform = new CheckPlatform(context: context);

@@ -15,6 +15,7 @@ import "package:home_automation/device/schedule_backdrop.dart";
 import 'package:home_automation/device/schedule_device.dart';
 import "package:home_automation/device/view_schedule.dart";
 import 'dart:async';
+import 'package:flutter/services.dart';
 
 class DeviceStatusScreen extends StatefulWidget {
   final User user;
@@ -61,6 +62,9 @@ class DeviceStatusScreenState extends State<DeviceStatusScreen>
 
   @override
   initState() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
     _showDialog = new ShowDialog();
     _checkPlatform = new CheckPlatform(context: context);
     _showInternetStatus = new ShowInternetStatus();

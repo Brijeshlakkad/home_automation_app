@@ -5,7 +5,7 @@ import 'package:home_automation/utils/show_dialog.dart';
 import 'package:home_automation/utils/check_platform.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:home_automation/colors.dart';
-
+import 'package:flutter/services.dart';
 class GetHardwareDetails extends StatefulWidget {
   final room;
   final List<Hardware> hwList;
@@ -47,6 +47,9 @@ class GetHardwareDetailsState extends State<GetHardwareDetails> {
   ];
   @override
   void initState() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
     _checkPlatform = new CheckPlatform(context: context);
     _showDialog = new ShowDialog();
     if (widget.hwDetails['isModifying']) {

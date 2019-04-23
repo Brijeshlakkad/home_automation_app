@@ -6,6 +6,7 @@ import 'package:home_automation/utils/custom_services.dart';
 import 'package:home_automation/utils/check_platform.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:home_automation/colors.dart';
+import 'package:flutter/services.dart';
 
 class GetDeviceDetails extends StatefulWidget {
   final hardware;
@@ -51,6 +52,9 @@ class GetDeviceDetailsState extends State<GetDeviceDetails> {
 
   @override
   void initState() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
     _checkPlatform = new CheckPlatform(context: context);
     _customService = new CustomService();
     _showDialog = new ShowDialog();

@@ -12,6 +12,7 @@ import 'package:home_automation/utils/show_internet_status.dart';
 import 'package:home_automation/models/user_data.dart';
 import 'package:home_automation/get_to_user_profile.dart';
 import 'package:home_automation/utils/custom_services.dart';
+import 'package:flutter/services.dart';
 
 class HomeScreen extends StatefulWidget {
   final User user;
@@ -68,6 +69,9 @@ class HomeScreenState extends State<HomeScreen> implements HomeScreenContract {
 
   @override
   void initState() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
     _customService = new CustomService();
     _showDialog = new ShowDialog();
     _deleteConfirmation = new DeleteConfirmation();

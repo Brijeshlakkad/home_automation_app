@@ -16,6 +16,7 @@ import 'package:home_automation/utils/show_internet_status.dart';
 import 'package:home_automation/models/user_data.dart';
 import 'package:home_automation/get_to_user_profile.dart';
 import 'dart:async';
+import 'package:flutter/services.dart';
 
 class DeviceScreen extends StatefulWidget {
   final Home home;
@@ -67,6 +68,9 @@ class DeviceScreenState extends State<DeviceScreen>
 
   @override
   void initState() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
     _showDialog = new ShowDialog();
     _deleteConfirmation = new DeleteConfirmation();
     _checkPlatform = new CheckPlatform(context: context);

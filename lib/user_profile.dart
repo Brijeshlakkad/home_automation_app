@@ -60,12 +60,19 @@ class UserProfileState extends State<UserProfile>
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
+    showDialog = new ShowDialog();
     _userUpdatePresenter = new UserUpdatePresenter(this);
     _checkPlatform = new CheckPlatform(context: context);
     _showInternetStatus = new ShowInternetStatus();
     getInternetAccessObject();
-    showDialog = new ShowDialog();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
+    super.dispose();
+    print("Disposing");
   }
 
   Future getInternetAccessObject() async {

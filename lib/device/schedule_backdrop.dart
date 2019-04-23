@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
+import 'package:flutter/services.dart';
 
 const double _kFlingVelocity = 2.0;
 
@@ -86,6 +87,9 @@ class _BackdropState extends State<Backdrop>
 
   @override
   void initState() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
     super.initState();
     // This creates an [AnimationController] that can allows for animation for
     // the BackdropPanel. 0.00 means that the front panel is in "tab" (hidden)
@@ -162,7 +166,7 @@ class _BackdropState extends State<Backdrop>
     final double panelTop = panelSize.height - panelTitleHeight;
 
     Animation<RelativeRect> panelAnimation = RelativeRectTween(
-      begin: RelativeRect.fromLTRB(0.0, deviceHeight*0.1, 0.0, 0.0),
+      begin: RelativeRect.fromLTRB(0.0, deviceHeight * 0.1, 0.0, 0.0),
       end: RelativeRect.fromLTRB(
           0.0, panelTop, 0.0, panelTop - panelSize.height),
     ).animate(_controller.view);

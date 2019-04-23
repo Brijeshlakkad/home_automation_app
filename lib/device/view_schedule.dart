@@ -12,6 +12,7 @@ import 'package:home_automation/models/schedule_device_data.dart';
 import 'package:home_automation/models/room_data.dart';
 import 'package:home_automation/utils/delete_confirmation.dart';
 import 'dart:async';
+import 'package:flutter/services.dart';
 
 class ViewSchedule extends StatefulWidget {
   final User user;
@@ -54,6 +55,9 @@ class ViewScheduleState extends State<ViewSchedule>
 
   @override
   initState() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
     _showDialog = new ShowDialog();
     _checkPlatform = new CheckPlatform(context: context);
     _showInternetStatus = new ShowInternetStatus();

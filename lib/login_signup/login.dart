@@ -10,6 +10,7 @@ import 'package:home_automation/utils/show_progress.dart';
 import 'package:home_automation/home.dart';
 import 'package:home_automation/utils/show_dialog.dart';
 import 'package:home_automation/login_signup/signup.dart';
+import 'package:flutter/services.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -41,6 +42,9 @@ class LoginScreenState extends State<LoginScreen>
   }
   @override
   void initState() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
     _showDialog = new ShowDialog();
     super.initState();
   }

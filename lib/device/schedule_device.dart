@@ -11,6 +11,7 @@ import 'package:material_switch/material_switch.dart';
 import 'package:home_automation/models/schedule_device_data.dart';
 import 'package:home_automation/models/user_data.dart';
 import 'package:home_automation/models/room_data.dart';
+import 'package:flutter/services.dart';
 
 class ScheduleDevice extends StatefulWidget {
   final User user;
@@ -57,6 +58,9 @@ class ScheduleDeviceState extends State<ScheduleDevice>
 
   @override
   initState() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
     _showDialog = new ShowDialog();
     _checkPlatform = new CheckPlatform(context: context);
     _showInternetStatus = new ShowInternetStatus();

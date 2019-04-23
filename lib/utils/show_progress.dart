@@ -3,10 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:home_automation/utils/color_loader.dart';
 
 class ShowProgress extends StatelessWidget {
-  bool _isIOS(BuildContext context) {
-    return Theme.of(context).platform == TargetPlatform.iOS ? true : false;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
