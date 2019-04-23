@@ -12,6 +12,8 @@ import 'package:home_automation/change_password.dart';
 import 'package:home_automation/subscription.dart';
 import 'package:home_automation/control_members.dart';
 import 'package:home_automation/device/scheduled_devices.dart';
+import 'package:share/share.dart';
+import 'package:home_automation/utils/show_progress.dart';
 
 class ShowUser extends StatefulWidget {
   final User user;
@@ -23,12 +25,17 @@ class ShowUser extends StatefulWidget {
   }
 }
 
-class ShowUserState extends State<ShowUser> {
+class ShowUserState extends State<ShowUser> implements UserUpdateContract {
+  bool _isLoading = false;
   bool internetAccess = false;
   CheckPlatform _checkPlatform;
   ShowDialog _showDialog;
+
   User user;
   Function callbackUser;
+  String link;
+
+  UserUpdatePresenter _userUpdatePresenter;
   ShowUserState(user, callbackUser) {
     this.user = user;
     this.callbackUser = callbackUser;
@@ -45,9 +52,10 @@ class ShowUserState extends State<ShowUser> {
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
-    _checkPlatform = new CheckPlatform(context: context);
-    getInternetAccessObject();
     _showDialog = new ShowDialog();
+    _checkPlatform = new CheckPlatform(context: context);
+    _userUpdatePresenter = new UserUpdatePresenter(this);
+    getInternetAccessObject();
     super.initState();
   }
 
@@ -57,6 +65,34 @@ class ShowUserState extends State<ShowUser> {
     setState(() {
       internetAccess = internetAccessDummy;
     });
+  }
+
+  Future getAppLink() async {
+    await getInternetAccessObject();
+    if (internetAccess) {
+      setState(() {
+        _isLoading = true;
+      });
+      String link =
+          await _userUpdatePresenter.api.getAppLink(_checkPlatform.isIOS());
+      setState(() {
+        this.link = link;
+      });
+      setState(() {
+        _isLoading = false;
+      });
+    } else {
+      await _showDialog.showDialogCustom(context, "Internet Connection Problem",
+          "Please check your internet connection",
+          fontSize: 17.0, boxHeight: 58.0);
+    }
+  }
+
+  @override
+  void onUserUpdateSuccess(User user) {}
+  @override
+  void onUserUpdateError(String errorString) {
+    _showDialog.showDialogCustom(context, "Error", errorString);
   }
 
   Widget _showBody(BuildContext context) {
@@ -141,7 +177,22 @@ class ShowUserState extends State<ShowUser> {
             height: 5.0,
           ),
           ListTile(
-            onTap: () {},
+            onTap: () async {
+              try {
+                await getAppLink();
+                final RenderBox box = context.findRenderObject();
+                Share.share(
+                    "To install Home Automation, Click on below link \n $link",
+                    sharePositionOrigin:
+                        box.localToGlobal(Offset.zero) & box.size);
+              } on Exception catch (error) {
+                onUserUpdateError(error.toString());
+              }
+              if (_isLoading)
+                setState(() {
+                  _isLoading = false;
+                });
+            },
             title: Text("Share"),
           ),
           Container(
@@ -164,7 +215,7 @@ class ShowUserState extends State<ShowUser> {
           : new AppBar(
               title: new Text("Home Automation"),
             ),
-      body: _showBody(context),
+      body: _isLoading ? ShowProgress() : _showBody(context),
     );
   }
 }

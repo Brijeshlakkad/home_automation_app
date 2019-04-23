@@ -21,6 +21,7 @@ dependencies:
   splashscreen: ^1.2.0
   flutter_datetime_picker: ^1.1.4
   material_switch: ^0.0.5
+  share: ^0.6.0+1
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2

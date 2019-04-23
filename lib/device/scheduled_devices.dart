@@ -87,112 +87,129 @@ class _ScheduledDeviceState extends State<ScheduledDevice>
     });
   }
 
+  Future removeScheduleProcess(int index) async {
+    bool perm = await _deleteConfirmation.showConfirmDialog(
+        context, _checkPlatform.isIOS(),
+        title: "Do you want to remove this schedule from list");
+    if (perm) {
+      setState(() {
+        _isLoading = true;
+      });
+      await _schedulePresenter.doRemoveSchedule(user, scheduleList[index]);
+      await getScheduleList();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget getObject(List<Schedule> scheduleList, int index, int len) {
-      return ListTile(
-        onTap: () async {
-          bool perm = await _deleteConfirmation.showConfirmDialog(
-              context, _checkPlatform.isIOS(),
-              title: "Do you want to remove this schedule from list");
-          if (perm) {
-            setState(() {
-              _isLoading = true;
-            });
-            await _schedulePresenter.doRemoveSchedule(
-                user, scheduleList[index]);
-            await getScheduleList();
-          }
-        },
-        title: Text(
-            "${scheduleList[index].deviceName} (${scheduleList[index].roomName})"),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  "Start Time: ",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.black),
-                ),
-                Text(
-                  "${scheduleList[index].startTIme}",
-                  style: TextStyle(color: Colors.black),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  "End Time: ",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.black),
-                ),
-                Text(
-                  "${scheduleList[index].endTime}",
-                  style: TextStyle(color: Colors.black),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  "Repetition: ",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.black),
-                ),
-                Text(
-                  "${scheduleList[index].repetition}",
-                  style: TextStyle(
-                    color: Colors.black,
+      return Card(
+        elevation: 5.0,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: kHAutoBlue300, width: 2.0),
+          ),
+          child: Container(
+            margin: EdgeInsets.all(10.0),
+            child: ListTile(
+              onLongPress: () async {
+                await removeScheduleProcess(index);
+              },
+              onTap: () async {
+                await removeScheduleProcess(index);
+              },
+              title: Text(
+                  "${scheduleList[index].deviceName} (${scheduleList[index].roomName})"),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        "Start Time: ",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black),
+                      ),
+                      Text(
+                        "${scheduleList[index].startTIme}",
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  "Created Date: ",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.black),
-                ),
-                Text(
-                  "${scheduleList[index].createdDate}",
-                  style: TextStyle(
-                    color: Colors.black,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        "End Time: ",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black),
+                      ),
+                      Text(
+                        "${scheduleList[index].endTime}",
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        trailing: scheduleList[index].afterStatus == "1"
-            ? Container(
-                color: Colors.green,
-                child: Container(
-                  padding: EdgeInsets.all(10.0),
-                  child: Text(
-                    "ON",
-                    style: TextStyle(color: Colors.white),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        "Repetition: ",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black),
+                      ),
+                      Text(
+                        "${scheduleList[index].repetition}",
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              )
-            : Container(
-                color: Colors.red,
-                child: Container(
-                  padding: EdgeInsets.all(10.0),
-                  child: Text(
-                    "OFF",
-                    style: TextStyle(color: Colors.white),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        "Created Date: ",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black),
+                      ),
+                      Text(
+                        "${scheduleList[index].createdDate}",
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
+                ],
               ),
+              trailing: scheduleList[index].afterStatus == "1"
+                  ? Container(
+                      color: Colors.green,
+                      child: Container(
+                        padding: EdgeInsets.all(10.0),
+                        child: Text(
+                          "ON",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      color: Colors.red,
+                      child: Container(
+                        padding: EdgeInsets.all(10.0),
+                        child: Text(
+                          "OFF",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+            ),
+          ),
+        ),
       );
     }
 

@@ -1,8 +1,10 @@
 import "package:flutter/material.dart";
+import 'package:flutter/cupertino.dart';
 import 'package:home_automation/colors.dart';
 import 'package:home_automation/utils/show_progress.dart';
 import 'package:home_automation/login_signup/signup_screen_presenter.dart';
 import 'package:home_automation/utils/show_dialog.dart';
+import 'package:home_automation/utils/check_platform.dart';
 
 class SignupScreen extends StatefulWidget {
   @override
@@ -13,14 +15,17 @@ class SignupScreen extends StatefulWidget {
 
 class SignupScreenState extends State<SignupScreen>
     implements SignupScreenContract {
-  var scaffoldKey = new GlobalKey<ScaffoldState>();
-  var formKey = new GlobalKey<FormState>();
   bool _isLoading = false, _isLoadingValue = false;
   bool _autoValidate = false;
+  ShowDialog _showDialog;
+  CheckPlatform _checkPlatform;
+
+  var scaffoldKey = new GlobalKey<ScaffoldState>();
+  var formKey = new GlobalKey<FormState>();
+  String _name, _email, _password, _address, _city, _contact;
   String _passwordValidText =
       "Password should contain at least one small and large alpha characters";
-  String _name, _email, _password, _address, _city, _contact;
-  ShowDialog _showDialog;
+
   FocusNode _nameNode = new FocusNode();
   FocusNode _emailNode = new FocusNode();
   FocusNode _passwordNode = new FocusNode();
@@ -33,6 +38,7 @@ class SignupScreenState extends State<SignupScreen>
   void initState() {
     _presenter = new SignupScreenPresenter(this);
     _showDialog = new ShowDialog();
+    _checkPlatform = new CheckPlatform(context: context);
     super.initState();
   }
 
@@ -158,13 +164,8 @@ class SignupScreenState extends State<SignupScreen>
 
     var _showRegisterForm = new ListView(
       children: <Widget>[
-        new Container(
-          padding:
-              EdgeInsets.only(top: 20.0, bottom: 10.0, left: 20.0, right: 20.0),
-          child: Text(
-            'Signup',
-            textScaleFactor: 2.0,
-          ),
+        SizedBox(
+          height: 15.0,
         ),
         new Container(
           padding:
@@ -187,7 +188,19 @@ class SignupScreenState extends State<SignupScreen>
                     _fieldFocusChange(context, _nameNode, _emailNode);
                   },
                   validator: nameValidator,
-                  decoration: InputDecoration(labelText: 'Name'),
+                  decoration: InputDecoration(
+                    hintText: 'Name',
+                    contentPadding: EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
+                    prefixIcon: Icon(
+                      Icons.person,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(32.0),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 21.0,
                 ),
                 new TextFormField(
                   onSaved: (val) {
@@ -200,7 +213,19 @@ class SignupScreenState extends State<SignupScreen>
                     _fieldFocusChange(context, _emailNode, _passwordNode);
                   },
                   validator: emailValidator,
-                  decoration: InputDecoration(labelText: 'Email'),
+                  decoration: InputDecoration(
+                    hintText: 'Email',
+                    contentPadding: EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
+                    prefixIcon: Icon(
+                      Icons.email,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(32.0),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 21.0,
                 ),
                 new TextFormField(
                   onSaved: (val) {
@@ -215,7 +240,14 @@ class SignupScreenState extends State<SignupScreen>
                     _fieldFocusChange(context, _passwordNode, _addressNode);
                   },
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    hintText: 'Password',
+                    contentPadding: EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
+                    prefixIcon: Icon(
+                      Icons.lock_open,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(32.0),
+                    ),
                     suffixIcon: Tooltip(
                       message: _passwordValidText,
                       padding: EdgeInsets.all(20.0),
@@ -231,6 +263,9 @@ class SignupScreenState extends State<SignupScreen>
                     ),
                   ),
                 ),
+                SizedBox(
+                  height: 21.0,
+                ),
                 new TextFormField(
                   onSaved: (val) {
                     _address = val;
@@ -243,7 +278,19 @@ class SignupScreenState extends State<SignupScreen>
                     _fieldFocusChange(context, _addressNode, _cityNode);
                   },
                   validator: addressValidator,
-                  decoration: InputDecoration(labelText: 'Address'),
+                  decoration: InputDecoration(
+                    hintText: 'Address',
+                    contentPadding: EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
+                    prefixIcon: Icon(
+                      Icons.home,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(32.0),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 21.0,
                 ),
                 new TextFormField(
                   onSaved: (val) {
@@ -257,7 +304,19 @@ class SignupScreenState extends State<SignupScreen>
                     _fieldFocusChange(context, _cityNode, _contactNode);
                   },
                   validator: cityValidator,
-                  decoration: InputDecoration(labelText: 'City'),
+                  decoration: InputDecoration(
+                    hintText: 'City',
+                    contentPadding: EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
+                    prefixIcon: Icon(
+                      Icons.location_city,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(32.0),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 21.0,
                 ),
                 new TextFormField(
                   onSaved: (val) {
@@ -272,16 +331,42 @@ class SignupScreenState extends State<SignupScreen>
                     _submit();
                   },
                   validator: contactValidator,
-                  decoration: InputDecoration(labelText: 'Contact'),
+                  decoration: InputDecoration(
+                    hintText: 'Contact',
+                    contentPadding: EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
+                    prefixIcon: Icon(
+                      Icons.phone,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(32.0),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 21.0,
                 ),
                 Container(
-                  padding: EdgeInsets.only(top: 20.0),
                   child: _isLoadingValue
                       ? ShowProgress()
                       : new RaisedButton(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          color: kHAutoBlue300,
                           onPressed: _submit,
-                          child: Text('Signup'),
+                          child: Container(
+                            margin: EdgeInsets.all(10.0),
+                            child: Text(
+                              'Signup',
+                              style: TextStyle(
+                                fontSize: 17.0,
+                              ),
+                            ),
+                          ),
                         ),
+                ),
+                SizedBox(
+                  height: 15.0,
                 ),
                 Container(
                   child: new FlatButton(
@@ -304,9 +389,14 @@ class SignupScreenState extends State<SignupScreen>
 
     return Scaffold(
       key: scaffoldKey,
-      appBar: AppBar(
-        title: Text("Home Autmation"),
-      ),
+      appBar: _checkPlatform.isIOS()
+          ? CupertinoNavigationBar(
+              backgroundColor: kHAutoBlue100,
+              middle: new Text("Sign Up"),
+            )
+          : AppBar(
+              title: Text("Sign Up"),
+            ),
       body: _isLoading ? ShowProgress() : _showRegisterForm,
     );
   }

@@ -83,7 +83,7 @@ class UserProfileState extends State<UserProfile>
       _mobile = this.user.mobile;
       _address = this.user.address;
       _city = this.user.city;
-    }catch(e){
+    } catch (e) {
       Navigator.of(context).pop();
     }
   }
@@ -212,121 +212,179 @@ class UserProfileState extends State<UserProfile>
           Container(
             child: Column(
               children: <Widget>[
-                Text(
-                  "Edit Profile Details",
-                  style: Theme.of(context)
-                      .textTheme
-                      .title
-                      .copyWith(fontSize: 20.0),
-                ),
                 SizedBox(
                   height: 9.0,
                 ),
-                Container(
-                  decoration: BoxDecoration(
-                      border: Border.all(color: kHAutoBlue300, width: 1.0)),
+                Card(
+                  elevation: 10.0,
                   child: Container(
-                    padding: EdgeInsets.all(10.0),
-                    child: Form(
-                      key: formKey,
-                      autovalidate: _autoValidate,
-                      child: Column(
-                        children: <Widget>[
-                          FlatButton(
-                            padding: EdgeInsets.zero,
-                            onPressed: () {
-                              _showSnackBar("Email can not be change!");
-                            },
-                            child: TextFormField(
-                              initialValue: _email,
-                              enabled: false,
-                              decoration: InputDecoration(
-                                labelText: "Email",
+                    decoration: BoxDecoration(
+                      border: Border.all(color: kHAutoBlue300, width: 2.0),
+                    ),
+                    child: Container(
+                      padding: EdgeInsets.all(10.0),
+                      child: Form(
+                        key: formKey,
+                        autovalidate: _autoValidate,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            FlatButton(
+                              padding: EdgeInsets.zero,
+                              onPressed: () {
+                                _showSnackBar("Email can not be change!");
+                              },
+                              child: TextFormField(
+                                initialValue: _email,
+                                enabled: false,
+                                decoration: InputDecoration(
+                                  hintText: "Email",
+                                  contentPadding: EdgeInsets.fromLTRB(
+                                      20.0, 20.0, 20.0, 10.0),
+                                  prefixIcon: Icon(
+                                    Icons.email,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(32.0),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                          TextFormField(
-                            initialValue: _name,
-                            onSaved: (val) {
-                              _name = val;
-                            },
-                            autofocus: true,
-                            focusNode: _nameFocus,
-                            keyboardType: TextInputType.text,
-                            textInputAction: TextInputAction.next,
-                            textCapitalization: TextCapitalization.words,
-                            onFieldSubmitted: (val) {
-                              _fieldFocusChange(
-                                  context, _nameFocus, _addressFocus);
-                            },
-                            decoration: InputDecoration(
-                              labelText: "Name",
+                            SizedBox(
+                              height: 21.0,
                             ),
-                            validator: nameValidator,
-                          ),
-                          TextFormField(
-                            initialValue: _address,
-                            onSaved: (val) {
-                              _address = val;
-                            },
-                            keyboardType: TextInputType.text,
-                            textInputAction: TextInputAction.next,
-                            textCapitalization: TextCapitalization.sentences,
-                            focusNode: _addressFocus,
-                            onFieldSubmitted: (val) {
-                              _fieldFocusChange(
-                                  context, _addressFocus, _cityFocus);
-                            },
-                            decoration: InputDecoration(
-                              labelText: "Address",
+                            TextFormField(
+                              initialValue: _name,
+                              onSaved: (val) {
+                                _name = val;
+                              },
+                              autofocus: true,
+                              focusNode: _nameFocus,
+                              keyboardType: TextInputType.text,
+                              textInputAction: TextInputAction.next,
+                              textCapitalization: TextCapitalization.words,
+                              onFieldSubmitted: (val) {
+                                _fieldFocusChange(
+                                    context, _nameFocus, _addressFocus);
+                              },
+                              decoration: InputDecoration(
+                                hintText: "Name",
+                                contentPadding:
+                                    EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
+                                prefixIcon: Icon(
+                                  Icons.person,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32.0),
+                                ),
+                              ),
+                              validator: nameValidator,
                             ),
-                            validator: addressValidator,
-                          ),
-                          TextFormField(
-                            initialValue: _city,
-                            onSaved: (val) {
-                              _city = val;
-                            },
-                            textCapitalization: TextCapitalization.sentences,
-                            textInputAction: TextInputAction.next,
-                            focusNode: _cityFocus,
-                            onFieldSubmitted: (val) {
-                              _fieldFocusChange(
-                                  context, _cityFocus, _mobileFocus);
-                            },
-                            decoration: InputDecoration(
-                              labelText: "City",
+                            SizedBox(
+                              height: 21.0,
                             ),
-                            validator: cityValidator,
-                          ),
-                          TextFormField(
-                            initialValue: _mobile,
-                            onSaved: (val) {
-                              _mobile = val;
-                            },
-                            keyboardType: TextInputType.phone,
-                            textInputAction: TextInputAction.next,
-                            focusNode: _mobileFocus,
-                            onFieldSubmitted: (val) async {
-                              _mobileFocus.unfocus();
-                              await _updateUserProfile();
-                            },
-                            decoration: InputDecoration(
-                              labelText: "Mobile",
+                            TextFormField(
+                              initialValue: _address,
+                              onSaved: (val) {
+                                _address = val;
+                              },
+                              keyboardType: TextInputType.text,
+                              textInputAction: TextInputAction.next,
+                              textCapitalization: TextCapitalization.sentences,
+                              focusNode: _addressFocus,
+                              onFieldSubmitted: (val) {
+                                _fieldFocusChange(
+                                    context, _addressFocus, _cityFocus);
+                              },
+                              decoration: InputDecoration(
+                                hintText: "Address",
+                                contentPadding:
+                                    EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
+                                prefixIcon: Icon(
+                                  Icons.home,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32.0),
+                                ),
+                              ),
+                              validator: addressValidator,
                             ),
-                            validator: contactValidator,
-                          ),
-                          SizedBox(
-                            height: 5.0,
-                          ),
-                          FlatButton(
-                            color: kHAutoBlue300,
-                            onPressed: () async {
-                              await _updateUserProfile();
-                            },
-                            child: Text("Update"),
-                          )
-                        ],
+                            SizedBox(
+                              height: 21.0,
+                            ),
+                            TextFormField(
+                              initialValue: _city,
+                              onSaved: (val) {
+                                _city = val;
+                              },
+                              textCapitalization: TextCapitalization.sentences,
+                              textInputAction: TextInputAction.next,
+                              focusNode: _cityFocus,
+                              onFieldSubmitted: (val) {
+                                _fieldFocusChange(
+                                    context, _cityFocus, _mobileFocus);
+                              },
+                              decoration: InputDecoration(
+                                hintText: "City",
+                                contentPadding:
+                                    EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
+                                prefixIcon: Icon(
+                                  Icons.location_city,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32.0),
+                                ),
+                              ),
+                              validator: cityValidator,
+                            ),
+                            SizedBox(
+                              height: 21.0,
+                            ),
+                            TextFormField(
+                              initialValue: _mobile,
+                              onSaved: (val) {
+                                _mobile = val;
+                              },
+                              keyboardType: TextInputType.phone,
+                              textInputAction: TextInputAction.next,
+                              focusNode: _mobileFocus,
+                              onFieldSubmitted: (val) async {
+                                _mobileFocus.unfocus();
+                                await _updateUserProfile();
+                              },
+                              decoration: InputDecoration(
+                                hintText: "Mobile",
+                                contentPadding:
+                                    EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
+                                prefixIcon: Icon(
+                                  Icons.phone,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32.0),
+                                ),
+                              ),
+                              validator: contactValidator,
+                            ),
+                            SizedBox(
+                              height: 21.0,
+                            ),
+                            RaisedButton(
+                              color: kHAutoBlue300,
+                              onPressed: () async {
+                                await _updateUserProfile();
+                              },
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: Text(
+                                "Update",
+                                style: TextStyle(
+                                  fontSize: 15.0,
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -349,10 +407,10 @@ class UserProfileState extends State<UserProfile>
       appBar: _checkPlatform.isIOS()
           ? CupertinoNavigationBar(
               backgroundColor: kHAutoBlue100,
-              middle: new Text("Profile Details"),
+              middle: new Text("Edit Profile"),
             )
           : new AppBar(
-              title: new Text("Profile Details"),
+              title: new Text("Edit Profile"),
             ),
       body: internetAccess
           ? _isLoading ? ShowProgress() : _showBody(context)

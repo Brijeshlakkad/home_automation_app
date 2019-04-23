@@ -86,6 +86,23 @@ class RequestUser {
       return User.map(res['user']);
     });
   }
+
+  Future<String> getAppLink(bool isIOS) async {
+    String os;
+    if (isIOS) {
+      os = "true";
+    } else {
+      os = "false";
+    }
+    return _netUtil.post(finalURL, body: {
+      "action": "4",
+      "isIOS": os,
+    }).then((dynamic res) {
+      print(res.toString());
+      if (res["error"]) throw new FormException(res['errorMessage']);
+      return res['link'];
+    });
+  }
 }
 
 abstract class UserContract {

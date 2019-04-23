@@ -30,7 +30,6 @@ class LoginScreenState extends State<LoginScreen>
   String _password, _email;
   bool _autoValidate = false;
   LoginScreenPresenter _presenter;
-  bool _showError = false;
   ShowDialog _showDialog;
   FocusNode _emailNode = new FocusNode();
   FocusNode _passwordNode = new FocusNode();
@@ -57,7 +56,6 @@ class LoginScreenState extends State<LoginScreen>
     CheckInternetAccess checkInternetAccess = new CheckInternetAccess();
     if (await checkInternetAccess.check()) {
       final form = formKey.currentState;
-      setState(() => _showError = false);
       if (form.validate()) {
         setState(() => _isLoadingValue = true);
         form.save();
@@ -126,17 +124,16 @@ class LoginScreenState extends State<LoginScreen>
     }
 
     var loginBtn = new Container(
-      padding: EdgeInsets.only(top: 16.0),
-      width: 400.0,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.all(Radius.circular(46.0)),
-      ),
       child: new RaisedButton(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
         ),
+        color: kHAutoBlue300,
         onPressed: _submit,
-        child: new Text("LOGIN"),
+        child: Container(
+          margin: EdgeInsets.all(15.0),
+          child: new Text("LOGIN"),
+        ),
       ),
     );
     var loginForm = new ListView(
@@ -243,18 +240,8 @@ class LoginScreenState extends State<LoginScreen>
             ],
           ),
         ),
-        Padding(
-          padding: EdgeInsets.only(top: 30.0, bottom: 10.0),
-          child: _showError
-              ? Container(
-                  child: Text(
-                    "Email id or Password is wrong",
-                    style: TextStyle(
-                      color: Colors.red,
-                    ),
-                  ),
-                )
-              : Container(),
+        SizedBox(
+          height: 15.0,
         ),
         Center(
           child: _isLoadingValue ? new ShowProgress() : loginBtn,

@@ -78,48 +78,52 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
   @override
   Widget build(BuildContext context) {
     Widget drawBox(Subscription subscription) {
-      return Container(
-        padding: EdgeInsets.all(10.0),
-        decoration:
-            BoxDecoration(border: Border.all(color: kHAutoBlue300, width: 1.0)),
-        child: Column(
-          children: [
-            Row(
-              children: <Widget>[
-                Text("Hardware Series"),
-                Expanded(
-                  child: Container(),
-                ),
-                Text("${subscription.hwSeries}"),
-              ],
-            ),
-            Row(
-              children: <Widget>[
-                Text("Expiration Date"),
-                Expanded(
-                  child: Container(),
-                ),
-                Text("${subscription.leftTime}"),
-              ],
-            ),
-            Row(
-              children: <Widget>[
-                Text("State"),
-                Expanded(
-                  child: Container(),
-                ),
-                subscription.state == "Running"
-                    ? Text(
-                        "${subscription.state}",
-                        style: TextStyle(color: Colors.green),
-                      )
-                    : Text(
-                        "${subscription.state}",
-                        style: TextStyle(color: Colors.red),
-                      ),
-              ],
-            ),
-          ],
+      return Card(
+        elevation: 5.0,
+        child: Container(
+          padding: EdgeInsets.all(10.0),
+          decoration: BoxDecoration(
+            border: Border.all(color: kHAutoBlue300, width: 2.0),
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: <Widget>[
+                  Text("Hardware Series"),
+                  Expanded(
+                    child: Container(),
+                  ),
+                  Text("${subscription.hwSeries}"),
+                ],
+              ),
+              Row(
+                children: <Widget>[
+                  Text("Expiration Date"),
+                  Expanded(
+                    child: Container(),
+                  ),
+                  Text("${subscription.leftTime}"),
+                ],
+              ),
+              Row(
+                children: <Widget>[
+                  Text("State"),
+                  Expanded(
+                    child: Container(),
+                  ),
+                  subscription.state == "Running"
+                      ? Text(
+                          "${subscription.state}",
+                          style: TextStyle(color: Colors.green),
+                        )
+                      : Text(
+                          "${subscription.state}",
+                          style: TextStyle(color: Colors.red),
+                        ),
+                ],
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -191,9 +195,14 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
 
     return Scaffold(
       key: scaffoldKey,
-      appBar: AppBar(
-        title: Text("Subscription"),
-      ),
+      appBar: _checkPlatform.isIOS()
+          ? CupertinoNavigationBar(
+              backgroundColor: kHAutoBlue100,
+              middle: new Text("Subscription"),
+            )
+          : AppBar(
+              title: Text("Subscription"),
+            ),
       body: _isLoading
           ? ShowProgress()
           : internetAccess

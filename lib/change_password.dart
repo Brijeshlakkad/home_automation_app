@@ -146,97 +146,138 @@ class ChangePasswordState extends State<ChangePassword>
 
   Widget _showBody(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(left: 10.0, right: 10.0),
-      child: Form(
-        key: formKey,
-        autovalidate: _autoValidate,
-        child: Column(
-          children: <Widget>[
-            SizedBox(
-              height: 10.0,
-            ),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: "Old Password",
-              ),
-              onSaved: (value) {
-                _oldPassword = value;
-              },
-              obscureText: true,
-              validator: oldPasswordValidator,
-              keyboardType: TextInputType.text,
-              textInputAction: TextInputAction.next,
-              focusNode: _oldPasswordFocus,
-              onFieldSubmitted: (value) {
-                _fieldFocusChange(
-                    context, _oldPasswordFocus, _newPasswordFocus);
-              },
-            ),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: "New Password",
-              ),
-              onSaved: (value) {
-                _newPassword = value;
-              },
-              validator: passwordValidator,
-              keyboardType: TextInputType.text,
-              obscureText: true,
-              textInputAction: TextInputAction.next,
-              focusNode: _newPasswordFocus,
-              onFieldSubmitted: (value) {
-                _fieldFocusChange(
-                    context, _newPasswordFocus, _newCPasswordFocus);
-              },
-            ),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: "Confirm New Password",
-              ),
-              onSaved: (value) {
-                _newCPassword = value;
-              },
-              validator: passwordValidator,
-              obscureText: true,
-              keyboardType: TextInputType.text,
-              textInputAction: TextInputAction.next,
-              focusNode: _newCPasswordFocus,
-              onFieldSubmitted: (value) async {
-                await _changePassword();
-              },
-            ),
-            _isError
-                ? Container(
-                    child: Column(
-                      children: <Widget>[
-                        SizedBox(
-                          height: 10.0,
-                        ),
-                        Container(
-                          child: Text(
-                            "$_showError",
-                            style: TextStyle(
-                              color: Colors.red,
-                            ),
-                          ),
-                        )
-                      ],
+      padding: EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0),
+      child: Card(
+        elevation: 10.0,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: kHAutoBlue300, width: 2.0),
+          ),
+          child: Container(
+            padding: EdgeInsets.all(10.0),
+            child: Form(
+              key: formKey,
+              autovalidate: _autoValidate,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  SizedBox(
+                    height: 10.0,
+                  ),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      hintText: "Old Password",
+                      contentPadding:
+                          EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(32.0),
+                      ),
                     ),
-                  )
-                : Container(),
-            SizedBox(
-              height: 10.0,
-            ),
-            _isLoadingValue
-                ? ShowProgress()
-                : RaisedButton(
-                    color: kHAutoBlue300,
-                    onPressed: () async {
+                    onSaved: (value) {
+                      _oldPassword = value;
+                    },
+                    obscureText: true,
+                    validator: oldPasswordValidator,
+                    keyboardType: TextInputType.text,
+                    textInputAction: TextInputAction.next,
+                    focusNode: _oldPasswordFocus,
+                    onFieldSubmitted: (value) {
+                      _fieldFocusChange(
+                          context, _oldPasswordFocus, _newPasswordFocus);
+                    },
+                  ),
+                  SizedBox(
+                    height: 21.0,
+                  ),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      hintText: "New Password",
+                      contentPadding:
+                          EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(32.0),
+                      ),
+                    ),
+                    onSaved: (value) {
+                      _newPassword = value;
+                    },
+                    validator: passwordValidator,
+                    keyboardType: TextInputType.text,
+                    obscureText: true,
+                    textInputAction: TextInputAction.next,
+                    focusNode: _newPasswordFocus,
+                    onFieldSubmitted: (value) {
+                      _fieldFocusChange(
+                          context, _newPasswordFocus, _newCPasswordFocus);
+                    },
+                  ),
+                  SizedBox(
+                    height: 21.0,
+                  ),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      hintText: "Confirm New Password",
+                      contentPadding:
+                          EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(32.0),
+                      ),
+                    ),
+                    onSaved: (value) {
+                      _newCPassword = value;
+                    },
+                    validator: passwordValidator,
+                    obscureText: true,
+                    keyboardType: TextInputType.text,
+                    textInputAction: TextInputAction.next,
+                    focusNode: _newCPasswordFocus,
+                    onFieldSubmitted: (value) async {
                       await _changePassword();
                     },
-                    child: Text('Change Password'),
                   ),
-          ],
+                  _isError
+                      ? Container(
+                          child: Column(
+                            children: <Widget>[
+                              SizedBox(
+                                height: 10.0,
+                              ),
+                              Container(
+                                child: Text(
+                                  "$_showError",
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              )
+                            ],
+                          ),
+                        )
+                      : Container(),
+                  SizedBox(
+                    height: 21.0,
+                  ),
+                  _isLoadingValue
+                      ? ShowProgress()
+                      : RaisedButton(
+                          color: kHAutoBlue300,
+                          onPressed: () async {
+                            await _changePassword();
+                          },
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Text(
+                            'Change Password',
+                            style: TextStyle(
+                              fontSize: 15.0,
+                            ),
+                          ),
+                        ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

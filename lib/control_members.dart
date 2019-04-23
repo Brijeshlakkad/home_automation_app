@@ -105,57 +105,64 @@ class _ControlMemberState extends State<ControlMember>
   }
 
   Widget _getMemberObject(List<Member> memberList, int index, int length) {
-    return Dismissible(
-      // Each Dismissible must contain a Key. Keys allow Flutter to
-      // uniquely identify Widgets.
-      key: Key(memberList[index].email),
-      // We also need to provide a function that tells our app
-      // what to do after an item has been swiped away.
-      onDismissed: (direction) {
-        Member member = memberList[index];
-        setState(() {
-          this.memberList.removeAt(index);
-        });
-        _memberPresenter.doRemoveMember(this.user, member);
-      },
-      background: Container(
-        color: Colors.red,
-        child: Center(
-          child: Text(
-            "Remove",
-            style: TextStyle(color: Colors.white, fontSize: 19.0),
+    return Card(
+      elevation: 5.0,
+      child: Dismissible(
+        key: Key(memberList[index].email),
+        onDismissed: (direction) {
+          Member member = memberList[index];
+          setState(() {
+            this.memberList.removeAt(index);
+          });
+          _memberPresenter.doRemoveMember(this.user, member);
+        },
+        background: Container(
+          color: Colors.red,
+          child: Center(
+            child: Text(
+              "Remove",
+              style: TextStyle(color: Colors.white, fontSize: 19.0),
+            ),
           ),
         ),
-      ),
-      child: ListTile(
-        leading: Text(
-          "${memberList[index].name[0].toUpperCase()}",
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 21.0,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: kHAutoBlue300, width: 2.0),
           ),
-        ),
-        title: Text(
-          "${memberList[index].email}",
-          style: TextStyle(height: 1.2),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: <Widget>[
-            Text("${memberList[index].name}"),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                //Text('Hardware'),
-                Text(
-                  "${memberList[index].hwName}",
-                  style: TextStyle(letterSpacing: 1.0),
+          child: Container(
+            margin: EdgeInsets.all(10.0),
+            child: ListTile(
+              leading: Text(
+                "${memberList[index].name[0].toUpperCase()}",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 21.0,
                 ),
-              ],
-            )
-          ],
+              ),
+              title: Text(
+                "${memberList[index].email}",
+                style: TextStyle(height: 1.2),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: <Widget>[
+                  Text("${memberList[index].name}"),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      //Text('Hardware'),
+                      Text(
+                        "${memberList[index].hwName}",
+                        style: TextStyle(letterSpacing: 1.0),
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -232,14 +239,30 @@ class _ControlMemberState extends State<ControlMember>
                   await _saveMember();
                 },
                 validator: emailValidator,
-                decoration: InputDecoration(labelText: "Member Email ID:"),
+                decoration: InputDecoration(
+                  hintText: "Member Email ID:",
+                  contentPadding: EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
+                  prefixIcon: Icon(
+                    Icons.email,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(32.0),
+                  ),
+                ),
               ),
               SizedBox(
-                height: 10.0,
+                height: 21.0,
               ),
               new InputDecorator(
                 decoration: InputDecoration(
-                  labelText: 'Device Port',
+                  labelText: 'Select Hardware',
+                  contentPadding: EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 10.0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(32.0),
+                  ),
+                  prefixIcon: Icon(
+                    Icons.toys,
+                  ),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: new DropdownButton<String>(
@@ -259,13 +282,33 @@ class _ControlMemberState extends State<ControlMember>
                 ),
               ),
               SizedBox(
-                height: 10.0,
+                height: 21.0,
               ),
               RaisedButton(
+                color: kHAutoBlue300,
                 onPressed: () async {
                   await _saveMember();
                 },
-                child: Text("Save"),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Container(
+                  margin: EdgeInsets.all(4.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(
+                        Icons.fingerprint,
+                      ),
+                      Text(
+                        " Save",
+                        style: TextStyle(
+                          fontSize: 15.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               )
             ],
           ),
@@ -342,9 +385,14 @@ class _ControlMemberState extends State<ControlMember>
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Control Members"),
-      ),
+      appBar: _checkPlatform.isIOS()
+          ? CupertinoNavigationBar(
+              backgroundColor: kHAutoBlue100,
+              middle: new Text("Control Members"),
+            )
+          : AppBar(
+              title: Text("Control Members"),
+            ),
       body: _isLoading
           ? ShowProgress()
           : internetAccess
