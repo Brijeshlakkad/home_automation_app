@@ -93,7 +93,7 @@ class ScheduleDeviceState extends State<ScheduleDevice>
 
   @override
   void onScheduleError(String errorString) {
-    _showDialog.showDialogCustom(context, "Error", errorString);
+    _showDialog.showDialogCustom(context, "Error", errorString,fontSize: 16.0,boxHeight: 60.0);
     setState(() {
       this.selectedSwitchOption = this.switchOptions[0];
       _isLoading = false;

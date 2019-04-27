@@ -261,6 +261,11 @@ class ViewScheduleState extends State<ViewSchedule>
               padding: EdgeInsets.only(top: 10.0),
             );
           }
+          if (index == len) {
+            return Container(
+                padding: EdgeInsets.only(bottom: 70.0),
+                child: getScheduleObject(scheduleList, index - 1));
+          }
           return getScheduleObject(scheduleList, index - 1);
         },
         itemCount: len + 1,
@@ -313,6 +318,11 @@ class ViewScheduleState extends State<ViewSchedule>
               ),
               padding: EdgeInsets.only(top: 10.0),
             );
+          }
+          if (index == len) {
+            return Container(
+                padding: EdgeInsets.only(bottom: 70.0),
+                child: getScheduleObject(scheduleList, index - 1));
           }
           return getScheduleObject(scheduleList, index - 1);
         }, childCount: len + 1),
@@ -417,14 +427,18 @@ class ViewScheduleState extends State<ViewSchedule>
                     )
                   : RefreshIndicator(
                       key: dvStatusRefreshIndicatorKey,
-                      child: createDeviceView(context, scheduleList),
+                      child: createDeviceView(
+                        context,
+                        scheduleList,
+                      ),
                       onRefresh: getSchedule,
                     )
               : _checkPlatform.isIOS()
                   ? new CustomScrollView(
                       slivers: <Widget>[
                         new CupertinoSliverRefreshControl(
-                            onRefresh: getSchedule),
+                          onRefresh: getSchedule,
+                        ),
                         new SliverSafeArea(
                           top: false,
                           sliver: _showInternetStatus.showInternetStatus(
